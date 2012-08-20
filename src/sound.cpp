@@ -1,3 +1,4 @@
+#include "sound.hpp"
 #include "cube.h"
 #include "SDL/SDL_mixer.h"
 
@@ -18,10 +19,9 @@ namespace sound
   static vector<Mix_Chunk *> samples;
   static cvector snames;
   static int soundsatonce = 0, lastsoundmillis = 0;
+  static struct { vec loc; bool inuse; } soundlocs[MAXCHAN];
 
-  struct soundloc { vec loc; bool inuse; } soundlocs[MAXCHAN];
-
-  void sound_stop(void)
+  void stop(void)
   {
     if (nosound) return;
     if (mod) {
@@ -45,7 +45,7 @@ namespace sound
   static void music(const char *name)
   {
     if (nosound) return;
-    sound_stop();
+    stop();
     if (soundvol && musicvol) {
       string sn;
       strcpy_s(sn, "packages/");
@@ -68,11 +68,11 @@ namespace sound
   void clean(void)
   {
     if (nosound) return;
-    sound_stop();
+    stop();
     Mix_CloseAudio();
   }
 
-  static void sound_updatechanvol(int chan, const vec *loc)
+  static void updatechanvol(int chan, const vec *loc)
   {
     int vol = soundvol, pan = 255/2;
     if (loc) {
@@ -90,7 +90,7 @@ namespace sound
     Mix_SetPanning(chan, 255-pan, pan);
   }
 
-  static void sound_newsoundloc(int chan, const vec *loc)
+  static void newsoundloc(int chan, const vec *loc)
   {
     assert(chan>=0 && chan<MAXCHAN);
     soundlocs[chan].loc = *loc;
@@ -100,16 +100,19 @@ namespace sound
   void updatevol(void)
   {
     if (nosound) return;
-    loopi(MAXCHAN)
-      if (soundlocs[i].inuse) {
-        if (Mix_Playing(i))
-          sound_updatechanvol(i, &soundlocs[i].loc);
-        else
-          soundlocs[i].inuse = false;
-      }
+    loopi(MAXCHAN) if (soundlocs[i].inuse) {
+      if (Mix_Playing(i))
+        updatechanvol(i, &soundlocs[i].loc);
+      else
+        soundlocs[i].inuse = false;
+    }
   }
 
-  void playc(int n) { addmsg(0, 2, SV_SOUND, n); play(n); }
+  void playc(int n)
+  {
+    client::addmsg(0, 2, SV_SOUND, n);
+    play(n);
+  }
 
   void play(int n, const vec *loc)
   {
@@ -120,8 +123,11 @@ namespace sound
     else
       soundsatonce = 1;
     lastsoundmillis = lastmillis;
-    if (soundsatonce>5) return;  // avoid bursts of sounds with heavy packetloss and in sp
-    if (n<0 || n>=samples.length()) { console::out("unregistered sound: %d", n); return; }
+    if (soundsatonce>5) return;  // avoid bursts of sounds with heavy packetloss
+    if (n<0 || n>=samples.length()) {
+      console::out("unregistered sound: %d", n);
+      return;
+    }
 
     if (!samples[n]) {
       sprintf_sd(buf)("packages/sounds/%s.wav", snames[n]);
@@ -134,8 +140,8 @@ namespace sound
 
     const int chan = Mix_PlayChannel(-1, samples[n], 0);
     if (chan<0) return;
-    if (loc) sound_newsoundloc(chan, loc);
-    sound_updatechanvol(chan, loc);
+    if (loc) newsoundloc(chan, loc);
+    updatechanvol(chan, loc);
   }
 
   static void sound(int n) { play(n, NULL); }
@@ -144,4 +150,19 @@ namespace sound
   COMMAND(registersound, ARG_1EST);
   COMMAND(sound, ARG_1INT);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

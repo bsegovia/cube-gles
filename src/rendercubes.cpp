@@ -18,7 +18,7 @@ void reallocv()
 {
     verts = (vertex *)realloc(verts, (curmaxverts *= 2)*sizeof(vertex));
     curmaxverts -= 10;
-    if(!verts) fatal("no vertex memory!");
+    if (!verts) fatal("no vertex memory!");
     setarraypointers();
 };
 
@@ -26,7 +26,7 @@ void reallocv()
 // leaves of all these functions, and are part of the cpu bottleneck on really slow
 // machines, hence the macros.
 
-#define vertcheck() { if(curvert>=curmaxverts) reallocv(); }
+#define vertcheck() { if (curvert>=curmaxverts) reallocv(); }
 
 #define vertf(v1, v2, v3, ls, t1, t2) { vertex &v = verts[curvert++]; \
     v.u = t1; v.v = t2; \
@@ -44,11 +44,11 @@ int firstindex;
 bool showm = false;
 
 void showmip() { showm = !showm; };
-void mipstats(int a, int b, int c) { if(showm) console::out("1x1/2x2/4x4: %d / %d / %d", a, b, c); };
+void mipstats(int a, int b, int c) { if (showm) console::out("1x1/2x2/4x4: %d / %d / %d", a, b, c); };
 
 COMMAND(showmip, ARG_NONE);
 
-#define stripend() { if(floorstrip || deltastrip) { addstrip(ogltex, firstindex, curvert-firstindex); floorstrip = deltastrip = false; }; };
+#define stripend() { if (floorstrip || deltastrip) { addstrip(ogltex, firstindex, curvert-firstindex); floorstrip = deltastrip = false; }; };
 void finishstrips() { stripend(); };
 
 sqr sbright, sdark;
@@ -57,7 +57,7 @@ VAR(lighterror,1,8,100);
 void render_flat(int wtex, int x, int y, int size, int h, sqr *l1, sqr *l2, sqr *l3, sqr *l4, bool isceil)  // floor/ceil quads
 {
     vertcheck();
-    if(showm) { l3 = l1 = &sbright; l4 = l2 = &sdark; };
+    if (showm) { l3 = l1 = &sbright; l4 = l2 = &sdark; };
 
     int sx, sy;
     int gltex = lookuptexture(wtex, sx, sy);
@@ -70,7 +70,7 @@ void render_flat(int wtex, int x, int y, int size, int h, sqr *l1, sqr *l2, sqr 
 
     bool first = !floorstrip || y!=oy+size || ogltex!=gltex || h!=oh || x!=ox;
 
-    if(first)       // start strip here
+    if (first)       // start strip here
     {
         stripend();
         firstindex = curvert;
@@ -78,7 +78,7 @@ void render_flat(int wtex, int x, int y, int size, int h, sqr *l1, sqr *l2, sqr 
         oh = h;
         ox = x;
         floorstrip = true;
-        if(isceil)
+        if (isceil)
         {
             vert(x+size, h, y, l2, xo+xs, yo);
             vert(x,      h, y, l1, xo, yo);
@@ -98,7 +98,7 @@ void render_flat(int wtex, int x, int y, int size, int h, sqr *l1, sqr *l2, sqr 
     else        // continue strip
     {
         int lighterr = lighterror*2;
-        if((abs(ol3r-l3->r)<lighterr && abs(ol4r-l4->r)<lighterr        // skip vertices if light values are close enough
+        if ((abs(ol3r-l3->r)<lighterr && abs(ol4r-l4->r)<lighterr        // skip vertices if light values are close enough
         &&  abs(ol3g-l3->g)<lighterr && abs(ol4g-l4->g)<lighterr
         &&  abs(ol3b-l3->b)<lighterr && abs(ol4b-l4->b)<lighterr) || !wtex)   
         {
@@ -118,7 +118,7 @@ void render_flat(int wtex, int x, int y, int size, int h, sqr *l1, sqr *l2, sqr 
         };
     };
 
-    if(isceil)
+    if (isceil)
     {
         vert(x+size, h, y+size, l3, xo+xs, yo+ys);
         vert(x,      h, y+size, l4, xo,    yo+ys); 
@@ -136,7 +136,7 @@ void render_flat(int wtex, int x, int y, int size, int h, sqr *l1, sqr *l2, sqr 
 void render_flatdelta(int wtex, int x, int y, int size, float h1, float h2, float h3, float h4, sqr *l1, sqr *l2, sqr *l3, sqr *l4, bool isceil)  // floor/ceil quads on a slope
 {
     vertcheck();
-    if(showm) { l3 = l1 = &sbright; l4 = l2 = &sdark; };
+    if (showm) { l3 = l1 = &sbright; l4 = l2 = &sdark; };
 
     int sx, sy;
     int gltex = lookuptexture(wtex, sx, sy);
@@ -149,14 +149,14 @@ void render_flatdelta(int wtex, int x, int y, int size, float h1, float h2, floa
 
     bool first = !deltastrip || y!=oy+size || ogltex!=gltex || x!=ox; 
 
-    if(first) 
+    if (first) 
     {
         stripend();
         firstindex = curvert;
         ogltex = gltex;
         ox = x;
         deltastrip = true;
-        if(isceil)
+        if (isceil)
         {
             vertf((float)x+size, h2, (float)y,      l2, xo+xs, yo);
             vertf((float)x,      h1, (float)y,      l1, xo,    yo);
@@ -174,7 +174,7 @@ void render_flatdelta(int wtex, int x, int y, int size, float h1, float h2, floa
         ol4b = l2->b;
     };
 
-    if(isceil)
+    if (isceil)
     {
         vertf((float)x+size, h3, (float)y+size, l3, xo+xs, yo+ys); 
         vertf((float)x,      h4, (float)y+size, l4, xo,    yo+ys);
@@ -218,15 +218,15 @@ void render_2tris(sqr *h, sqr *s, int x1, int y1, int x2, int y2, int x3, int y3
 void render_tris(int x, int y, int size, bool topleft,
                  sqr *h1, sqr *h2, sqr *s, sqr *t, sqr *u, sqr *v)
 {
-    if(topleft)
+    if (topleft)
     {
-        if(h1) render_2tris(h1, s, x+size, y+size, x, y+size, x, y, u, v, s);
-        if(h2) render_2tris(h2, s, x, y, x+size, y, x+size, y+size, s, t, v);
+        if (h1) render_2tris(h1, s, x+size, y+size, x, y+size, x, y, u, v, s);
+        if (h2) render_2tris(h2, s, x, y, x+size, y, x+size, y+size, s, t, v);
     }
     else
     {
-        if(h1) render_2tris(h1, s, x, y, x+size, y, x, y+size, s, t, u);
-        if(h2) render_2tris(h2, s, x+size, y, x+size, y+size, x, y+size, t, u, v);
+        if (h1) render_2tris(h1, s, x, y, x+size, y, x, y+size, s, t, u);
+        if (h2) render_2tris(h2, s, x+size, y, x+size, y+size, x, y+size, t, u, v);
     };
 };
 
@@ -234,7 +234,7 @@ void render_square(int wtex, float floor1, float floor2, float ceil1, float ceil
 {
     stripend();
     vertcheck();
-    if(showm) { l1 = &sbright; l2 = &sdark; };
+    if (showm) { l1 = &sbright; l2 = &sdark; };
 
     int sx, sy;
     int gltex = lookuptexture(wtex, sx, sy);
@@ -243,7 +243,7 @@ void render_square(int wtex, float floor1, float floor2, float ceil1, float ceil
     float xs = size*xf;
     float xo = xf*(x1==x2 ? min(y1,y2) : min(x1,x2));
 
-    if(!flip)
+    if (!flip)
     {
         vertf((float)x2, ceil2,  (float)y2, l2, xo+xs, -yf*ceil2);
         vertf((float)x1, ceil1,  (float)y1, l1, xo,    -yf*ceil1); 
@@ -265,7 +265,7 @@ void render_square(int wtex, float floor1, float floor2, float ceil1, float ceil
 int wx1, wy1, wx2, wy2;
 
 VAR(watersubdiv, 1, 4, 64);
-VARF(waterlevel, -128, -128, 127, if(!noteditmode()) hdr.waterlevel = waterlevel);
+VARF(waterlevel, -128, -128, 127, if (!noteditmode()) hdr.waterlevel = waterlevel);
 
 inline void vertw(int v1, float v2, int v3, sqr *c, float t1, float t2, float t)
 {
@@ -280,7 +280,7 @@ inline float dy(float x) { return x+(float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f
 
 int renderwater(float hf)
 {
-    if(wx1<0) return nquads;
+    if (wx1<0) return nquads;
 
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
@@ -301,13 +301,13 @@ int renderwater(float hf)
     sqr dl;
     dl.r = dl.g = dl.b = 255;
     
-    for(int xx = wx1; xx<wx2; xx += watersubdiv)
+    for (int xx = wx1; xx<wx2; xx += watersubdiv)
     {
-        for(int yy = wy1; yy<wy2; yy += watersubdiv)
+        for (int yy = wy1; yy<wy2; yy += watersubdiv)
         {
             float xo = xf*(xx+t2);
             float yo = yf*(yy+t2);
-            if(yy==wy1)
+            if (yy==wy1)
             {
                 vertw(xx,             hf, yy,             &dl, dx(xo),    dy(yo), t1);
                 vertw(xx+watersubdiv, hf, yy,             &dl, dx(xo+xs), dy(yo), t1);
@@ -331,7 +331,7 @@ void addwaterquad(int x, int y, int size)       // update bounding rect that con
 {
     int x2 = x+size;
     int y2 = y+size;
-    if(wx1<0)
+    if (wx1<0)
     {
         wx1 = x;
         wy1 = y;
@@ -340,20 +340,39 @@ void addwaterquad(int x, int y, int size)       // update bounding rect that con
     }
     else
     {
-        if(x<wx1) wx1 = x;
-        if(y<wy1) wy1 = y;
-        if(x2>wx2) wx2 = x2;
-        if(y2>wy2) wy2 = y2;
+        if (x<wx1) wx1 = x;
+        if (y<wy1) wy1 = y;
+        if (x2>wx2) wx2 = x2;
+        if (y2>wy2) wy2 = y2;
     };
 };
 
 void resetcubes()
 {
-    if(!verts) reallocv();
+    if (!verts) reallocv();
     floorstrip = deltastrip = false;
     wx1 = -1;
     nquads = 0;
     sbright.r = sbright.g = sbright.b = 255;
     sdark.r = sdark.g = sdark.b = 0;
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

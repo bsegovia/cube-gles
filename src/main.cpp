@@ -5,13 +5,13 @@
 void cleanup(char *msg)         // single program exit point;
 {
     stop();
-    disconnect(true);
-    writecfg();
+    client::disconnect(true);
+    cmd::writecfg();
     cleangl();
     sound::clean();
     cleanupserver();
     SDL_ShowCursor(1);
-    if(msg)
+    if (msg)
     {
         #ifdef WIN32
         MessageBox(NULL, msg, "cube fatal error", MB_OK|MB_SYSTEMMODAL);
@@ -38,7 +38,7 @@ void fatal(const char *s, const char *o)    // failure exit
 void *alloc(int s) // for some big chunks... most other allocs use the memory pool
 {
     void *b = calloc(1,s);
-    if(!b) fatal("out of memory!");
+    if (!b) fatal("out of memory!");
     return b;
 };
 
@@ -50,9 +50,9 @@ void screenshot()
     SDL_Surface *image;
     SDL_Surface *temp;
     int idx;
-    if((image = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)) != NULL)
+    if ((image = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)) != NULL)
     {
-        if((temp = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)) != NULL)
+        if ((temp = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)) != NULL)
         {
             glReadPixels(0, 0, scr_w, scr_h, GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
             for (idx = 0; idx<scr_h; idx++)
@@ -78,7 +78,7 @@ void keyrepeat(bool on)
                              SDL_DEFAULT_REPEAT_INTERVAL);
 };
 
-VARF(gamespeed, 10, 100, 1000, if(multiplayer()) gamespeed = 100);
+VARF(gamespeed, 10, 100, 1000, if (client::multiplayer()) gamespeed = 100);
 VARP(minmillis, 0, 5, 1000);
 VARF(grabmouse, 0, 1, 1, {SDL_WM_GrabInput(grabmouse ? SDL_GRAB_ON : SDL_GRAB_OFF);});
 
@@ -96,10 +96,10 @@ int main(int argc, char **argv)
     #define log(s) console::out("init: %s", s)
     log("sdl");
     
-    for(int i = 1; i<argc; i++)
+    for (int i = 1; i<argc; i++)
     {
         const char *a = &argv[i][2];
-        if(argv[i][0]=='-') switch(argv[i][1])
+        if (argv[i][0]=='-') switch (argv[i][1])
         {
             case 'd': dedicated = true; break;
             case 't': fs     = 0; break;
@@ -121,10 +121,10 @@ int main(int argc, char **argv)
     fs = 0;
     #endif
 
-    if(SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|par)<0) fatal("Unable to initialize SDL");
+    if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|par)<0) fatal("Unable to initialize SDL");
 
     log("net");
-    if(enet_initialize()<0) fatal("Unable to initialise network module");
+    if (enet_initialize()<0) fatal("Unable to initialise network module");
 
     initclient();
     initserver(dedicated, uprate, sdesc, ip, master, passwd, maxcl);  // never returns if dedicated
@@ -133,11 +133,11 @@ int main(int argc, char **argv)
     empty_world(7, true);
 
     log("video: sdl");
-    if(SDL_InitSubSystem(SDL_INIT_VIDEO)<0) fatal("Unable to initialize SDL Video");
+    if (SDL_InitSubSystem(SDL_INIT_VIDEO)<0) fatal("Unable to initialize SDL Video");
 
     log("video: mode");
     SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-    if(SDL_SetVideoMode(scr_w, scr_h, 0, SDL_OPENGL|fs)==NULL) fatal("Unable to create OpenGL screen");
+    if (SDL_SetVideoMode(scr_w, scr_h, 0, SDL_OPENGL|fs)==NULL) fatal("Unable to create OpenGL screen");
 
     log("video: misc");
     SDL_WM_SetCaption("cube engine", NULL);
@@ -150,7 +150,7 @@ int main(int argc, char **argv)
 
     log("basetex");
     int xs, ys;
-    if(!installtex(2,  path(newstring("data/newchars.png")), xs, ys) ||
+    if (!installtex(2,  path(newstring("data/newchars.png")), xs, ys) ||
        !installtex(3,  path(newstring("data/martin/base.png")), xs, ys) ||
        !installtex(6,  path(newstring("data/martin/ball1.png")), xs, ys) ||
        !installtex(7,  path(newstring("data/martin/smoke.png")), xs, ys) ||
@@ -167,13 +167,13 @@ int main(int argc, char **argv)
     log("cfg");
     menu::newm("frags\tpj\tping\tteam\tname");
     menu::newm("ping\tplr\tserver");
-    exec("data/keymap.cfg");
-    exec("data/menus.cfg");
-    exec("data/prefabs.cfg");
-    exec("data/sounds.cfg");
-    exec("servers.cfg");
-    if(!execfile("config.cfg")) execfile("data/defaults.cfg");
-    exec("autoexec.cfg");
+    cmd::exec("data/keymap.cfg");
+    cmd::exec("data/menus.cfg");
+    cmd::exec("data/prefabs.cfg");
+    cmd::exec("data/sounds.cfg");
+    cmd::exec("servers.cfg");
+    if (!cmd::execfile("config.cfg")) cmd::execfile("data/defaults.cfg");
+    cmd::exec("autoexec.cfg");
 
     log("localconnect");
     localconnect();
@@ -181,22 +181,22 @@ int main(int argc, char **argv)
 
     log("mainloop");
     int ignore = 5;
-    for(;;)
+    for (;;)
     {
         int millis = SDL_GetTicks()*gamespeed/100;
-        if(millis-lastmillis>200) lastmillis = millis-200;
-        else if(millis-lastmillis<1) lastmillis = millis-1;
-        if(millis-lastmillis<minmillis) SDL_Delay(minmillis-(millis-lastmillis));
+        if (millis-lastmillis>200) lastmillis = millis-200;
+        else if (millis-lastmillis<1) lastmillis = millis-1;
+        if (millis-lastmillis<minmillis) SDL_Delay(minmillis-(millis-lastmillis));
         cleardlights();
         updateworld(millis);
-        if(!demoplayback) serverslice((int)time(NULL), 0);
+        if (!demoplayback) serverslice((int)time(NULL), 0);
         static float fps = 30.0f;
         fps = (1000.0f/curtime+fps*50)/51;
         computeraytable(player1->o.x, player1->o.y);
         readdepth(scr_w, scr_h);
         SDL_GL_SwapBuffers();
         sound::updatevol();
-        if(framesinmap++<5)    // cheap hack to get rid of initial sparklies, even when triple buffering etc.
+        if (framesinmap++<5)    // cheap hack to get rid of initial sparklies, even when triple buffering etc.
         {
             player1->yaw += 5;
             gl_drawframe(scr_w, scr_h, fps);
@@ -205,9 +205,9 @@ int main(int argc, char **argv)
         gl_drawframe(scr_w, scr_h, fps);
         SDL_Event event;
         int lasttype = 0, lastbut = 0;
-        while(SDL_PollEvent(&event))
+        while (SDL_PollEvent(&event))
         {
-            switch(event.type)
+            switch (event.type)
             {
                 case SDL_QUIT:
                     quit();
@@ -219,13 +219,13 @@ int main(int argc, char **argv)
                     break;
 
                 case SDL_MOUSEMOTION:
-                    if(ignore) { ignore--; break; };
+                    if (ignore) { ignore--; break; };
                     mousemove(event.motion.xrel, event.motion.yrel);
                     break;
 
                 case SDL_MOUSEBUTTONDOWN:
                 case SDL_MOUSEBUTTONUP:
-                    if(lasttype==event.type && lastbut==event.button.button) break; // why?? get event twice without it
+                    if (lasttype==event.type && lastbut==event.button.button) break; // why?? get event twice without it
                     console::keypress(-event.button.button, event.button.state!=0, 0);
                     lasttype = event.type;
                     lastbut = event.button.button;
@@ -236,4 +236,23 @@ int main(int argc, char **argv)
     quit();
     return 1;
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

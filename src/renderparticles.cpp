@@ -12,7 +12,7 @@ VARP(maxparticles, 100, 2000, MAXPARTICLES-500);
 
 void newparticle(vec &o, vec &d, int fade, int type)
 {
-    if(!parinit)
+    if (!parinit)
     {
         loopi(MAXPARTICLES)
         {
@@ -21,7 +21,7 @@ void newparticle(vec &o, vec &d, int fade, int type)
         };
         parinit = true;
     };
-    if(parempty)
+    if (parempty)
     {
         particle *p = parempty;
         parempty = p->next;
@@ -44,7 +44,7 @@ void setorient(vec &r, vec &u) { right = r; up = u; };
 
 void render_particles(int time)
 {
-	if(demoplayback && demotracking)
+	if (demoplayback && demotracking)
 	{
 		vec nom = { 0, 0, 0 };
 		newparticle(player1->o, nom, 100000000, 8);
@@ -70,7 +70,7 @@ void render_particles(int time)
     
     int numrender = 0;
     
-    for(particle *p, **pp = &parlist; (p = *pp);)
+    for (particle *p, **pp = &parlist; (p = *pp);)
     {       
         parttype *pt = &parttypes[p->type];
 
@@ -87,7 +87,7 @@ void render_particles(int time)
         glEnd();
         xtraverts += 4;
 
-        if(numrender++>maxparticles || (p->fade -= time)<0)
+        if (numrender++>maxparticles || (p->fade -= time)<0)
         {
             *pp = p->next;
             p->next = parempty;
@@ -95,7 +95,7 @@ void render_particles(int time)
         }
         else
         {
-			if(pt->gr) p->o.z -= ((lastmillis-p->millis)/3.0f)*curtime/(pt->gr*10000);
+			if (pt->gr) p->o.z -= ((lastmillis-p->millis)/3.0f)*curtime/(pt->gr*10000);
             vec a = p->d;
             vmul(a,time);
             vdiv(a,20000.0f);
@@ -121,7 +121,7 @@ void particle_splash(int type, int num, int fade, vec &p)
             y = rnd(radius*2)-radius;
             z = rnd(radius*2)-radius;
         }
-        while(x*x+y*y+z*z>radius*radius);
+        while (x*x+y*y+z*z>radius*radius);
         vec d = { (float)x, (float)y, (float)z };
         newparticle(p, d, rnd(fade*3), type);
     };
@@ -139,5 +139,24 @@ void particle_trail(int type, int fade, vec &s, vec &e)
         newparticle(p, d, rnd(fade)+fade, type);
     };
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 

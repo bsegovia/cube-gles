@@ -222,7 +222,7 @@ template <class T> struct hashtable
     hashtable(hashtable<T> &v);
     void operator=(hashtable<T> &v);
 
-    T *access(const char *key, T *data = NULL)
+    T *access(const char *key, const T *data = NULL)
     {
         unsigned int h = 5381;
         for(int i = 0, k; (k = key[i]) != 0; i++) h = ((h<<5)+h)^k; // bernstein k=33 xor

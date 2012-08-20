@@ -5,15 +5,15 @@
 
 void render_wall(sqr *o, sqr *s, int x1, int y1, int x2, int y2, int mip, sqr *d1, sqr *d2, bool topleft)
 {
-    if(SOLID(o) || o->type==SEMISOLID)
+    if (SOLID(o) || o->type==SEMISOLID)
     {
         float c1 = s->floor;
         float c2 = s->floor;
-        if(s->type==FHF) { c1 -= d1->vdelta/4.0f; c2 -= d2->vdelta/4.0f; };
+        if (s->type==FHF) { c1 -= d1->vdelta/4.0f; c2 -= d2->vdelta/4.0f; };
         float f1 = s->ceil;
         float f2 = s->ceil;
-        if(s->type==CHF) { f1 += d1->vdelta/4.0f; f2 += d2->vdelta/4.0f; };
-        //if(f1-c1<=0 && f2-c2<=0) return;
+        if (s->type==CHF) { f1 += d1->vdelta/4.0f; f2 += d2->vdelta/4.0f; };
+        //if (f1-c1<=0 && f2-c2<=0) return;
         render_square(o->wtex, c1, c2, f1, f2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
         return;
     };
@@ -22,17 +22,17 @@ void render_wall(sqr *o, sqr *s, int x1, int y1, int x2, int y2, int mip, sqr *d
         float f2 = s->floor;
         float c1 = o->floor;
         float c2 = o->floor;
-        if(o->type==FHF && s->type!=FHF)
+        if (o->type==FHF && s->type!=FHF)
         {
             c1 -= d1->vdelta/4.0f;
             c2 -= d2->vdelta/4.0f;
         }
-        if(s->type==FHF && o->type!=FHF)
+        if (s->type==FHF && o->type!=FHF)
         {
             f1 -= d1->vdelta/4.0f;
             f2 -= d2->vdelta/4.0f;
         }
-        if(f1>=c1 && f2>=c2) goto skip;
+        if (f1>=c1 && f2>=c2) goto skip;
         render_square(o->wtex, f1, f2, c1, c2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
     };
     skip:
@@ -41,17 +41,17 @@ void render_wall(sqr *o, sqr *s, int x1, int y1, int x2, int y2, int mip, sqr *d
         float f2 = o->ceil;
         float c1 = s->ceil;
         float c2 = s->ceil;
-        if(o->type==CHF && s->type!=CHF)
+        if (o->type==CHF && s->type!=CHF)
         {
             f1 += d1->vdelta/4.0f;
             f2 += d2->vdelta/4.0f;
         }
-        else if(s->type==CHF && o->type!=CHF)
+        else if (s->type==CHF && o->type!=CHF)
         {
             c1 += d1->vdelta/4.0f;
             c2 += d2->vdelta/4.0f;
         }
-        if(c1<=f1 && c2<=f2) return;
+        if (c1<=f1 && c2<=f2) return;
         render_square(o->utex, f1, f2, c1, c2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
     };
 };
@@ -71,21 +71,21 @@ int stats[LARGEST_FACTOR];
 
 bool issemi(int mip, int x, int y, int x1, int y1, int x2, int y2)      
 {
-    if(!(mip--)) return true;
+    if (!(mip--)) return true;
     sqr *w = wmip[mip];
     int msize = ssize>>mip;
     x *= 2;
     y *= 2;
-    switch(SWS(w, x+x1, y+y1, msize)->type)
+    switch (SWS(w, x+x1, y+y1, msize)->type)
     {
-        case SEMISOLID: if(issemi(mip, x+x1, y+y1, x1, y1, x2, y2)) return true;
+        case SEMISOLID: if (issemi(mip, x+x1, y+y1, x1, y1, x2, y2)) return true;
         case CORNER:
         case SOLID: break;
         default: return true;
     };
-    switch(SWS(w, x+x2, y+y2, msize)->type)
+    switch (SWS(w, x+x2, y+y2, msize)->type)
     {
-        case SEMISOLID: if(issemi(mip, x+x2, y+y2, x1, y1, x2, y2)) return true;
+        case SEMISOLID: if (issemi(mip, x+x2, y+y2, x1, y1, x2, y2)) return true;
         case CORNER:
         case SOLID: break;
         default: return true;
@@ -111,14 +111,14 @@ void render_seg_new(float vx, float vy, float vh, int mip, int x, int y, int xs,
     int ry = vyy+lodbot;
 
     float fsize = (float)(1<<mip);
-    for(int ox = x; ox<xs; ox++) for(int oy = y; oy<ys; oy++)       // first collect occlusion information for this block
+    for (int ox = x; ox<xs; ox++) for (int oy = y; oy<ys; oy++)       // first collect occlusion information for this block
     {
         SWS(w,ox,oy,sz)->occluded = isoccluded(player1->o.x, player1->o.y, (float)(ox<<mip), (float)(oy<<mip), fsize);
     };
     
     int pvx = (int)vx>>mip;
     int pvy = (int)vy>>mip;
-    if(pvx>=0 && pvy>=0 && pvx<sz && pvy<sz)
+    if (pvx>=0 && pvy>=0 && pvx<sz && pvy<sz)
     {
         //SWS(w,vxx,vyy,sz)->occluded = 0; 
         SWS(w, pvx, pvy, sz)->occluded = 0;  // player cell never occluded
@@ -133,9 +133,9 @@ void render_seg_new(float vx, float vy, float vh, int mip, int x, int y, int xs,
     // also deferred, and render them recursively. Anything left (perfect mips and higher lods) we
     // render here.
 
-    #define LOOPH {for(int xx = x; xx<xs; xx++) for(int yy = y; yy<ys; yy++) { \
-                  sqr *s = SWS(w,xx,yy,sz); if(s->occluded==1) continue; \
-                  if(s->defer && !s->occluded && mip && xx>=lx && xx<rx && yy>=ly && yy<ry)
+    #define LOOPH {for (int xx = x; xx<xs; xx++) for (int yy = y; yy<ys; yy++) { \
+                  sqr *s = SWS(w,xx,yy,sz); if (s->occluded==1) continue; \
+                  if (s->defer && !s->occluded && mip && xx>=lx && xx<rx && yy>=ly && yy<ry)
     #define LOOPD sqr *t = SWS(s,1,0,sz); \
                   sqr *u = SWS(s,1,1,sz); \
                   sqr *v = SWS(s,0,1,sz); \
@@ -144,29 +144,29 @@ void render_seg_new(float vx, float vy, float vh, int mip, int x, int y, int xs,
         {
             int start = yy;
             sqr *next;
-            while(yy<ys-1 && (next = SWS(w,xx,yy+1,sz))->defer && !next->occluded) yy++;    // collect 2xN rect of lower mip
+            while (yy<ys-1 && (next = SWS(w,xx,yy+1,sz))->defer && !next->occluded) yy++;    // collect 2xN rect of lower mip
             render_seg_new(vx, vy, vh, mip-1, xx*2, start*2, xx*2+2, yy*2+2);
             continue;
         };
         stats[mip]++;
         LOOPD
-        if((s->type==SPACE || s->type==FHF) && s->ceil>=vh && render_ceil)
+        if ((s->type==SPACE || s->type==FHF) && s->ceil>=vh && render_ceil)
             render_flat(s->ctex, xx<<mip, yy<<mip, 1<<mip, s->ceil, s, t, u, v, true);
-        if(s->type==CHF) //if(s->ceil>=vh)
+        if (s->type==CHF) //if (s->ceil>=vh)
             render_flatdelta(s->ctex, xx<<mip, yy<<mip, 1<<mip, dc(s), dc(t), dc(u), dc(v), s, t, u, v, true);
     }};
 
     LOOPH continue;     // floors
         LOOPD
-        if((s->type==SPACE || s->type==CHF) && s->floor<=vh && render_floor)
+        if ((s->type==SPACE || s->type==CHF) && s->floor<=vh && render_floor)
         {
             render_flat(s->ftex, xx<<mip, yy<<mip, 1<<mip, s->floor, s, t, u, v, false);
-			if(s->floor<hdr.waterlevel && !SOLID(s)) addwaterquad(xx<<mip, yy<<mip, 1<<mip);
+			if (s->floor<hdr.waterlevel && !SOLID(s)) addwaterquad(xx<<mip, yy<<mip, 1<<mip);
         };
-        if(s->type==FHF)
+        if (s->type==FHF)
         {
             render_flatdelta(s->ftex, xx<<mip, yy<<mip, 1<<mip, df(s), df(t), df(u), df(v), s, t, u, v, false);
-			if(s->floor-s->vdelta/4.0f<hdr.waterlevel && !SOLID(s)) addwaterquad(xx<<mip, yy<<mip, 1<<mip);
+			if (s->floor-s->vdelta/4.0f<hdr.waterlevel && !SOLID(s)) addwaterquad(xx<<mip, yy<<mip, 1<<mip);
         };
     }};
 
@@ -180,54 +180,54 @@ void render_seg_new(float vx, float vy, float vh, int mip, int x, int y, int xs,
         sqr *z = SWS(s,-1,0,sz);
         bool normalwall = true;
 
-        if(s->type==CORNER)
+        if (s->type==CORNER)
         {
             // cull also
             bool topleft = true;
             sqr *h1 = NULL;
             sqr *h2 = NULL;
-            if(SOLID(z))
+            if (SOLID(z))
             {
-                if(SOLID(w))      { render_wall(w, h2 = s, xx+1, yy, xx, yy+1, mip, t, v, false); topleft = false; }
-                else if(SOLID(v)) { render_wall(v, h2 = s, xx, yy, xx+1, yy+1, mip, s, u, false); };
+                if (SOLID(w))      { render_wall(w, h2 = s, xx+1, yy, xx, yy+1, mip, t, v, false); topleft = false; }
+                else if (SOLID(v)) { render_wall(v, h2 = s, xx, yy, xx+1, yy+1, mip, s, u, false); };
             }
-            else if(SOLID(t))
+            else if (SOLID(t))
             {
-                if(SOLID(w))      { render_wall(w, h1 = s, xx+1, yy+1, xx, yy, mip, u, s, false); }
-                else if(SOLID(v)) { render_wall(v, h1 = s, xx, yy+1, xx+1, yy, mip, v, t, false); topleft = false; };
+                if (SOLID(w))      { render_wall(w, h1 = s, xx+1, yy+1, xx, yy, mip, u, s, false); }
+                else if (SOLID(v)) { render_wall(v, h1 = s, xx, yy+1, xx+1, yy, mip, v, t, false); topleft = false; };
             }
             else
             {
                 normalwall = false;
                 bool wv = w->ceil-w->floor < v->ceil-v->floor;
-                if(z->ceil-z->floor < t->ceil-t->floor)
+                if (z->ceil-z->floor < t->ceil-t->floor)
                 {
-                    if(wv) { render_wall(h1 = s, h2 = v, xx+1, yy, xx, yy+1, mip, t, v, false); topleft = false; }
+                    if (wv) { render_wall(h1 = s, h2 = v, xx+1, yy, xx, yy+1, mip, t, v, false); topleft = false; }
                     else   { render_wall(h1 = s, h2 = w, xx, yy, xx+1, yy+1, mip, s, u, false); };
                 }
                 else
                 {
-                    if(wv) { render_wall(h2 = s, h1 = v, xx+1, yy+1, xx, yy, mip, u, s, false); }
+                    if (wv) { render_wall(h2 = s, h1 = v, xx+1, yy+1, xx, yy, mip, u, s, false); }
                     else   { render_wall(h2 = s, h1 = w, xx, yy+1, xx+1, yy, mip, v, t, false); topleft = false; };
                 };
             };
             render_tris(xx<<mip, yy<<mip, 1<<mip, topleft, h1, h2, s, t, u, v);
         }
 
-        if(normalwall)
+        if (normalwall)
         {
             bool inner = xx!=sz-1 && yy!=sz-1;
 
-            if(xx>=vxx && xx!=0 && yy!=sz-1 && !SOLID(z) && (!SOLID(s) || z->type!=CORNER)
+            if (xx>=vxx && xx!=0 && yy!=sz-1 && !SOLID(z) && (!SOLID(s) || z->type!=CORNER)
                 && (z->type!=SEMISOLID || issemi(mip, xx-1, yy, 1, 0, 1, 1)))
                 render_wall(s, z, xx,   yy,   xx,   yy+1, mip, s, v, true);
-            if(xx<=vxx && inner && !SOLID(t) && (!SOLID(s) || t->type!=CORNER)
+            if (xx<=vxx && inner && !SOLID(t) && (!SOLID(s) || t->type!=CORNER)
                 && (t->type!=SEMISOLID || issemi(mip, xx+1, yy, 0, 0, 0, 1)))
                 render_wall(s, t, xx+1, yy,   xx+1, yy+1, mip, t, u, false);
-            if(yy>=vyy && yy!=0 && xx!=sz-1 && !SOLID(w) && (!SOLID(s) || w->type!=CORNER)
+            if (yy>=vyy && yy!=0 && xx!=sz-1 && !SOLID(w) && (!SOLID(s) || w->type!=CORNER)
                 && (w->type!=SEMISOLID || issemi(mip, xx, yy-1, 0, 1, 1, 1)))
                 render_wall(s, w, xx,   yy,   xx+1, yy,   mip, s, t, false);
-            if(yy<=vyy && inner && !SOLID(v) && (!SOLID(s) || v->type!=CORNER)
+            if (yy<=vyy && inner && !SOLID(v) && (!SOLID(s) || v->type!=CORNER)
                 && (v->type!=SEMISOLID || issemi(mip, xx, yy+1, 0, 0, 1, 0)))
                 render_wall(s, v, xx,   yy+1, xx+1, yy+1, mip, v, u, true);
         };
@@ -240,8 +240,8 @@ void distlod(int &low, int &high, int angle, float widef)
     float f = 90.0f/lod/widef;
     low = (int)((90-angle)/f);
     high = (int)(angle/f);
-    if(low<min_lod) low = min_lod;
-    if(high<min_lod) high = min_lod;
+    if (low<min_lod) low = min_lod;
+    if (high<min_lod) high = min_lod;
 };
 
 // does some out of date view frustrum optimisation that doesn't contribute much anymore
@@ -253,24 +253,24 @@ void render_world(float vx, float vy, float vh, int yaw, int pitch, float fov, i
     yaw = 360-yaw;
     float widef = fov/75.0f;
     int cdist = abs(yaw%90-45);
-    if(cdist<7)    // hack to avoid popup at high fovs at 45 yaw
+    if (cdist<7)    // hack to avoid popup at high fovs at 45 yaw
     {
         min_lod = max(min_lod, (int)(MIN_LOD+(10-cdist)/1.0f*widef)); // less if lod worked better
         widef = 1.0f;
     };
     lod = MAX_LOD;
     lodtop = lodbot = lodleft = lodright = min_lod;
-    if(yaw>45 && yaw<=135)
+    if (yaw>45 && yaw<=135)
     {
         lodleft = lod;
         distlod(lodtop, lodbot, yaw-45, widef);
     }
-    else if(yaw>135 && yaw<=225)
+    else if (yaw>135 && yaw<=225)
     {
         lodbot = lod;
         distlod(lodleft, lodright, yaw-135, widef);
     }
-    else if(yaw>225 && yaw<=315)
+    else if (yaw>225 && yaw<=315)
     {
         lodright = lod;
         distlod(lodbot, lodtop, yaw-225, widef);
@@ -287,4 +287,23 @@ void render_world(float vx, float vy, float vh, int yaw, int pitch, float fov, i
     render_seg_new(vx, vy, vh, MAX_MIP, 0, 0, ssize>>MAX_MIP, ssize>>MAX_MIP);
     mipstats(stats[0], stats[1], stats[2]);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

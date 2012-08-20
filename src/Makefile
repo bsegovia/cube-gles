@@ -13,7 +13,7 @@ CLIENT_OBJS= \
 	editing.o \
 	entities.o \
 	main.o \
-	menus.o \
+	menu.o \
 	monster.o \
 	physics.o \
 	rendercubes.o \

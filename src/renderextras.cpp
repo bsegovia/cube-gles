@@ -48,7 +48,7 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
     glDisable(GL_TEXTURE_2D);
     glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
     glBegin(GL_QUADS);
-    if(border) glColor3d(0.5, 0.3, 0.4); 
+    if (border) glColor3d(0.5, 0.3, 0.4); 
     else glColor3d(1.0, 1.0, 1.0);
     glVertex2i(x1, y1);
     glVertex2i(x2, y1);
@@ -78,7 +78,7 @@ bool sinit = false;
 
 void newsphere(vec &o, float max, int type)
 {
-    if(!sinit)
+    if (!sinit)
     {
         loopi(MAXSPHERES)
         {
@@ -87,7 +87,7 @@ void newsphere(vec &o, float max, int type)
         };
         sinit = true;
     };
-    if(sempty)
+    if (sempty)
     {
         sphere *p = sempty;
         sempty = p->next;
@@ -107,7 +107,7 @@ void renderspheres(int time)
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     glBindTexture(GL_TEXTURE_2D, 4);  
 
-    for(sphere *p, **pp = &slist; (p = *pp);)
+    for (sphere *p, **pp = &slist; (p = *pp);)
     {
         glPushMatrix();
         float size = p->size/p->max;
@@ -121,7 +121,7 @@ void renderspheres(int time)
         glPopMatrix();
         xtraverts += 12*6*2;
 
-        if(p->size>p->max)
+        if (p->size>p->max)
         {
             *pp = p->next;
             p->next = sempty;
@@ -152,33 +152,33 @@ const char *entnames[] =
 void renderents()       // show sparkly thingies for map entities in edit mode
 {
     closeent[0] = 0;
-    if(!editmode) return;
+    if (!editmode) return;
     loopv(ents)
     {
         entity &e = ents[i];
-        if(e.type==NOTUSED) continue;
+        if (e.type==NOTUSED) continue;
         vec v = { e.x, e.y, e.z };
         particle_splash(2, 2, 40, v);
     };
     int e = closestent();
-    if(e>=0)
+    if (e>=0)
     {
         entity &c = ents[e];
-        sprintf_s(closeent)("closest entity = %s (%d, %d, %d, %d), selection = (%d, %d)", entnames[c.type], c.attr1, c.attr2, c.attr3, c.attr4, getvar("selxs"), getvar("selys"));
+        sprintf_s(closeent)("closest entity = %s (%d, %d, %d, %d), selection = (%d, %d)", entnames[c.type], c.attr1, c.attr2, c.attr3, c.attr4, cmd::getvar("selxs"), cmd::getvar("selys"));
     };
 };
 
 void loadsky(char *basename)
 {
     static string lastsky = "";
-    if(strcmp(lastsky, basename)==0) return;
+    if (strcmp(lastsky, basename)==0) return;
     const char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
     int texnum = 14;
     loopi(6)
     {
         sprintf_sd(name)("packages/%s_%s.jpg", basename, side[i]);
         int xs, ys;
-        if(!installtex(texnum+i, path(name), xs, ys, true)) console::out("could not load sky textures");
+        if (!installtex(texnum+i, path(name), xs, ys, true)) console::out("could not load sky textures");
     };
     strcpy_s(lastsky, basename);
 };
@@ -265,9 +265,9 @@ VARP(crosshairfx, 0, 1, 1);
 void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
 {
     readmatrices();
-    if(editmode)
+    if (editmode)
     {
-        if(cursordepth==1.0f) worldpos = player1->o;
+        if (cursordepth==1.0f) worldpos = player1->o;
         glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         cursorupdate();
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
@@ -281,11 +281,11 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
 
     glDepthMask(GL_FALSE);
 
-    if(dblend || underwater)
+    if (dblend || underwater)
     {
         glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
         glBegin(GL_QUADS);
-        if(dblend) glColor3d(0.0f, 0.9f, 0.9f);
+        if (dblend) glColor3d(0.0f, 0.9f, 0.9f);
         else glColor3d(0.9f, 0.5f, 0.0f);
         glVertex2i(0, 0);
         glVertex2i(VIRTW, 0);
@@ -293,29 +293,29 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
         glVertex2i(0, VIRTH);
         glEnd();
         dblend -= curtime/3;
-        if(dblend<0) dblend = 0;
+        if (dblend<0) dblend = 0;
     };
 
     glEnable(GL_TEXTURE_2D);
 
     char *command = console::getcurcommand();
     char *player = playerincrosshair();
-    if(command) draw_textf("> %s_", 20, 1570, 2, command);
-    else if(closeent[0]) draw_text(closeent, 20, 1570, 2);
-    else if(player) draw_text(player, 20, 1570, 2);
+    if (command) draw_textf("> %s_", 20, 1570, 2, command);
+    else if (closeent[0]) draw_text(closeent, 20, 1570, 2);
+    else if (player) draw_text(player, 20, 1570, 2);
 
     renderscores();
-    if(!menu::render())
+    if (!menu::render())
     {
         glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
         glBindTexture(GL_TEXTURE_2D, 1);
         glBegin(GL_QUADS);
         glColor3ub(255,255,255);
-        if(crosshairfx)
+        if (crosshairfx)
         {
-            if(player1->gunwait) glColor3ub(128,128,128);
-            else if(player1->health<=25) glColor3ub(255,0,0);
-            else if(player1->health<=50) glColor3ub(255,128,0);
+            if (player1->gunwait) glColor3ub(128,128,128);
+            else if (player1->health<=25) glColor3ub(255,0,0);
+            else if (player1->health<=50) glColor3ub(255,128,0);
         };
         float chsize = (float)crosshairsize;
         glTexCoord2d(0.0, 0.0); glVertex2f(VIRTW/2 - chsize, VIRTH/2 - chsize);
@@ -331,7 +331,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     glOrtho(0, VIRTW*4/3, VIRTH*4/3, 0, -1, 1);
     console::render();
 
-    if(!hidestats)
+    if (!hidestats)
     {
         glPopMatrix();
         glPushMatrix();
@@ -344,22 +344,22 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     
     glPopMatrix();
 
-    if(player1->state==CS_ALIVE)
+    if (player1->state==CS_ALIVE)
     {
         glPushMatrix();
         glOrtho(0, VIRTW/2, VIRTH/2, 0, -1, 1);
         draw_textf("%d",  90, 827, 2, player1->health);
-        if(player1->armour) draw_textf("%d", 390, 827, 2, player1->armour);
+        if (player1->armour) draw_textf("%d", 390, 827, 2, player1->armour);
         draw_textf("%d", 690, 827, 2, player1->ammo[player1->gunselect]);
         glPopMatrix();
         glPushMatrix();
         glOrtho(0, VIRTW, VIRTH, 0, -1, 1);
         glDisable(GL_BLEND);
         drawicon(128, 128, 20, 1650);
-        if(player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650); 
+        if (player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650); 
         int g = player1->gunselect;
         int r = 64;
-        if(g>2) { g -= 3; r = 128; };
+        if (g>2) { g -= 3; r = 128; };
         drawicon((float)(g*64), (float)r, 1220, 1650);   
         glPopMatrix();
     };
@@ -369,4 +369,23 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     glDisable(GL_TEXTURE_2D);
     glEnable(GL_DEPTH_TEST);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

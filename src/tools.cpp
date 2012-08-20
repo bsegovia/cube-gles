@@ -9,12 +9,12 @@ pool::pool()
 {
     blocks = 0;
     allocnext(POOLSIZE);
-    for(int i = 0; i<MAXBUCKETS; i++) reuse[i] = NULL;
+    for (int i = 0; i<MAXBUCKETS; i++) reuse[i] = NULL;
 };
 
 void *pool::alloc(size_t size)
 {
-    if(size>MAXREUSESIZE)
+    if (size>MAXREUSESIZE)
     {
         return malloc(size);
     }
@@ -22,7 +22,7 @@ void *pool::alloc(size_t size)
     {
         size = bucket(size);
         void **r = (void **)reuse[size];
-        if(r)
+        if (r)
         {
             reuse[size] = *r;
             return (void *)r;
@@ -30,7 +30,7 @@ void *pool::alloc(size_t size)
         else
         {
             size <<= PTRBITS;
-            if(left<size) allocnext(POOLSIZE);
+            if (left<size) allocnext(POOLSIZE);
             char *r = p;
             p += size;
             left -= size;
@@ -41,14 +41,14 @@ void *pool::alloc(size_t size)
 
 void pool::dealloc(void *p, size_t size)
 {
-    if(size>MAXREUSESIZE)
+    if (size>MAXREUSESIZE)
     {
         free(p);
     }
     else
     {
         size = bucket(size);
-        if(size)    // only needed for 0-size free, are there any?
+        if (size)    // only needed for 0-size free, are there any?
         {
             *((void **)p) = reuse[size];
             reuse[size] = p;
@@ -59,7 +59,7 @@ void pool::dealloc(void *p, size_t size)
 void *pool::realloc(void *p, size_t oldsize, size_t newsize)
 {
     void *np = alloc(newsize);
-    if(!oldsize) return np;
+    if (!oldsize) return np;
     memcpy(np, p, newsize>oldsize ? oldsize : newsize);
     dealloc(p, oldsize);
     return np;
@@ -67,7 +67,7 @@ void *pool::realloc(void *p, size_t oldsize, size_t newsize)
 
 void pool::dealloc_block(void *b)
 {
-    if(b)
+    if (b)
     {
         dealloc_block(*((char **)b));
         free(b);
@@ -101,34 +101,34 @@ pool *gp()  // useful for global buffers that need to be initialisation order in
 
 char *path(char *s)
 {
-    for(char *t = s; (t = strpbrk(t, "/\\")) != 0; *t++ = PATHDIV);
+    for (char *t = s; (t = strpbrk(t, "/\\")) != 0; *t++ = PATHDIV);
     return s;
 };
 
 char *loadfile(char *fn, int *size)
 {
     FILE *f = fopen(fn, "rb");
-    if(!f) return NULL;
+    if (!f) return NULL;
     fseek(f, 0, SEEK_END);
     unsigned int len = ftell(f);
     fseek(f, 0, SEEK_SET);
     char *buf = (char *)malloc(len+1);
-    if(!buf) return NULL;
+    if (!buf) return NULL;
     buf[len] = 0;
     size_t rlen = fread(buf, 1, len, f);
     fclose(f);
-    if(len!=rlen || len<=0) 
+    if (len!=rlen || len<=0) 
     {
         free(buf);
         return NULL;
     };
-    if(size!=NULL) *size = len;
+    if (size!=NULL) *size = len;
     return buf;
 };
 
 void endianswap(void *memory, int stride, int length)   // little indians as storage format
 {
-    if(*((char *)&stride)) return;
+    if (*((char *)&stride)) return;
     loop(w, length) loop(i, stride/2)
     {
         uchar *p = (uchar *)memory+w*stride;
@@ -137,4 +137,23 @@ void endianswap(void *memory, int stride, int length)   // little indians as sto
         p[stride-i-1] = t;
     };
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

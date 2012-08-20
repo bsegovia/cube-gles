@@ -1,48 +1,17 @@
-// protos for ALL external functions in cube... 
+#ifndef __QBE_PROTOS_HPP__
+#define __QBE_PROTOS_HPP__
 
-// command
-extern int variable(const char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist);
-extern void setvar(const char *name, int i);
-extern int getvar(const char *name);
-extern bool identexists(const char *name);
-extern bool addcommand(const char *name, void (*fun)(), int narg);
-extern int execute(char *p, bool down = true);
-extern void exec(const char *cfgfile);
-extern bool execfile(const char *cfgfile);
-extern void resetcomplete();
-extern void complete(char *s);
-extern void alias(const char *name, const char *action);
-extern char *getalias(const char *name);
-extern void writecfg();
-
-namespace console
-{
-  /*! Handle a pressed key when console is up */
-  void keypress(int code, bool isdown, int cooked);
-  /*! Render buffer taking into account time & scrolling */
-  void render(void);
-  /*! Output a formatted string in the console */
-  void out(const char *s, ...);
-  /*! Get the string for the command currently typed */
-  char *getcurcommand(void);
-  /*! Write all the bindings in the given file */
-  void writebinds(FILE *f);
-}
-
-namespace menu
-{
-  bool render(void);
-  void set(int menu);
-  void manual(int m, int n, char *text);
-  void sort(int start, int num);
-  bool key(int code, bool isdown);
-  void newm(const char *name);
-}
+#include "command.hpp"
+#include "console.hpp"
+#include "menu.hpp"
+#include "sound.hpp"
+#include "client.hpp"
 
 // serverbrowser
-extern void addserver(char *servername);
-extern char *getservername(int n);
-extern void writeservercfg();
+extern void addserver(const char *servername);
+extern const char *getservername(int n);
+extern void refreshservers(void);
+extern void writeservercfg(void);
 
 // rendergl
 extern void gl_init(int w, int h);
@@ -64,24 +33,6 @@ extern void addwaterquad(int x, int y, int size);
 extern int renderwater(float hf);
 extern void finishstrips();
 extern void setarraypointers();
-
-// client
-extern void localservertoclient(uchar *buf, int len);
-extern void connects(char *servername);
-extern void disconnect(int onlyclean = 0, int async = 0);
-extern void toserver(char *text);
-extern void addmsg(int rel, int num, int type, ...);
-extern bool multiplayer();
-extern bool allowedittoggle();
-extern void sendpackettoserv(void *packet);
-extern void gets2c();
-extern void c2sinfo(dynent *d);
-extern void neterr(const char *s);
-extern void initclientnet();
-extern bool netmapstart();
-extern int getclientnum();
-extern void changemapserv(char *name, int mode);
-extern void writeclientinfo(FILE *f);
 
 // clientgame
 extern void mousemove(int dx, int dy); 
@@ -174,8 +125,8 @@ extern void particle_trail(int type, int fade, vec &from, vec &to);
 extern void render_particles(int time);
 
 // worldio
-extern void save_world(char *fname);
-extern void load_world(char *mname);
+extern void save_world(const char *fname);
+extern void load_world(const char *mname);
 extern void writemap(char *mname, int msize, uchar *mdata);
 extern uchar *readmap(char *mname, int *msize);
 extern void loadgamerest();
@@ -192,15 +143,6 @@ extern bool collide(dynent *d, bool spawn, float drop, float rise);
 extern void entinmap(dynent *d);
 extern void setentphysics(int mml, int mmr);
 extern void physicsframe();
-
-namespace sound
-{
-  void play(int n, const vec *loc = NULL);
-  void playc(int n);
-  void init(void);
-  void clean(void);
-  void updatevol(void);
-}
 
 // rendermd2
 extern void rendermodel(const char *mdl, int frame, int range, int tex, float rad, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int snap = 0, int basetime = 0);
@@ -258,4 +200,6 @@ extern void baseammo(int gun);
 
 // rndmap
 extern void perlinarea(block &b, int scale, int seed, int psize);
+
+#endif /* __QBE_PROTOS_HPP__ */
 

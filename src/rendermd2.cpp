@@ -53,9 +53,9 @@ struct md2
 
     ~md2()
     {
-        if(glCommands)
+        if (glCommands)
             delete [] glCommands;
-        if(frames)
+        if (frames)
             delete [] frames;
     }
 };
@@ -66,26 +66,26 @@ bool md2::load(char* filename)
     FILE* file;
     md2_header header;
 
-    if((file= fopen(filename, "rb"))==NULL) return false;
+    if ((file= fopen(filename, "rb"))==NULL) return false;
 
     fread(&header, sizeof(md2_header), 1, file);
     endianswap(&header, sizeof(int), sizeof(md2_header)/sizeof(int));
 
-    if(header.magic!= 844121161 || header.version!=8) return false;
+    if (header.magic!= 844121161 || header.version!=8) return false;
 
     frames = new char[header.frameSize*header.numFrames];
-    if(frames==NULL) return false;
+    if (frames==NULL) return false;
 
     fseek(file, header.offsetFrames, SEEK_SET);
     fread(frames, header.frameSize*header.numFrames, 1, file);
 
-    for(int i = 0; i < header.numFrames; ++i)
+    for (int i = 0; i < header.numFrames; ++i)
     {
         endianswap(frames + i * header.frameSize, sizeof(float), 6);
     }
 
     glCommands = new int[header.numGlCommands];
-    if(glCommands==NULL) return false;
+    if (glCommands==NULL) return false;
 
     fseek(file,       header.offsetGlCommands, SEEK_SET);
     fread(glCommands, header.numGlCommands*sizeof(int), 1, file);
@@ -125,7 +125,7 @@ void md2::scale(int frame, float scale, int sn)
 
 void md2::render(vec &light, int frame, int range, float x, float y, float z, float yaw, float pitch, float sc, float speed, int snap, int basetime)
 {
-    loopi(range) if(!mverts[frame+i]) scale(frame+i, sc, snap);
+    loopi(range) if (!mverts[frame+i]) scale(frame+i, sc, snap);
     
     glPushMatrix ();
     glTranslatef(x, y, z);
@@ -134,14 +134,14 @@ void md2::render(vec &light, int frame, int range, float x, float y, float z, fl
     
 	glColor3fv((float *)&light);
 
-    if(displaylist && frame==0 && range==1)
+    if (displaylist && frame==0 && range==1)
     {
 		glCallList(displaylist);
 		xtraverts += displaylistverts;
     }
     else
     {
-		if(frame==0 && range==1)
+		if (frame==0 && range==1)
 		{
 			static int displaylistn = 10;
 			glNewList(displaylist = displaylistn++, GL_COMPILE);
@@ -154,14 +154,14 @@ void md2::render(vec &light, int frame, int range, float x, float y, float z, fl
 		float frac2 = 1-frac1;
 		fr1 = fr1%range+frame;
 		int fr2 = fr1+1;
-		if(fr2>=frame+range) fr2 = frame;
+		if (fr2>=frame+range) fr2 = frame;
 		vec *verts1 = mverts[fr1];
 		vec *verts2 = mverts[fr2];
 
-		for(int *command = glCommands; (*command)!=0;)
+		for (int *command = glCommands; (*command)!=0;)
 		{
 			int numVertex = *command++;
-			if(numVertex>0) { glBegin(GL_TRIANGLE_STRIP); }
+			if (numVertex>0) { glBegin(GL_TRIANGLE_STRIP); }
 			else            { glBegin(GL_TRIANGLE_FAN); numVertex = -numVertex; };
 
 			loopi(numVertex)
@@ -181,7 +181,7 @@ void md2::render(vec &light, int frame, int range, float x, float y, float z, fl
 			glEnd();
 		};
 		
-		if(displaylist)
+		if (displaylist)
 		{
 			glEndList();
 			displaylistverts = xtraverts-displaylistverts;
@@ -197,10 +197,10 @@ const int FIRSTMDL = 20;
 
 void delayedload(md2 *m)
 { 
-    if(!m->loaded)
+    if (!m->loaded)
     {
         sprintf_sd(name1)("packages/models/%s/tris.md2", m->loadname);
-        if(!m->load(path(name1))) fatal("loadmodel: ", name1);
+        if (!m->load(path(name1))) fatal("loadmodel: ", name1);
         sprintf_sd(name2)("packages/models/%s/skin.jpg", m->loadname);
         int xs, ys;
         installtex(FIRSTMDL+m->mdlnum, path(name2), xs, ys);
@@ -212,9 +212,9 @@ int modelnum = 0;
 
 md2 *loadmodel(const char *name)
 {
-    if(!mdllookup) mdllookup = new hashtable<md2 *>;
+    if (!mdllookup) mdllookup = new hashtable<md2 *>;
     md2 **mm = mdllookup->access(name);
-    if(mm) return *mm;
+    if (mm) return *mm;
     md2 *m = new md2();
     m->mdlnum = modelnum++;
     mapmodelinfo mmi = { 2, 2, 0, 0, "" }; 
@@ -243,7 +243,7 @@ void rendermodel(const char *mdl, int frame, int range, int tex, float rad, floa
 {
     md2 *m = loadmodel(mdl); 
     
-    if(isoccluded(player1->o.x, player1->o.y, x-rad, z-rad, rad*2)) return;
+    if (isoccluded(player1->o.x, player1->o.y, x-rad, z-rad, rad*2)) return;
 
     delayedload(m);
     
@@ -254,7 +254,7 @@ void rendermodel(const char *mdl, int frame, int range, int tex, float rad, floa
     int iy = (int)z;
     vec light = { 1.0f, 1.0f, 1.0f }; 
     
-    if(!OUTBORD(ix, iy))
+    if (!OUTBORD(ix, iy))
     {
          sqr *s = S(ix,iy);  
          float ll = 256.0f; // 0.96f;
@@ -264,7 +264,7 @@ void rendermodel(const char *mdl, int frame, int range, int tex, float rad, floa
          light.z = s->b/ll+of;
     };
     
-    if(teammate)
+    if (teammate)
     {
         light.x *= 0.6f;
         light.y *= 0.7f;
@@ -273,4 +273,23 @@ void rendermodel(const char *mdl, int frame, int range, int tex, float rad, floa
 
     m->render(light, frame, range, x, y, z, yaw, pitch, scale, speed, snap, basetime);
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

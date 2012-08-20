@@ -5,7 +5,7 @@
 
 enum { ST_EMPTY, ST_LOCAL, ST_TCPIP };
 
-struct client                   // server side version of "dynent" type
+struct Client                   // server side version of "dynent" type
 {
     int type;
     ENetPeer *peer;
@@ -15,7 +15,7 @@ struct client                   // server side version of "dynent" type
     int modevote;
 };
 
-vector<client> clients;
+vector<Client> clients;
 
 int maxclients = 8;
 string smapname;
@@ -57,8 +57,8 @@ void disconnect_client(int n, const char *reason);
 
 void send(int n, ENetPacket *packet)
 {
-	if(!packet) return;
-    switch(clients[n].type)
+	if (!packet) return;
+    switch (clients[n].type)
     {
         case ST_TCPIP:
         {
@@ -68,7 +68,7 @@ void send(int n, ENetPacket *packet)
         };
 
         case ST_LOCAL:
-            localservertoclient(packet->data, packet->dataLength);
+            client::localservertoclient(packet->data, packet->dataLength);
             break;
 
     };
@@ -83,9 +83,9 @@ void send2(bool rel, int cn, int a, int b)
     putint(p, b);
     *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
     enet_packet_resize(packet, p-start);
-    if(cn<0) process(packet, -1);
+    if (cn<0) process(packet, -1);
     else send(cn, packet);
-    if(packet->referenceCount==0) enet_packet_destroy(packet);
+    if (packet->referenceCount==0) enet_packet_destroy(packet);
 };
 
 void sendservmsg(const char *msg)
@@ -98,12 +98,12 @@ void sendservmsg(const char *msg)
     *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
     enet_packet_resize(packet, p-start);
     multicast(packet, -1);
-    if(packet->referenceCount==0) enet_packet_destroy(packet);
+    if (packet->referenceCount==0) enet_packet_destroy(packet);
 };
 
 void disconnect_client(int n, const char *reason)
 {
-    printf("disconnecting client (%s) [%s]\n", clients[n].hostname, reason);
+    printf("client::disconnecting client (%s) [%s]\n", clients[n].hostname, reason);
     enet_peer_disconnect(clients[n].peer);
     clients[n].type = ST_EMPTY;
     send2(true, -1, SV_CDIS, n);
@@ -113,8 +113,8 @@ void resetitems() { sents.setsize(0); notgotitems = true; };
 
 void pickup(uint i, int sec, int sender)         // server side item pickup, acknowledge first client that gets it
 {
-    if(i>=(uint)sents.length()) return;
-    if(sents[i].spawned)
+    if (i>=(uint)sents.length()) return;
+    if (sents[i].spawned)
     {
         sents[i].spawned = false;
         sents[i].spawnsecs = sec;
@@ -132,15 +132,15 @@ bool vote(char *map, int reqmode, int sender)
     strcpy_s(clients[sender].mapvote, map);
     clients[sender].modevote = reqmode;
     int yes = 0, no = 0; 
-    loopv(clients) if(clients[i].type!=ST_EMPTY)
+    loopv(clients) if (clients[i].type!=ST_EMPTY)
     {
-        if(clients[i].mapvote[0]) { if(strcmp(clients[i].mapvote, map)==0 && clients[i].modevote==reqmode) yes++; else no++; }
+        if (clients[i].mapvote[0]) { if (strcmp(clients[i].mapvote, map)==0 && clients[i].modevote==reqmode) yes++; else no++; }
         else no++;
     };
-    if(yes==1 && no==0) return true;  // single player
+    if (yes==1 && no==0) return true;  // single player
     sprintf_sd(msg)("%s suggests %s on map %s (set map to vote)", clients[sender].name, modestr(reqmode), map);
     sendservmsg(msg);
-    if(yes/(float)(yes+no) <= 0.5f) return false;
+    if (yes/(float)(yes+no) <= 0.5f) return false;
     sendservmsg("vote passed");
     resetvotes();
     return true;    
@@ -151,7 +151,7 @@ bool vote(char *map, int reqmode, int sender)
 
 void process(ENetPacket * packet, int sender)   // sender may be -1
 {
-    if(ENET_NET_TO_HOST_16(*(ushort *)packet->data)!=packet->dataLength)
+    if (ENET_NET_TO_HOST_16(*(ushort *)packet->data)!=packet->dataLength)
     {
         disconnect_client(sender, "packet length");
         return;
@@ -162,7 +162,7 @@ void process(ENetPacket * packet, int sender)   // sender may be -1
     char text[MAXTRANS];
     int cn = -1, type;
 
-    while(p<end) switch(type = getint(p))
+    while (p<end) switch (type = getint(p))
     {
         case SV_TEXT:
             sgetstr();
@@ -179,8 +179,8 @@ void process(ENetPacket * packet, int sender)   // sender may be -1
         {
             sgetstr();
             int reqmode = getint(p);
-            if(reqmode<0) reqmode = 0;
-            if(smapname[0] && !mapreload && !vote(text, reqmode, sender)) return;
+            if (reqmode<0) reqmode = 0;
+            if (smapname[0] && !mapreload && !vote(text, reqmode, sender)) return;
             mapreload = false;
             mode = reqmode;
             minremain = mode&1 ? 15 : 10;
@@ -195,10 +195,10 @@ void process(ENetPacket * packet, int sender)   // sender may be -1
         case SV_ITEMLIST:
         {
             int n;
-            while((n = getint(p))!=-1) if(notgotitems)
+            while ((n = getint(p))!=-1) if (notgotitems)
             {
                 server_entity se = { false, 0 };
-                while(sents.length()<=n) sents.add(se);
+                while (sents.length()<=n) sents.add(se);
                 sents[n].spawned = true;
             };
             notgotitems = false;
@@ -219,7 +219,7 @@ void process(ENetPacket * packet, int sender)   // sender may be -1
         case SV_POS:
         {
             cn = getint(p);
-            if(cn<0 || cn>=clients.length() || clients[cn].type==ST_EMPTY)
+            if (cn<0 || cn>=clients.length() || clients[cn].type==ST_EMPTY)
             {
                 disconnect_client(sender, "client num");
                 return;
@@ -244,19 +244,19 @@ void process(ENetPacket * packet, int sender)   // sender may be -1
             
         case SV_EXT:   // allows for new features that require no server updates 
         {
-            for(int n = getint(p); n; n--) getint(p);
+            for (int n = getint(p); n; n--) getint(p);
             break;
         };
 
         default:
         {
             int size = msgsizelookup(type);
-            if(size==-1) { disconnect_client(sender, "tag type"); return; };
+            if (size==-1) { disconnect_client(sender, "tag type"); return; };
             loopi(size-1) getint(p);
         };
     };
 
-    if(p>end) { disconnect_client(sender, "end of packet"); return; };
+    if (p>end) { disconnect_client(sender, "end of packet"); return; };
     multicast(packet, sender);
 };
 
@@ -271,13 +271,13 @@ void send_welcome(int n)
     putint(p, smapname[0]);
     sendstring(serverpassword, p);
     putint(p, clients.length()>maxclients);
-    if(smapname[0])
+    if (smapname[0])
     {
         putint(p, SV_MAPCHANGE);
         sendstring(smapname, p);
         putint(p, mode);
         putint(p, SV_ITEMLIST);
-        loopv(sents) if(sents[i].spawned) putint(p, i);
+        loopv(sents) if (sents[i].spawned) putint(p, i);
         putint(p, -1);
     };
     *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
@@ -289,7 +289,7 @@ void multicast(ENetPacket *packet, int sender)
 {
     loopv(clients)
     {
-        if(i==sender) continue;
+        if (i==sender) continue;
         send(i, packet);
     };
 };
@@ -297,18 +297,18 @@ void multicast(ENetPacket *packet, int sender)
 void localclienttoserver(ENetPacket *packet)
 {
     process(packet, 0);
-    if(!packet->referenceCount) enet_packet_destroy (packet);
+    if (!packet->referenceCount) enet_packet_destroy (packet);
 };
 
-client &addclient()
+Client &addclient()
 {
-    loopv(clients) if(clients[i].type==ST_EMPTY) return clients[i];
+    loopv(clients) if (clients[i].type==ST_EMPTY) return clients[i];
     return clients.add();
 };
 
 void checkintermission()
 {
-    if(!minremain)
+    if (!minremain)
     {
         interm = lastsec+10;
         mapend = lastsec+1000;
@@ -320,7 +320,7 @@ void startintermission() { minremain = 0; checkintermission(); };
 
 void resetserverifempty()
 {
-    loopv(clients) if(clients[i].type!=ST_EMPTY) return;
+    loopv(clients) if (clients[i].type!=ST_EMPTY) return;
     clients.setsize(0);
     smapname[0] = 0;
     resetvotes();
@@ -339,7 +339,7 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
 {
     loopv(sents)        // spawn entities when timer reached
     {
-        if(sents[i].spawnsecs && (sents[i].spawnsecs -= seconds-lastsec)<=0)
+        if (sents[i].spawnsecs && (sents[i].spawnsecs -= seconds-lastsec)<=0)
         {
             sents[i].spawnsecs = 0;
             sents[i].spawned = true;
@@ -349,11 +349,11 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
     
     lastsec = seconds;
     
-    if((mode>1 || (mode==0 && nonlocalclients)) && seconds>mapend-minremain*60) checkintermission();
-    if(interm && seconds>interm)
+    if ((mode>1 || (mode==0 && nonlocalclients)) && seconds>mapend-minremain*60) checkintermission();
+    if (interm && seconds>interm)
     {
         interm = 0;
-        loopv(clients) if(clients[i].type!=ST_EMPTY)
+        loopv(clients) if (clients[i].type!=ST_EMPTY)
         {
             send2(true, i, SV_MAPRELOAD, 0);    // ask a client to trigger map reload
             mapreload = true;
@@ -363,29 +363,29 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
 
     resetserverifempty();
     
-    if(!isdedicated) return;     // below is network only
+    if (!isdedicated) return;     // below is network only
 
 	int numplayers = 0;
-	loopv(clients) if(clients[i].type!=ST_EMPTY) ++numplayers;
+	loopv(clients) if (clients[i].type!=ST_EMPTY) ++numplayers;
 	serverms(mode, numplayers, minremain, smapname, seconds, clients.length()>=maxclients);
 
-    if(seconds-laststatus>60)   // display bandwidth stats, useful for server ops
+    if (seconds-laststatus>60)   // display bandwidth stats, useful for server ops
     {
         nonlocalclients = 0;
-        loopv(clients) if(clients[i].type==ST_TCPIP) nonlocalclients++;
+        loopv(clients) if (clients[i].type==ST_TCPIP) nonlocalclients++;
         laststatus = seconds;     
-        if(nonlocalclients || bsend || brec) printf("status: %d remote clients, %.1f send, %.1f rec (K/sec)\n", nonlocalclients, bsend/60.0f/1024, brec/60.0f/1024);
+        if (nonlocalclients || bsend || brec) printf("status: %d remote clients, %.1f send, %.1f rec (K/sec)\n", nonlocalclients, bsend/60.0f/1024, brec/60.0f/1024);
         bsend = brec = 0;
     };
 
     ENetEvent event;
-    if(enet_host_service(serverhost, &event, timeout) > 0)
+    if (enet_host_service(serverhost, &event, timeout) > 0)
     {
-        switch(event.type)
+        switch (event.type)
         {
             case ENET_EVENT_TYPE_CONNECT:
             {
-                client &c = addclient();
+                Client &c = addclient();
                 c.type = ST_TCPIP;
                 c.peer = event.peer;
                 c.peer->data = (void *)(&c-&clients[0]);
@@ -398,12 +398,12 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
             case ENET_EVENT_TYPE_RECEIVE:
                 brec += event.packet->dataLength;
                 process(event.packet, (intptr_t)event.peer->data); 
-                if(event.packet->referenceCount==0) enet_packet_destroy(event.packet);
+                if (event.packet->referenceCount==0) enet_packet_destroy(event.packet);
                 break;
 
             case ENET_EVENT_TYPE_DISCONNECT: 
-                if((intptr_t)event.peer->data<0) break;
-                printf("disconnected client (%s)\n", clients[(intptr_t)event.peer->data].hostname);
+                if ((intptr_t)event.peer->data<0) break;
+                printf("client::disconnected client (%s)\n", clients[(intptr_t)event.peer->data].hostname);
                 clients[(intptr_t)event.peer->data].type = ST_EMPTY;
                 send2(true, -1, SV_CDIS, (intptr_t)event.peer->data);
                 event.peer->data = (void *)-1;
@@ -411,7 +411,7 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
             default: break;
         };
 
-        if(numplayers>maxclients)   
+        if (numplayers>maxclients)   
         {
             disconnect_client(lastconnect, "maxclients reached");
         };
@@ -423,17 +423,17 @@ void serverslice(int seconds, unsigned int timeout)   // main server update, cal
 
 void cleanupserver()
 {
-    if(serverhost) enet_host_destroy(serverhost);
+    if (serverhost) enet_host_destroy(serverhost);
 };
 
 void localdisconnect()
 {
-    loopv(clients) if(clients[i].type==ST_LOCAL) clients[i].type = ST_EMPTY;
+    loopv(clients) if (clients[i].type==ST_LOCAL) clients[i].type = ST_EMPTY;
 };
 
 void localconnect()
 {
-    client &c = addclient();
+    Client &c = addclient();
     c.type = ST_LOCAL;
     strcpy_s(c.hostname, "local");
     send_welcome(&c-&clients[0]); 
@@ -445,18 +445,18 @@ void initserver(bool dedicated, int uprate, const char *sdesc, const char *ip, c
     maxclients = maxcl;
 	  servermsinit(master ? master : "wouter.fov120.com/cube/masterserver/", sdesc, dedicated);
 
-    if((isdedicated = dedicated) != 0)
+    if ((isdedicated = dedicated) != 0)
     {
         ENetAddress address = { ENET_HOST_ANY, CUBE_SERVER_PORT };
-        if(*ip && enet_address_set_host(&address, ip)<0) printf("WARNING: server ip not resolved");
+        if (*ip && enet_address_set_host(&address, ip)<0) printf("WARNING: server ip not resolved");
         serverhost = enet_host_create(&address, MAXCLIENTS, 0, uprate);
-        if(!serverhost) fatal("could not create server host\n");
+        if (!serverhost) fatal("could not create server host\n");
         loopi(MAXCLIENTS) serverhost->peers[i].data = (void *)-1;
     };
 
     resetserverifempty();
 
-    if(isdedicated)       // do not return, this becomes main loop
+    if (isdedicated)       // do not return, this becomes main loop
     {
         #ifdef WIN32
         SetPriorityClass(GetCurrentProcess(), HIGH_PRIORITY_CLASS);
@@ -464,7 +464,7 @@ void initserver(bool dedicated, int uprate, const char *sdesc, const char *ip, c
         printf("dedicated server started, waiting for clients...\nCtrl-C to exit\n\n");
         atexit(cleanupserver);
         atexit(enet_deinitialize);
-        for(;;) serverslice(/*enet_time_get_sec()*/time(NULL), 5);
+        for (;;) serverslice(/*enet_time_get_sec()*/time(NULL), 5);
     };
 };
 

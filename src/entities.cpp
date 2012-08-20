@@ -19,26 +19,26 @@ void renderent(entity &e, const char *mdlname, float z, float yaw, int frame = 0
 
 void renderentities()
 {
-  if(lastmillis>triggertime+1000) triggertime = 0;
+  if (lastmillis>triggertime+1000) triggertime = 0;
   loopv(ents)
   {
     entity &e = ents[i];
-    if(e.type==MAPMODEL)
+    if (e.type==MAPMODEL)
     {
       mapmodelinfo &mmi = getmminfo(e.attr2);
-      if(!&mmi) continue;
+      if (!&mmi) continue;
       rendermodel(mmi.name, 0, 1, e.attr4, (float)mmi.rad, e.x, (float)S(e.x, e.y)->floor+mmi.zoff+e.attr3, e.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f, mmi.snap);
     }
     else
     {
-      if(OUTBORD(e.x, e.y)) continue;
-      if(e.type!=CARROT)
+      if (OUTBORD(e.x, e.y)) continue;
+      if (e.type!=CARROT)
       {
-        if(!e.spawned && e.type!=TELEPORT) continue;
-        if(e.type<I_SHELLS || e.type>TELEPORT) continue;
+        if (!e.spawned && e.type!=TELEPORT) continue;
+        if (e.type<I_SHELLS || e.type>TELEPORT) continue;
         renderent(e, entmdlnames[e.type-I_SHELLS], (float)(1+sin(lastmillis/100.0+e.x+e.y)/20), lastmillis/10.0f);
       }
-      else switch(e.attr2)
+      else switch (e.attr2)
       {			
         case 1:
         case 3:
@@ -46,7 +46,7 @@ void renderentities()
 
         case 2:
         case 0:
-          if(!e.spawned) continue;
+          if (!e.spawned) continue;
           renderent(e, "carrot", (float)(1+sin(lastmillis/100.0+e.x+e.y)/20), lastmillis/(e.attr2 ? 1.0f : 10.0f));
           break;
 
@@ -72,20 +72,20 @@ struct itemstat { int add, max, sound; } itemstats[] = {
 void baseammo(int gun) { player1->ammo[gun] = itemstats[gun-1].add*2; };
 
 // these two functions are called when the server acknowledges that you really
-// picked up the item (in multiplayer someone may grab it before you).
+// picked up the item (in client::multiplayer someone may grab it before you).
 
 void radditem(int i, int &v)
 {
   itemstat &is = itemstats[ents[i].type-I_SHELLS];
   ents[i].spawned = false;
   v += is.add;
-  if(v>is.max) v = is.max;
+  if (v>is.max) v = is.max;
   sound::playc(is.sound);
 };
 
 void realpickup(int n, dynent *d)
 {
-  switch(ents[n].type)
+  switch (ents[n].type)
   {
     case I_SHELLS:  radditem(n, d->ammo[1]); break;
     case I_BULLETS: radditem(n, d->ammo[2]); break;
@@ -112,9 +112,9 @@ void realpickup(int n, dynent *d)
 
 void additem(int i, int &v, int spawnsec)
 {
-  if(v<itemstats[ents[i].type-I_SHELLS].max)                              // don't pick up if not needed
+  if (v<itemstats[ents[i].type-I_SHELLS].max)                              // don't pick up if not needed
   {
-    addmsg(1, 3, SV_ITEMPICKUP, i, m_classicsp ? 100000 : spawnsec);    // first ask the server for an ack
+    client::addmsg(1, 3, SV_ITEMPICKUP, i, m_classicsp ? 100000 : spawnsec);    // first ask the server for an ack
     ents[i].spawned = false;                                            // even if someone else gets it first
   };
 };
@@ -122,12 +122,12 @@ void additem(int i, int &v, int spawnsec)
 void teleport(int n, dynent *d)     // also used by monsters
 {
   int e = -1, tag = ents[n].attr1, beenhere = -1;
-  for(;;)
+  for (;;)
   {
     e = findentity(TELEDEST, e+1);
-    if(e==beenhere || e<0) { console::out("no teleport destination for tag %d", tag); return; };
-    if(beenhere<0) beenhere = e;
-    if(ents[e].attr2==tag)
+    if (e==beenhere || e<0) { console::out("no teleport destination for tag %d", tag); return; };
+    if (beenhere<0) beenhere = e;
+    if (ents[e].attr2==tag)
     {
       d->o.x = ents[e].x;
       d->o.y = ents[e].y;
@@ -145,10 +145,10 @@ void teleport(int n, dynent *d)     // also used by monsters
 void pickup(int n, dynent *d)
 {
   int np = 1;
-  loopv(players) if(players[i]) np++;
+  loopv(players) if (players[i]) np++;
   np = np<3 ? 4 : (np>4 ? 2 : 3);         // spawn times are dependent on number of players
   int ammo = np*2;
-  switch(ents[n].type)
+  switch (ents[n].type)
   {
     case I_SHELLS:  additem(n, d->ammo[1], ammo); break;
     case I_BULLETS: additem(n, d->ammo[2], ammo); break;
@@ -159,7 +159,7 @@ void pickup(int n, dynent *d)
 
     case I_GREENARMOUR:
                     // (100h/100g only absorbs 166 damage)
-                    if(d->armourtype==A_YELLOW && d->armour>66) break;
+                    if (d->armourtype==A_YELLOW && d->armour>66) break;
                     additem(n, d->armour, 20);
                     break;
 
@@ -174,13 +174,13 @@ void pickup(int n, dynent *d)
     case CARROT:
                     ents[n].spawned = false;
                     triggertime = lastmillis;
-                    trigger(ents[n].attr1, ents[n].attr2, false);  // needs to go over server for multiplayer
+                    trigger(ents[n].attr1, ents[n].attr2, false);  // needs to go over server for client::multiplayer
                     break;
 
     case TELEPORT:
                     {
                       static int lastteleport = 0;
-                      if(lastmillis-lastteleport<500) break;
+                      if (lastmillis-lastteleport<500) break;
                       lastteleport = lastmillis;
                       teleport(n, d);
                       break;
@@ -189,7 +189,7 @@ void pickup(int n, dynent *d)
     case JUMPPAD:
                     {
                       static int lastjumppad = 0;
-                      if(lastmillis-lastjumppad<300) break;
+                      if (lastmillis-lastjumppad<300) break;
                       lastjumppad = lastmillis;
                       vec v = { (int)(char)ents[n].attr3/10.0f, (int)(char)ents[n].attr2/10.0f, ents[n].attr1/10.0f };
                       player1->vel.z = 0;
@@ -202,22 +202,22 @@ void pickup(int n, dynent *d)
 
 void checkitems()
 {
-  if(editmode) return;
+  if (editmode) return;
   loopv(ents)
   {
     entity &e = ents[i];
-    if(e.type==NOTUSED) continue;
-    if(!ents[i].spawned && e.type!=TELEPORT && e.type!=JUMPPAD) continue;
-    if(OUTBORD(e.x, e.y)) continue;
+    if (e.type==NOTUSED) continue;
+    if (!ents[i].spawned && e.type!=TELEPORT && e.type!=JUMPPAD) continue;
+    if (OUTBORD(e.x, e.y)) continue;
     vec v = { e.x, e.y, S(e.x, e.y)->floor+player1->eyeheight };
     vdist(dist, t, player1->o, v);
-    if(dist<(e.type==TELEPORT ? 4 : 2.5)) pickup(i, player1);
+    if (dist<(e.type==TELEPORT ? 4 : 2.5)) pickup(i, player1);
   };
 };
 
 void checkquad(int time)
 {
-  if(player1->quadmillis && (player1->quadmillis -= time)<0)
+  if (player1->quadmillis && (player1->quadmillis -= time)<0)
   {
     player1->quadmillis = 0;
     sound::playc(S_PUPOUT);
@@ -227,7 +227,7 @@ void checkquad(int time)
 
 void putitems(uchar *&p)            // puts items in network stream and also spawns them locally
 {
-  loopv(ents) if((ents[i].type>=I_SHELLS && ents[i].type<=I_QUAD) || ents[i].type==CARROT)
+  loopv(ents) if ((ents[i].type>=I_SHELLS && ents[i].type<=I_QUAD) || ents[i].type==CARROT)
   {
     putint(p, i);
     ents[i].spawned = true;
@@ -235,5 +235,5 @@ void putitems(uchar *&p)            // puts items in network stream and also spa
 };
 
 void resetspawns() { loopv(ents) ents[i].spawned = false; };
-void setspawn(uint i, bool on) { if(i<(uint)ents.length()) ents[i].spawned = on; };
+void setspawn(uint i, bool on) { if (i<(uint)ents.length()) ents[i].spawned = on; };
 

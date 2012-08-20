@@ -24,17 +24,17 @@ static guninfo guns[NUMGUNS] =
 
 void selectgun(int a, int b, int c)
 {
-    if(a<-1 || b<-1 || c<-1 || a>=NUMGUNS || b>=NUMGUNS || c>=NUMGUNS) return;
+    if (a<-1 || b<-1 || c<-1 || a>=NUMGUNS || b>=NUMGUNS || c>=NUMGUNS) return;
     int s = player1->gunselect;
-    if(a>=0 && s!=a && player1->ammo[a]) s = a;
-    else if(b>=0 && s!=b && player1->ammo[b]) s = b;
-    else if(c>=0 && s!=c && player1->ammo[c]) s = c;
-    else if(s!=GUN_RL && player1->ammo[GUN_RL]) s = GUN_RL;
-    else if(s!=GUN_CG && player1->ammo[GUN_CG]) s = GUN_CG;
-    else if(s!=GUN_SG && player1->ammo[GUN_SG]) s = GUN_SG;
-    else if(s!=GUN_RIFLE && player1->ammo[GUN_RIFLE]) s = GUN_RIFLE;
+    if (a>=0 && s!=a && player1->ammo[a]) s = a;
+    else if (b>=0 && s!=b && player1->ammo[b]) s = b;
+    else if (c>=0 && s!=c && player1->ammo[c]) s = c;
+    else if (s!=GUN_RL && player1->ammo[GUN_RL]) s = GUN_RL;
+    else if (s!=GUN_CG && player1->ammo[GUN_CG]) s = GUN_CG;
+    else if (s!=GUN_SG && player1->ammo[GUN_SG]) s = GUN_SG;
+    else if (s!=GUN_RIFLE && player1->ammo[GUN_RIFLE]) s = GUN_RIFLE;
     else s = GUN_FIST;
-    if(s!=player1->gunselect) sound::playc(S_WEAPLOAD);
+    if (s!=player1->gunselect) sound::playc(S_WEAPLOAD);
     player1->gunselect = s;
     //console::out("%s selected", (int)guns[s].name);
 };
@@ -70,11 +70,11 @@ bool intersect(dynent *d, vec &from, vec &to)   // if lineseg hits entity boundi
     vsub(w, from);
     float c1 = dotprod(w, v);
 
-    if(c1<=0) p = &from;
+    if (c1<=0) p = &from;
     else
     {
         float c2 = dotprod(v, v);
-        if(c2<=c1) p = &to;
+        if (c2<=c1) p = &to;
         else
         {
             float f = c1/c2;
@@ -94,12 +94,12 @@ bool intersect(dynent *d, vec &from, vec &to)   // if lineseg hits entity boundi
 
 char *playerincrosshair()
 {
-	if(demoplayback) return NULL;
+	if (demoplayback) return NULL;
     loopv(players)
     {
         dynent *o = players[i];
-        if(!o) continue; 
-        if(intersect(o, player1->o, worldpos)) return o->name;
+        if (!o) continue; 
+        if (intersect(o, player1->o, worldpos)) return o->name;
     };
     return NULL;
 };
@@ -115,7 +115,7 @@ void newprojectile(vec &from, vec &to, float speed, bool local, dynent *owner, i
     loopi(MAXPROJ)
     {
         projectile *p = &projs[i];
-        if(p->inuse) continue;
+        if (p->inuse) continue;
         p->inuse = true;
         p->o = from;
         p->to = to;
@@ -129,9 +129,9 @@ void newprojectile(vec &from, vec &to, float speed, bool local, dynent *owner, i
 
 void hit(int target, int damage, dynent *d, dynent *at)
 {
-    if(d==player1) selfdamage(damage, at==player1 ? -1 : -2, at);
-    else if(d->monsterstate) monsterpain(d, damage, at);
-    else { addmsg(1, 4, SV_DAMAGE, target, damage, d->lifesequence); sound::play(S_PAIN1+rnd(5), &d->o); };
+    if (d==player1) selfdamage(damage, at==player1 ? -1 : -2, at);
+    else if (d->monsterstate) monsterpain(d, damage, at);
+    else { client::addmsg(1, 4, SV_DAMAGE, target, damage, d->lifesequence); sound::play(S_PAIN1+rnd(5), &d->o); };
     particle_splash(3, damage, 1000, d->o);
 	demodamage(damage, d->o);
 };
@@ -141,12 +141,12 @@ const float RL_DAMRAD = 7;   // hack
 
 void radialeffect(dynent *o, vec &v, int cn, int qdam, dynent *at)
 {
-    if(o->state!=CS_ALIVE) return;
+    if (o->state!=CS_ALIVE) return;
     vdist(dist, temp, v, o->o);
     dist -= 2; // account for eye distance imprecision
-    if(dist<RL_DAMRAD) 
+    if (dist<RL_DAMRAD) 
     {
-        if(dist<0) dist = 0;
+        if (dist<0) dist = 0;
         int damage = (int)(qdam*(1-(dist/RL_DAMRAD)));
         hit(cn, damage, o, at);
         vmul(temp, (RL_DAMRAD-dist)*damage/800);
@@ -158,7 +158,7 @@ void splash(projectile *p, vec &v, vec &vold, int notthisplayer, int notthismons
 {
     particle_splash(0, 50, 300, v);
     p->inuse = false;
-    if(p->gun!=GUN_RL)
+    if (p->gun!=GUN_RL)
     {
         sound::play(S_FEXPLODE, &v);
         // no push?
@@ -168,24 +168,24 @@ void splash(projectile *p, vec &v, vec &vold, int notthisplayer, int notthismons
         sound::play(S_RLHIT, &v);
         newsphere(v, RL_RADIUS, 0);
         dodynlight(vold, v, 0, 0, p->owner);
-        if(!p->local) return;
+        if (!p->local) return;
         radialeffect(player1, v, -1, qdam, p->owner);
         loopv(players)
         {
-            if(i==notthisplayer) continue;
+            if (i==notthisplayer) continue;
             dynent *o = players[i];
-            if(!o) continue; 
+            if (!o) continue; 
             radialeffect(o, v, i, qdam, p->owner);
         };
         dvector &mv = getmonsters();
-        loopv(mv) if(i!=notthismonster) radialeffect(mv[i], v, i, qdam, p->owner);
+        loopv(mv) if (i!=notthismonster) radialeffect(mv[i], v, i, qdam, p->owner);
     };
 };
 
 inline void projdamage(dynent *o, projectile *p, vec &v, int i, int im, int qdam)
 {
-    if(o->state!=CS_ALIVE) return;
-    if(intersect(o, p->o, v))
+    if (o->state!=CS_ALIVE) return;
+    if (intersect(o, p->o, v))
     {
         splash(p, v, p->o, i, im, qdam);
         hit(i, qdam, o, p->owner);
@@ -197,32 +197,32 @@ void moveprojectiles(float time)
     loopi(MAXPROJ)
     {
         projectile *p = &projs[i];
-        if(!p->inuse) continue;
+        if (!p->inuse) continue;
         int qdam = guns[p->gun].damage*(p->owner->quadmillis ? 4 : 1);
-        if(p->owner->monsterstate) qdam /= MONSTERDAMAGEFACTOR;
+        if (p->owner->monsterstate) qdam /= MONSTERDAMAGEFACTOR;
         vdist(dist, v, p->o, p->to);
         float dtime = dist*1000/p->speed;
-        if(time>dtime) dtime = time;
+        if (time>dtime) dtime = time;
         vmul(v, time/dtime);
         vadd(v, p->o)
-        if(p->local)
+        if (p->local)
         {
             loopv(players)
             {
                 dynent *o = players[i];
-                if(!o) continue; 
+                if (!o) continue; 
                 projdamage(o, p, v, i, -1, qdam);
             };
-            if(p->owner!=player1) projdamage(player1, p, v, -1, -1, qdam);
+            if (p->owner!=player1) projdamage(player1, p, v, -1, -1, qdam);
             dvector &mv = getmonsters();
-            loopv(mv) if(!vreject(mv[i]->o, v, 10.0f) && mv[i]!=p->owner) projdamage(mv[i], p, v, -1, i, qdam);
+            loopv(mv) if (!vreject(mv[i]->o, v, 10.0f) && mv[i]!=p->owner) projdamage(mv[i], p, v, -1, i, qdam);
         };
-        if(p->inuse)
+        if (p->inuse)
         {
-            if(time==dtime) splash(p, v, p->o, -1, -1, qdam);
+            if (time==dtime) splash(p, v, p->o, -1, -1, qdam);
             else
             {
-                if(p->gun==GUN_RL) { dodynlight(p->o, v, 0, 255, p->owner); particle_splash(5, 2, 200, v); }
+                if (p->gun==GUN_RL) { dodynlight(p->o, v, 0, 255, p->owner); particle_splash(5, 2, 200, v); }
                 else { particle_splash(1, 1, 200, v); particle_splash(guns[p->gun].part, 1, 1, v); };
             };       
         };
@@ -234,7 +234,7 @@ void shootv(int gun, vec &from, vec &to, dynent *d, bool local)     // create vi
 {
     sound::play(guns[gun].sound, d==player1 ? NULL : &d->o);
     int pspeed = 25;
-    switch(gun)
+    switch (gun)
     {
         case GUN_FIST:
             break;
@@ -255,7 +255,7 @@ void shootv(int gun, vec &from, vec &to, dynent *d, bool local)     // create vi
         case GUN_ICEBALL:
         case GUN_SLIMEBALL:
             pspeed = guns[gun].projspeed;
-            if(d->monsterstate) pspeed /= 2;
+            if (d->monsterstate) pspeed /= 2;
             newprojectile(from, to, (float)pspeed, local, d, gun);
             break;
 
@@ -276,29 +276,29 @@ void hitpush(int target, int damage, dynent *d, dynent *at, vec &from, vec &to)
 
 void raydamage(dynent *o, vec &from, vec &to, dynent *d, int i)
 {
-    if(o->state!=CS_ALIVE) return;
+    if (o->state!=CS_ALIVE) return;
     int qdam = guns[d->gunselect].damage;
-    if(d->quadmillis) qdam *= 4;
-    if(d->monsterstate) qdam /= MONSTERDAMAGEFACTOR;
-    if(d->gunselect==GUN_SG)
+    if (d->quadmillis) qdam *= 4;
+    if (d->monsterstate) qdam /= MONSTERDAMAGEFACTOR;
+    if (d->gunselect==GUN_SG)
     {
         int damage = 0;
-        loop(r, SGRAYS) if(intersect(o, from, sg[r])) damage += qdam;
-        if(damage) hitpush(i, damage, o, d, from, to);
+        loop(r, SGRAYS) if (intersect(o, from, sg[r])) damage += qdam;
+        if (damage) hitpush(i, damage, o, d, from, to);
     }
-    else if(intersect(o, from, to)) hitpush(i, qdam, o, d, from, to);
+    else if (intersect(o, from, to)) hitpush(i, qdam, o, d, from, to);
 };
 
 void shoot(dynent *d, vec &targ)
 {
     int attacktime = lastmillis-d->lastaction;
-    if(attacktime<d->gunwait) return;
+    if (attacktime<d->gunwait) return;
     d->gunwait = 0;
-    if(!d->attacking) return;
+    if (!d->attacking) return;
     d->lastaction = lastmillis;
     d->lastattackgun = d->gunselect;
-    if(!d->ammo[d->gunselect]) { sound::playc(S_NOAMMO); d->gunwait = 250; d->lastattackgun = -1; return; };
-    if(d->gunselect) d->ammo[d->gunselect]--;
+    if (!d->ammo[d->gunselect]) { sound::playc(S_NOAMMO); d->gunwait = 250; d->lastattackgun = -1; return; };
+    if (d->gunselect) d->ammo[d->gunselect]--;
     vec from = d->o;
     vec to = targ;
     from.z -= 0.2f;    // below eye
@@ -308,34 +308,53 @@ void shoot(dynent *d, vec &targ)
     vec kickback = unitv;
     vmul(kickback, guns[d->gunselect].kickamount*-0.01f);
     vadd(d->vel, kickback);
-    if(d->pitch<80.0f) d->pitch += guns[d->gunselect].kickamount*0.05f;
+    if (d->pitch<80.0f) d->pitch += guns[d->gunselect].kickamount*0.05f;
     
 
-    if(d->gunselect==GUN_FIST || d->gunselect==GUN_BITE) 
+    if (d->gunselect==GUN_FIST || d->gunselect==GUN_BITE) 
     {
         vmul(unitv, 3); // punch range
         to = from;
         vadd(to, unitv);
     };   
-    if(d->gunselect==GUN_SG) createrays(from, to);
+    if (d->gunselect==GUN_SG) createrays(from, to);
 
-    if(d->quadmillis && attacktime>200) sound::playc(S_ITEMPUP);
+    if (d->quadmillis && attacktime>200) sound::playc(S_ITEMPUP);
     shootv(d->gunselect, from, to, d, true);
-    if(!d->monsterstate) addmsg(1, 8, SV_SHOT, d->gunselect, (int)(from.x*DMF), (int)(from.y*DMF), (int)(from.z*DMF), (int)(to.x*DMF), (int)(to.y*DMF), (int)(to.z*DMF));
+    if (!d->monsterstate) client::addmsg(1, 8, SV_SHOT, d->gunselect, (int)(from.x*DMF), (int)(from.y*DMF), (int)(from.z*DMF), (int)(to.x*DMF), (int)(to.y*DMF), (int)(to.z*DMF));
     d->gunwait = guns[d->gunselect].attackdelay;
 
-    if(guns[d->gunselect].projspeed) return;
+    if (guns[d->gunselect].projspeed) return;
     
     loopv(players)
     {
         dynent *o = players[i];
-        if(!o) continue; 
+        if (!o) continue; 
         raydamage(o, from, to, d, i);
     };
 
     dvector &v = getmonsters();
-    loopv(v) if(v[i]!=d) raydamage(v[i], from, to, d, -2);
+    loopv(v) if (v[i]!=d) raydamage(v[i], from, to, d, -2);
 
-    if(d->monsterstate) raydamage(player1, from, to, d, -1);
+    if (d->monsterstate) raydamage(player1, from, to, d, -1);
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

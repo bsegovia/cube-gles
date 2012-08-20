@@ -46,14 +46,14 @@ void gl_init(int w, int h)
 
     char *exts = (char *)glGetString(GL_EXTENSIONS);
 
-    if(strstr(exts, "GL_EXT_texture_env_combine")) hasoverbright = true;
+    if (strstr(exts, "GL_EXT_texture_env_combine")) hasoverbright = true;
     else console::out("WARNING: cannot use overbright lighting, using old lighting model!");
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glmaxtexsize);
 
     purgetextures();
 
-    if(!(qsphere = gluNewQuadric())) fatal("glu sphere");
+    if (!(qsphere = gluNewQuadric())) fatal("glu sphere");
     gluQuadricDrawStyle(qsphere, GLU_FILL);
     gluQuadricOrientation(qsphere, GLU_INSIDE);
     gluQuadricTexture(qsphere, GL_TRUE);
@@ -64,14 +64,14 @@ void gl_init(int w, int h)
 
 void cleangl()
 {
-    if(qsphere) gluDeleteQuadric(qsphere);
+    if (qsphere) gluDeleteQuadric(qsphere);
 };
 
 bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp)
 {
     SDL_Surface *s = IMG_Load(texname);
-    if(!s) { console::out("couldn't load texture %s", texname); return false; };
-    if(s->format->BitsPerPixel!=24) { console::out("texture must be 24bpp: %s", texname); return false; };
+    if (!s) { console::out("couldn't load texture %s", texname); return false; };
+    if (s->format->BitsPerPixel!=24) { console::out("texture must be 24bpp: %s", texname); return false; };
     // loopi(s->w*s->h*3) { uchar *p = (uchar *)s->pixels+i; *p = 255-*p; };
     glBindTexture(GL_TEXTURE_2D, tnum);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -82,16 +82,16 @@ bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp)
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     xs = s->w;
     ys = s->h;
-    while(xs>glmaxtexsize || ys>glmaxtexsize) { xs /= 2; ys /= 2; };
+    while (xs>glmaxtexsize || ys>glmaxtexsize) { xs /= 2; ys /= 2; };
     void *scaledimg = s->pixels;
-    if(xs!=s->w)
+    if (xs!=s->w)
     {
         console::out("warning: quality loss: scaling %s", texname);     // for voodoo cards under linux
         scaledimg = alloc(xs*ys*3);
         gluScaleImage(GL_RGB, s->w, s->h, GL_UNSIGNED_BYTE, s->pixels, xs, ys, GL_UNSIGNED_BYTE, scaledimg);
     };
-    if(gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, xs, ys, GL_RGB, GL_UNSIGNED_BYTE, scaledimg)) fatal("could not build mipmaps");
-    if(xs!=s->w) free(scaledimg);
+    if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, xs, ys, GL_RGB, GL_UNSIGNED_BYTE, scaledimg)) fatal("could not build mipmaps");
+    if (xs!=s->w) free(scaledimg);
     SDL_FreeSurface(s);
     return true;
 };
@@ -124,7 +124,7 @@ void texturereset() { curtexnum = 0; };
 void texture(char *aframe, char *name)
 {
     int num = curtexnum++, frame = atoi(aframe);
-    if(num<0 || num>=256 || frame<0 || frame>=MAXFRAMES) return;
+    if (num<0 || num>=256 || frame<0 || frame>=MAXFRAMES) return;
     mapping[num][frame] = 1;
     char *n = mapname[num][frame];
     strcpy_s(n, name);
@@ -139,7 +139,7 @@ int lookuptexture(int tex, int &xs, int &ys)
     int frame = 0;                      // other frames?
     int tid = mapping[tex][frame];
 
-    if(tid>=FIRSTTEX)
+    if (tid>=FIRSTTEX)
     {
         xs = texx[tid-FIRSTTEX];
         ys = texy[tid-FIRSTTEX];
@@ -147,11 +147,11 @@ int lookuptexture(int tex, int &xs, int &ys)
     };
 
     xs = ys = 16;
-    if(!tid) return 1;                  // crosshair :)
+    if (!tid) return 1;                  // crosshair :)
 
     loopi(curtex)       // lazily happens once per "texture" command, basically
     {
-        if(strcmp(mapname[tex][frame], texname[i])==0)
+        if (strcmp(mapname[tex][frame], texname[i])==0)
         {
             mapping[tex][frame] = tid = i+FIRSTTEX;
             xs = texx[i];
@@ -160,14 +160,14 @@ int lookuptexture(int tex, int &xs, int &ys)
         };
     };
 
-    if(curtex==MAXTEX) fatal("loaded too many textures");
+    if (curtex==MAXTEX) fatal("loaded too many textures");
 
     int tnum = curtex+FIRSTTEX;
     strcpy_s(texname[curtex], mapname[tex][frame]);
 
     sprintf_sd(name)("packages%c%s", PATHDIV, texname[curtex]);
 
-    if(installtex(tnum, name, xs, ys))
+    if (installtex(tnum, name, xs, ys))
     {
         mapping[tex][frame] = tnum;
         texx[curtex] = xs;
@@ -188,7 +188,7 @@ void setupworld()
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
     setarraypointers();
 
-    if(hasoverbright)
+    if (hasoverbright)
     {
         glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
         glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
@@ -205,15 +205,15 @@ vector<strip> strips;
 void renderstripssky()
 {
     glBindTexture(GL_TEXTURE_2D, skyoglid);
-    loopv(strips) if(strips[i].tex==skyoglid) glDrawArrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
+    loopv(strips) if (strips[i].tex==skyoglid) glDrawArrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
 };
 
 void renderstrips()
 {
     int lasttex = -1;
-    loopv(strips) if(strips[i].tex!=skyoglid)
+    loopv(strips) if (strips[i].tex!=skyoglid)
     {
-        if(strips[i].tex!=lasttex)
+        if (strips[i].tex!=lasttex)
         {
             glBindTexture(GL_TEXTURE_2D, strips[i].tex);
             lasttex = strips[i].tex;
@@ -222,7 +222,7 @@ void renderstrips()
     };
 };
 
-void overbright(float amount) { if(hasoverbright) glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, amount ); };
+void overbright(float amount) { if (hasoverbright) glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, amount ); };
 
 void addstrip(int tex, int start, int n)
 {
@@ -235,7 +235,7 @@ void addstrip(int tex, int start, int n)
 VARFP(gamma, 30, 100, 300,
 {
     float f = gamma/100.0f;
-    if(SDL_SetGamma(f,f,f)==-1)
+    if (SDL_SetGamma(f,f,f)==-1)
     {
         console::out("Could not set gamma (card/driver doesn't support it?)");
         console::out("sdl: %s", SDL_GetError());
@@ -271,7 +271,7 @@ void drawhudmodel(int start, int end, float speed, int base)
 
 void drawhudgun(float fovy, float aspect, int farplane)
 {
-    if(!hudgun /*|| !player1->gunselect*/) return;
+    if (!hudgun /*|| !player1->gunselect*/) return;
 
     glEnable(GL_CULL_FACE);
 
@@ -282,7 +282,7 @@ void drawhudgun(float fovy, float aspect, int farplane)
 
     //glClear(GL_DEPTH_BUFFER_BIT);
     int rtime = reloadtime(player1->gunselect);
-    if(player1->lastaction && player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
+    if (player1->lastaction && player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
     {
         drawhudmodel(7, 18, rtime/18.0f, player1->lastaction);
     }
@@ -312,7 +312,7 @@ void gl_drawframe(int w, int h, float curfps)
     glFogfv(GL_FOG_COLOR, fogc);
     glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
 
-    if(underwater)
+    if (underwater)
     {
         fovy += (float)sin(lastmillis/1000.0)*2.0f;
         aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
@@ -395,4 +395,23 @@ void gl_drawframe(int w, int h, float curfps)
     glEnable(GL_CULL_FACE);
     glEnable(GL_FOG);
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

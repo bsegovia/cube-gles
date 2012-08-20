@@ -1,6 +1,11 @@
 #include "cube.h"
 #include <ctype.h>
 
+#ifndef WIN32
+#include <X11/Xlib.h>
+#include <SDL/SDL_syswm.h>
+#endif
+
 namespace console
 {
   struct cline { char *cref; int outtime; };
@@ -77,7 +82,7 @@ namespace console
 
   static void bindkey(char *key, char *action)
   {
-    for(char *x = key; *x; x++) *x = toupper(*x);
+    for (char *x = key; *x; x++) *x = toupper(*x);
     loopi(numkm) if (strcmp(keyms[i].name, key)==0) {
       strcpy_s(keyms[i].action, action);
       return;
@@ -95,11 +100,6 @@ namespace console
   }
 
   static void mapmsg(char *s) { strn0cpy(hdr.maptitle, s, 128); }
-
-#ifndef WIN32
-#include <X11/Xlib.h>
-#include <SDL/SDL_syswm.h>
-#endif
 
   static void paste()
   {
@@ -119,7 +119,7 @@ namespace console
     char *cb = XFetchBytes(wminfo.info.x11.display, &cbsize);
     if (!cb || !cbsize) return;
     int commandlen = strlen(commandbuf);
-    for(char *cbline = cb, *cbend;
+    for (char *cbline = cb, *cbend;
         commandlen + 1 < _MAXDEFSTR &&
         cbline < &cb[cbsize]; cbline = cbend + 1)
     {
@@ -141,7 +141,7 @@ namespace console
     static bool rec = false;
     if (!rec && n>=0 && n<vhistory.length()) {
       rec = true;
-      execute(vhistory[vhistory.length()-n-1]);
+      cmd::execute(vhistory[vhistory.length()-n-1]);
       rec = false;
     }
   }
@@ -150,14 +150,14 @@ namespace console
   {
     if (saycommandon) {                               // keystrokes go to commandline
       if (isdown) {
-        switch(code) {
+        switch (code) {
           case SDLK_RETURN:
             break;
           case SDLK_BACKSPACE:
           case SDLK_LEFT:
           {
-            for(int i = 0; commandbuf[i]; i++) if (!commandbuf[i+1]) commandbuf[i] = 0;
-            resetcomplete();
+            for (int i = 0; commandbuf[i]; i++) if (!commandbuf[i+1]) commandbuf[i] = 0;
+            cmd::resetcomplete();
             break;
           }
           case SDLK_UP:
@@ -167,12 +167,12 @@ namespace console
             if (histpos<vhistory.length()) strcpy_s(commandbuf, vhistory[histpos++]);
             break;
           case SDLK_TAB:
-            complete(commandbuf);
+            cmd::complete(commandbuf);
             break;
           case SDLK_v:
             if (SDL_GetModState()&(KMOD_LCTRL|KMOD_RCTRL)) { paste(); return; }
           default:
-            resetcomplete();
+            cmd::resetcomplete();
             if (cooked) { char add[] = { cooked, 0 }; strcat_s(commandbuf, add); }
         }
       } else {
@@ -182,9 +182,9 @@ namespace console
               vhistory.add(newstring(commandbuf));  // cap this?
             histpos = vhistory.length();
             if (commandbuf[0]=='/')
-              execute(commandbuf, true);
+              cmd::execute(commandbuf, true);
             else
-              toserver(commandbuf);
+              client::toserver(commandbuf);
           }
           saycommand(NULL);
         }
@@ -195,7 +195,7 @@ namespace console
       loopi(numkm) if (keyms[i].code==code) { // keystrokes go to game, lookup in keymap and execute
         string temp;
         strcpy_s(temp, keyms[i].action);
-        execute(temp, isdown);
+        cmd::execute(temp, isdown);
         return;
       }
     }
@@ -217,4 +217,19 @@ namespace console
   COMMAND(mapmsg, ARG_1STR);
   COMMAND(history, ARG_1INT);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

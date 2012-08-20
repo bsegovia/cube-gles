@@ -106,11 +106,11 @@ int text_width(const char *str)
     for (int i = 0; str[i] != 0; i++)
     {
         int c = str[i];
-        if(c=='\t') { x = (x+PIXELTAB)/PIXELTAB*PIXELTAB; continue; }; 
-        if(c=='\f') continue; 
-        if(c==' ') { x += FONTH/2; continue; };
+        if (c=='\t') { x = (x+PIXELTAB)/PIXELTAB*PIXELTAB; continue; }; 
+        if (c=='\f') continue; 
+        if (c==' ') { x += FONTH/2; continue; };
         c -= 33;
-        if(c<0 || c>=95) continue;
+        if (c<0 || c>=95) continue;
         int in_width = char_coords[c][2] - char_coords[c][0];
         x += in_width + 1;
     }
@@ -140,11 +140,11 @@ void draw_text(const char *str, int left, int top, int gl_num)
     for (i = 0; str[i] != 0; i++)
     {
         int c = str[i];
-        if(c=='\t') { x = (x-left+PIXELTAB)/PIXELTAB*PIXELTAB+left; continue; }; 
-        if(c=='\f') { glColor3ub(64,255,128); continue; };
-        if(c==' ') { x += FONTH/2; continue; };
+        if (c=='\t') { x = (x-left+PIXELTAB)/PIXELTAB*PIXELTAB+left; continue; }; 
+        if (c=='\f') { glColor3ub(64,255,128); continue; };
+        if (c==' ') { x += FONTH/2; continue; };
         c -= 33;
-        if(c<0 || c>=95) continue;
+        if (c<0 || c>=95) continue;
 
         in_left    = ((float) char_coords[c][0])   / 512.0f;
         in_top     = ((float) char_coords[c][1]+2) / 512.0f;
@@ -220,4 +220,23 @@ void draw_envbox(int t, int w)
 
     glDepthMask(GL_TRUE);
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

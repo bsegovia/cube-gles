@@ -6,8 +6,8 @@
 
 void putint(uchar *&p, int n)
 {
-    if(n<128 && n>-127) { *p++ = n; }
-    else if(n<0x8000 && n>=-0x8000) { *p++ = 0x80; *p++ = n; *p++ = n>>8;  }
+    if (n<128 && n>-127) { *p++ = n; }
+    else if (n<0x8000 && n>=-0x8000) { *p++ = 0x80; *p++ = n; *p++ = n>>8;  }
     else { *p++ = 0x81; *p++ = n; *p++ = n>>8; *p++ = n>>16; *p++ = n>>24; };
 };
 
@@ -15,14 +15,14 @@ int getint(uchar *&p)
 {
     int c = *((char *)p);
     p++;
-    if(c==-128) { int n = *p++; n |= *((char *)p)<<8; p++; return n;}
-    else if(c==-127) { int n = *p++; n |= *p++<<8; n |= *p++<<16; return n|(*p++<<24); } 
+    if (c==-128) { int n = *p++; n |= *((char *)p)<<8; p++; return n;}
+    else if (c==-127) { int n = *p++; n |= *p++<<8; n |= *p++<<16; return n|(*p++<<24); } 
     else return c;
 };
 
 void sendstring(const char *t, uchar *&p)
 {
-    while(*t) putint(p, *t++);
+    while (*t) putint(p, *t++);
     putint(p, 0);
 };
 
@@ -50,7 +50,7 @@ char msgsizesl[] =               // size inclusive message token, 0 for variable
 
 char msgsizelookup(int msg)
 {
-    for(char *p = msgsizesl; *p>=0; p += 2) if(*p==msg) return p[1];
+    for (char *p = msgsizesl; *p>=0; p += 2) if (*p==msg) return p[1];
     return -1;
 };
 
@@ -62,17 +62,17 @@ uchar *copydata = NULL;
 
 void sendmaps(int n, string mapname, int mapsize, uchar *mapdata)
 {
-    if(mapsize <= 0 || mapsize > 256*256) return;
+    if (mapsize <= 0 || mapsize > 256*256) return;
     strcpy_s(copyname, mapname);
     copysize = mapsize;
-    if(copydata) free(copydata);
+    if (copydata) free(copydata);
     copydata = (uchar *)alloc(mapsize);
     memcpy(copydata, mapdata, mapsize);
 }
 
 ENetPacket *recvmap(int n)
 {
-    if(!copydata) return NULL;
+    if (!copydata) return NULL;
     ENetPacket *packet = enet_packet_create(NULL, MAXTRANS + copysize, ENET_PACKET_FLAG_RELIABLE);
     uchar *start = packet->data;
     uchar *p = start+2;
@@ -89,19 +89,19 @@ ENetPacket *recvmap(int n)
 
 #ifdef STANDALONE
 
-void localservertoclient(uchar *buf, int len) {};
+void client::localservertoclient(uchar *buf, int len) {};
 void fatal(const char *s, const char *o) { cleanupserver(); printf("servererror: %s\n", s); exit(1); };
-void *alloc(int s) { void *b = calloc(1,s); if(!b) fatal("no memory!"); return b; };
+void *alloc(int s) { void *b = calloc(1,s); if (!b) fatal("no memory!"); return b; };
 
 int main(int argc, char* argv[])
 {
     int uprate = 0, maxcl = 4;
     const char *sdesc = "", *ip = "", *master = NULL, *passwd = "";
     
-    for(int i = 1; i<argc; i++)
+    for (int i = 1; i<argc; i++)
     {
         char *a = &argv[i][2];
-        if(argv[i][0]=='-') switch(argv[i][1])
+        if (argv[i][0]=='-') switch (argv[i][1])
         {
             case 'u': uprate = atoi(a); break;
             case 'n': sdesc  = a; break;
@@ -113,9 +113,28 @@ int main(int argc, char* argv[])
         };
     };
     
-    if(enet_initialize()<0) fatal("Unable to initialise network module");
+    if (enet_initialize()<0) fatal("Unable to initialise network module");
     initserver(true, uprate, sdesc, ip, master, passwd, maxcl);
     return 0;
 };
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

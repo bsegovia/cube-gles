@@ -10,11 +10,11 @@ void backup(char *name, char *backupname)
 
 string cgzname, bakname, pcfname, mcfname; 
 
-void setnames(char *name)
+void setnames(const char *name)
 {
     string pakname, mapname;
-    char *slash = strpbrk(name, "/\\");
-    if(slash)
+    const char *slash = strpbrk(name, "/\\");
+    if (slash)
     {
         strn0cpy(pakname, name, slash-name+1);
         strcpy_s(mapname, slash+1);
@@ -46,7 +46,7 @@ void voptimize()        // reset vdeltas on non-hf cubes
     loop(x, ssize) loop(y, ssize)
     {
         sqr *s = S(x, y);
-        if(x && y) { if(nhf(s) && nhf(S(x-1, y)) && nhf(S(x-1, y-1)) && nhf(S(x, y-1))) s->vdelta = 0; }
+        if (x && y) { if (nhf(s) && nhf(S(x-1, y)) && nhf(S(x-1, y-1)) && nhf(S(x, y-1))) s->vdelta = 0; }
         else s->vdelta = 0;
     };
 };
@@ -60,9 +60,9 @@ void topt(sqr *s, bool &wf, bool &uf, int &wt, int &ut)
     o[3] = SWS(s,-1,0,ssize);
     wf = true;
     uf = true;
-    if(SOLID(s))
+    if (SOLID(s))
     {
-        loopi(4) if(!SOLID(o[i]))
+        loopi(4) if (!SOLID(o[i]))
         {
             wf = false;
             wt = s->wtex;
@@ -72,10 +72,10 @@ void topt(sqr *s, bool &wf, bool &uf, int &wt, int &ut)
     }
     else
     {
-        loopi(4) if(!SOLID(o[i]))
+        loopi(4) if (!SOLID(o[i]))
         {
-            if(o[i]->floor<s->floor) { wt = s->wtex; wf = false; };
-            if(o[i]->ceil>s->ceil)   { ut = s->utex; uf = false; };
+            if (o[i]->floor<s->floor) { wt = s->wtex; wf = false; };
+            if (o[i]->ceil>s->ceil)   { ut = s->utex; uf = false; };
         };
     };
 };
@@ -84,7 +84,7 @@ void toptimize() // FIXME: only does 2x2, make atleast for 4x4 also
 {
     bool wf[4], uf[4];
     sqr *s[4];
-    for(int x = 2; x<ssize-4; x += 2) for(int y = 2; y<ssize-4; y += 2)
+    for (int x = 2; x<ssize-4; x += 2) for (int y = 2; y<ssize-4; y += 2)
     {
         s[0] = S(x,y);
         int wt = s[0]->wtex, ut = s[0]->utex;
@@ -94,8 +94,8 @@ void toptimize() // FIXME: only does 2x2, make atleast for 4x4 also
         topt(s[3] = SWS(s[0],1,0,ssize), wf[3], uf[3], wt, ut);
         loopi(4)
         {
-            if(wf[i]) s[i]->wtex = wt;
-            if(uf[i]) s[i]->utex = ut;
+            if (wf[i]) s[i]->wtex = wt;
+            if (uf[i]) s[i]->utex = ut;
         };
     };
 };
@@ -107,7 +107,7 @@ void writemap(char *mname, int msize, uchar *mdata)
     setnames(mname);
     backup(cgzname, bakname);
     FILE *f = fopen(cgzname, "wb");
-    if(!f) { console::out("could not write map to %s", cgzname); return; };
+    if (!f) { console::out("could not write map to %s", cgzname); return; };
     fwrite(mdata, 1, msize, f);
     fclose(f);
     console::out("wrote map %s as file %s", mname, cgzname);
@@ -117,7 +117,7 @@ uchar *readmap(char *mname, int *msize)
 {
     setnames(mname);
     uchar *mdata = (uchar *)loadfile(cgzname, msize);
-    if(!mdata) { console::out("could not read map %s", cgzname); return NULL; };
+    if (!mdata) { console::out("could not read map %s", cgzname); return NULL; };
     return mdata;
 }
 
@@ -125,26 +125,26 @@ uchar *readmap(char *mname, int *msize)
 // encoding and leaves out data for certain kinds of cubes, then zlib removes the
 // last bits of redundancy. Both passes contribute greatly to the miniscule map sizes.
 
-void save_world(char *mname)
+void save_world(const char *mname)
 {
     resettagareas();    // wouldn't be able to reproduce tagged areas otherwise
     voptimize();
     toptimize();
-    if(!*mname) mname = getclientmap();
+    if (!*mname) mname = getclientmap();
     setnames(mname);
     backup(cgzname, bakname);
     gzFile f = gzopen(cgzname, "wb9");
-    if(!f) { console::out("could not write map to %s", cgzname); return; };
+    if (!f) { console::out("could not write map to %s", cgzname); return; };
     hdr.version = MAPVERSION;
     hdr.numents = 0;
-    loopv(ents) if(ents[i].type!=NOTUSED) hdr.numents++;
+    loopv(ents) if (ents[i].type!=NOTUSED) hdr.numents++;
     header tmp = hdr;
     endianswap(&tmp.version, sizeof(int), 4);
     endianswap(&tmp.waterlevel, sizeof(int), 16);
     gzwrite(f, &tmp, sizeof(header));
     loopv(ents) 
     {
-        if(ents[i].type!=NOTUSED) 
+        if (ents[i].type!=NOTUSED) 
         {
             entity tmp = ents[i];
             endianswap(&tmp, sizeof(short), 4);
@@ -153,7 +153,7 @@ void save_world(char *mname)
     };
     sqr *t = NULL;
     int sc = 0;
-    #define spurge while(sc) { gzputc(f, 255); if(sc>255) { gzputc(f, 255); sc -= 255; } else { gzputc(f, sc); sc = 0; } };
+    #define spurge while (sc) { gzputc(f, 255); if (sc>255) { gzputc(f, 255); sc -= 255; } else { gzputc(f, sc); sc = 0; } };
     loopk(cubicsize)
     {
         sqr *s = &world[k];
@@ -164,9 +164,9 @@ void save_world(char *mname)
         // SOLID (5)
         // anything else (9)
 
-        if(SOLID(s))
+        if (SOLID(s))
         {
-            if(t && c(type) && c(wtex) && c(vdelta))
+            if (t && c(type) && c(wtex) && c(vdelta))
             {
                 sc++;
             }
@@ -180,7 +180,7 @@ void save_world(char *mname)
         }
         else
         {
-            if(t && c(type) && c(floor) && c(ceil) && c(ctex) && c(ftex) && c(utex) && c(wtex) && c(vdelta) && c(tag))
+            if (t && c(type) && c(floor) && c(ceil) && c(ctex) && c(ftex) && c(utex) && c(wtex) && c(vdelta) && c(tag))
             {
                 sc++;
             }
@@ -206,20 +206,20 @@ void save_world(char *mname)
     settagareas();
 };
 
-void load_world(char *mname)        // still supports all map formats that have existed since the earliest cube betas!
+void load_world(const char *mname)        // still supports all map formats that have existed since the earliest cube betas!
 {
     stopifrecording();
     cleardlights();
     pruneundos();
     setnames(mname);
     gzFile f = gzopen(cgzname, "rb9");
-    if(!f) { console::out("could not read map %s", cgzname); return; };
+    if (!f) { console::out("could not read map %s", cgzname); return; };
     gzread(f, &hdr, sizeof(header)-sizeof(int)*16);
     endianswap(&hdr.version, sizeof(int), 4);
-    if(strncmp(hdr.head, "CUBE", 4)!=0) fatal("while reading map: header malformatted");
-    if(hdr.version>MAPVERSION) fatal("this map requires a newer version of cube");
-    if(sfactor<SMALLEST_FACTOR || sfactor>LARGEST_FACTOR) fatal("illegal map size");
-    if(hdr.version>=4)
+    if (strncmp(hdr.head, "CUBE", 4)!=0) fatal("while reading map: header malformatted");
+    if (hdr.version>MAPVERSION) fatal("this map requires a newer version of cube");
+    if (sfactor<SMALLEST_FACTOR || sfactor>LARGEST_FACTOR) fatal("illegal map size");
+    if (hdr.version>=4)
     {
         gzread(f, &hdr.waterlevel, sizeof(int)*16);
         endianswap(&hdr.waterlevel, sizeof(int), 16);
@@ -235,10 +235,10 @@ void load_world(char *mname)        // still supports all map formats that have 
         gzread(f, &e, sizeof(persistent_entity));
         endianswap(&e, sizeof(short), 4);
         e.spawned = false;
-        if(e.type==LIGHT)
+        if (e.type==LIGHT)
         {
-            if(!e.attr2) e.attr2 = 255;  // needed for MAPVERSION<=2
-            if(e.attr1>32) e.attr1 = 32; // 12_03 and below
+            if (!e.attr2) e.attr2 = 255;  // needed for MAPVERSION<=2
+            if (e.attr1>32) e.attr1 = 32; // 12_03 and below
         };
     };
     free(world);
@@ -250,12 +250,12 @@ void load_world(char *mname)        // still supports all map formats that have 
     {
         sqr *s = &world[k];
         int type = gzgetc(f);
-        switch(type)
+        switch (type)
         {
             case 255:  
             {
                 int n = gzgetc(f);
-                for(int i = 0; i<n; i++, k++) memcpy(&world[k], t, sizeof(sqr));
+                for (int i = 0; i<n; i++, k++) memcpy(&world[k], t, sizeof(sqr));
                 k--;
                 break;
             };
@@ -271,7 +271,7 @@ void load_world(char *mname)        // still supports all map formats that have 
                 s->type = SOLID;
                 s->wtex = gzgetc(f);
                 s->vdelta = gzgetc(f);
-                if(hdr.version<=2) { gzgetc(f); gzgetc(f); };
+                if (hdr.version<=2) { gzgetc(f); gzgetc(f); };
                 s->ftex = DEFAULT_FLOOR;
                 s->ctex = DEFAULT_CEIL;
                 s->utex = s->wtex;
@@ -282,7 +282,7 @@ void load_world(char *mname)        // still supports all map formats that have 
             };
             default:
             {
-                if(type<0 || type>=MAXTYPE)
+                if (type<0 || type>=MAXTYPE)
                 {
                     sprintf_sd(t)("%d @ %d", type, k);
                     fatal("while reading map: type out of range: ", t);
@@ -290,11 +290,11 @@ void load_world(char *mname)        // still supports all map formats that have 
                 s->type = type;
                 s->floor = gzgetc(f);
                 s->ceil = gzgetc(f);
-                if(s->floor>=s->ceil) s->floor = s->ceil-1;  // for pre 12_13
+                if (s->floor>=s->ceil) s->floor = s->ceil-1;  // for pre 12_13
                 s->wtex = gzgetc(f);
                 s->ftex = gzgetc(f);
                 s->ctex = gzgetc(f);
-                if(hdr.version<=2) { gzgetc(f); gzgetc(f); };
+                if (hdr.version<=2) { gzgetc(f); gzgetc(f); };
                 s->vdelta = gzgetc(f);
                 s->utex = (hdr.version>=2) ? gzgetc(f) : s->wtex;
                 s->tag = (hdr.version>=5) ? gzgetc(f) : 0;
@@ -304,13 +304,13 @@ void load_world(char *mname)        // still supports all map formats that have 
         s->defer = 0;
         t = s;
         texuse[s->wtex] = 1;
-        if(!SOLID(s)) texuse[s->utex] = texuse[s->ftex] = texuse[s->ctex] = 1;
+        if (!SOLID(s)) texuse[s->utex] = texuse[s->ftex] = texuse[s->ctex] = 1;
     };
     gzclose(f);
     calclight();
     settagareas();
     int xs, ys;
-    //loopi(256) if(texuse) lookuptexture(i, xs, ys);
+    //loopi(256) if (texuse) lookuptexture(i, xs, ys);
     loopi(256) lookuptexture(i, xs, ys);
     console::out("read map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
     console::out("%s", hdr.maptitle);
@@ -318,12 +318,31 @@ void load_world(char *mname)        // still supports all map formats that have 
     loopl(256)
     {
         sprintf_sd(aliasname)("level_trigger_%d", l);     // can this be done smarter?
-        if(identexists(aliasname)) alias(aliasname, "");
+        if (cmd::identexists(aliasname)) cmd::alias(aliasname, "");
     };
-    execfile("data/default_map_settings.cfg");
-    execfile(pcfname);
-    execfile(mcfname);
+    cmd::execfile("data/default_map_settings.cfg");
+    cmd::execfile(pcfname);
+    cmd::execfile(mcfname);
 };
 
 COMMANDN(savemap, save_world, ARG_1STR);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

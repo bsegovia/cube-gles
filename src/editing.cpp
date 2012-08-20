@@ -9,12 +9,12 @@ bool editmode = false;
 // code assumes that these are kept inside MINBORD distance of the edge of the
 // map
 
-block sel =
+static block sel =
 {
-  variable("selx",  0, 0, 4096, &sel.x,  NULL, false),
-  variable("sely",  0, 0, 4096, &sel.y,  NULL, false),
-  variable("selxs", 0, 0, 4096, &sel.xs, NULL, false),
-  variable("selys", 0, 0, 4096, &sel.ys, NULL, false),
+  cmd::variable("selx",  0, 0, 4096, &sel.x,  NULL, false),
+  cmd::variable("sely",  0, 0, 4096, &sel.y,  NULL, false),
+  cmd::variable("selxs", 0, 0, 4096, &sel.xs, NULL, false),
+  cmd::variable("selys", 0, 0, 4096, &sel.ys, NULL, false),
 };
 
 int selh = 0;
@@ -36,9 +36,9 @@ VAR(editing,0,0,1);
 
 void toggleedit()
 {
-  if(player1->state==CS_DEAD) return;                 // do not allow dead players to edit to avoid state confusion
-  if(!editmode && !allowedittoggle()) return;         // not in most multiplayer modes
-  if(!(editmode = !editmode))
+  if (player1->state==CS_DEAD) return;                 // do not allow dead players to edit to avoid state confusion
+  if (!editmode && !client::allowedittoggle()) return;         // not in most client::multiplayer modes
+  if (!(editmode = !editmode))
   {
     settagareas();                                  // reset triggers to allow quick playtesting
     entinmap(player1);                              // find spawn closest to current floating pos
@@ -47,7 +47,7 @@ void toggleedit()
   {
     resettagareas();                                // clear trigger areas to allow them to be edited
     player1->health = 100;
-    if(m_classicsp) monsterclear();                 // all monsters back at their spawns for editing
+    if (m_classicsp) monsterclear();                 // all monsters back at their spawns for editing
     projreset();
   };
   keyrepeat(editmode);
@@ -61,27 +61,27 @@ void correctsel()                                       // ensures above invaria
 {
   selset = !OUTBORD(sel.x, sel.y);
   int bsize = ssize-MINBORD;
-  if(sel.xs+sel.x>bsize) sel.xs = bsize-sel.x;
-  if(sel.ys+sel.y>bsize) sel.ys = bsize-sel.y;
-  if(sel.xs<=0 || sel.ys<=0) selset = false;
+  if (sel.xs+sel.x>bsize) sel.xs = bsize-sel.x;
+  if (sel.ys+sel.y>bsize) sel.ys = bsize-sel.y;
+  if (sel.xs<=0 || sel.ys<=0) selset = false;
 };
 
 bool noteditmode()
 {
   correctsel();
-  if(!editmode) console::out("this function is only allowed in edit mode");
+  if (!editmode) console::out("this function is only allowed in edit mode");
   return !editmode;
 };
 
 bool noselection()
 {
-  if(!selset) console::out("no selection");
+  if (!selset) console::out("no selection");
   return !selset;
 };
 
-#define EDITSEL   if(noteditmode() || noselection()) return;
-#define EDITSELMP if(noteditmode() || noselection() || multiplayer()) return;
-#define EDITMP    if(noteditmode() || multiplayer()) return;
+#define EDITSEL   if (noteditmode() || noselection()) return;
+#define EDITSELMP if (noteditmode() || noselection() || client::multiplayer()) return;
+#define EDITMP    if (noteditmode() || client::multiplayer()) return;
 
 void selectpos(int x, int y, int xs, int ys)
 {
@@ -97,7 +97,7 @@ void makesel()
   sel = s;
   selh = max(lasth,ch);
   correctsel();
-  if(selset) rtex = *S(sel.x, sel.y);
+  if (selset) rtex = *S(sel.x, sel.y);
 };
 
 VAR(flrceil,0,0,2);
@@ -120,10 +120,10 @@ void cursorupdate()                                     // called every frame fr
   cx = (int)x;
   cy = (int)y;
 
-  if(OUTBORD(cx, cy)) return;
+  if (OUTBORD(cx, cy)) return;
   sqr *s = S(cx,cy);
 
-  if(fabs(sheight(s,s,z)-z)>1)                        // selected wall
+  if (fabs(sheight(s,s,z)-z)>1)                        // selected wall
   {
     x += x>player1->o.x ? 0.5f : -0.5f;             // find right wall cube
     y += y>player1->o.y ? 0.5f : -0.5f;
@@ -131,10 +131,10 @@ void cursorupdate()                                     // called every frame fr
     cx = (int)x;
     cy = (int)y;
 
-    if(OUTBORD(cx, cy)) return;
+    if (OUTBORD(cx, cy)) return;
   };
 
-  if(dragging) makesel();
+  if (dragging) makesel();
 
   const int GRIDSIZE = 5;
   const float GRIDW = 0.5f;
@@ -144,28 +144,28 @@ void cursorupdate()                                     // called every frame fr
 
   // render editing grid
 
-  for(int ix = cx-GRIDSIZE; ix<=cx+GRIDSIZE; ix++) for(int iy = cy-GRIDSIZE; iy<=cy+GRIDSIZE; iy++)
+  for (int ix = cx-GRIDSIZE; ix<=cx+GRIDSIZE; ix++) for (int iy = cy-GRIDSIZE; iy<=cy+GRIDSIZE; iy++)
   {
-    if(OUTBORD(ix, iy)) continue;
+    if (OUTBORD(ix, iy)) continue;
     sqr *s = S(ix,iy);
-    if(SOLID(s)) continue;
+    if (SOLID(s)) continue;
     float h1 = sheight(s, s, z);
     float h2 = sheight(s, SWS(s,1,0,ssize), z);
     float h3 = sheight(s, SWS(s,1,1,ssize), z);
     float h4 = sheight(s, SWS(s,0,1,ssize), z);
-    if(s->tag) linestyle(GRIDW, 0xFF, 0x40, 0x40);
-    else if(s->type==FHF || s->type==CHF) linestyle(GRIDW, 0x80, 0xFF, 0x80);
+    if (s->tag) linestyle(GRIDW, 0xFF, 0x40, 0x40);
+    else if (s->type==FHF || s->type==CHF) linestyle(GRIDW, 0x80, 0xFF, 0x80);
     else linestyle(GRIDW, 0x80, 0x80, 0x80);
     block b = { ix, iy, 1, 1 };
     box(b, h1, h2, h3, h4);
     linestyle(GRID8, 0x40, 0x40, 0xFF);
-    if(!(ix&GRIDM))   line(ix,   iy,   h1, ix,   iy+1, h4);
-    if(!((ix+1)&GRIDM)) line(ix+1, iy,   h2, ix+1, iy+1, h3);
-    if(!(iy&GRIDM))   line(ix,   iy,   h1, ix+1, iy,   h2);
-    if(!((iy+1)&GRIDM)) line(ix,   iy+1, h4, ix+1, iy+1, h3);
+    if (!(ix&GRIDM))   line(ix,   iy,   h1, ix,   iy+1, h4);
+    if (!((ix+1)&GRIDM)) line(ix+1, iy,   h2, ix+1, iy+1, h3);
+    if (!(iy&GRIDM))   line(ix,   iy,   h1, ix+1, iy,   h2);
+    if (!((iy+1)&GRIDM)) line(ix,   iy+1, h4, ix+1, iy+1, h3);
   };
 
-  if(!SOLID(s))
+  if (!SOLID(s))
   {
     float ih = sheight(s, s, z);
     linestyle(GRIDS, 0xFF, 0xFF, 0xFF);
@@ -176,7 +176,7 @@ void cursorupdate()                                     // called every frame fr
     ch = (int)ih;
   };
 
-  if(selset)
+  if (selset)
   {
     linestyle(GRIDS, 0xFF, 0x40, 0x40);
     box(sel, (float)selh, (float)selh, (float)selh, (float)selh);
@@ -192,7 +192,7 @@ void pruneundos(int maxremain)         // bound memory
   loopvrev(undos)
   {
     t += undos[i]->xs*undos[i]->ys*sizeof(sqr);
-    if(t>maxremain) free(undos.remove(i));
+    if (t>maxremain) free(undos.remove(i));
   };
 };
 
@@ -205,7 +205,7 @@ void makeundo()
 void editundo()
 {
   EDITMP;
-  if(undos.empty()) { console::out("nothing more to undo"); return; };
+  if (undos.empty()) { console::out("nothing more to undo"); return; };
   block *p = undos.pop();
   blockpaste(*p);
   free(p);
@@ -216,18 +216,18 @@ static block *copybuf = NULL;
 void copy()
 {
   EDITSELMP;
-  if(copybuf) free(copybuf);
+  if (copybuf) free(copybuf);
   copybuf = blockcopy(sel);
 };
 
 void paste()
 {
   EDITMP;
-  if(!copybuf) { console::out("nothing to paste"); return; };
+  if (!copybuf) { console::out("nothing to paste"); return; };
   sel.xs = copybuf->xs;
   sel.ys = copybuf->ys;
   correctsel();
-  if(!selset || sel.xs!=copybuf->xs || sel.ys!=copybuf->ys) { console::out("incorrect selection"); return; };
+  if (!selset || sel.xs!=copybuf->xs || sel.ys!=copybuf->ys) { console::out("incorrect selection"); return; };
   makeundo();
   copybuf->x = sel.x;
   copybuf->y = sel.y;
@@ -239,11 +239,11 @@ void tofronttex()                                       // maintain most recentl
   loopi(3)
   {
     int c = curedittex[i];
-    if(c>=0)
+    if (c>=0)
     {
       uchar *p = hdr.texlists[i];
       int t = p[c];
-      for(int a = c-1; a>=0; a--) p[a+1] = p[a];
+      for (int a = c-1; a>=0; a--) p[a+1] = p[a];
       p[0] = t;
       curedittex[i] = -1;
     };
@@ -252,7 +252,7 @@ void tofronttex()                                       // maintain most recentl
 
 void editdrag(bool isdown)
 {
-  if((dragging = isdown) != 0)
+  if ((dragging = isdown) != 0)
   {
     lastx = cx;
     lasty = cy;
@@ -269,15 +269,15 @@ void editdrag(bool isdown)
 
 void editheightxy(bool isfloor, int amount, block &sel)
 {
-  loopselxy(if(isfloor)
+  loopselxy(if (isfloor)
       {
       s->floor += amount;
-      if(s->floor>=s->ceil) s->floor = s->ceil-1;
+      if (s->floor>=s->ceil) s->floor = s->ceil-1;
       }
       else
       {
       s->ceil += amount;
-      if(s->ceil<=s->floor) s->ceil = s->floor+1;
+      if (s->ceil<=s->floor) s->ceil = s->floor+1;
       });
 };
 
@@ -286,14 +286,14 @@ void editheight(int flr, int amount)
   EDITSEL;
   bool isfloor = flr==0;
   editheightxy(isfloor, amount, sel);
-  addmsg(1, 7, SV_EDITH, sel.x, sel.y, sel.xs, sel.ys, isfloor, amount);
+  client::addmsg(1, 7, SV_EDITH, sel.x, sel.y, sel.xs, sel.ys, isfloor, amount);
 };
 
 COMMAND(editheight, ARG_2INT);
 
 void edittexxy(int type, int t, block &sel)
 {
-  loopselxy(switch(type)
+  loopselxy(switch (type)
       {
       case 0: s->ftex = t; break;
       case 1: s->wtex = t; break;
@@ -305,15 +305,15 @@ void edittexxy(int type, int t, block &sel)
 void edittex(int type, int dir)
 {
   EDITSEL;
-  if(type<0 || type>3) return;
-  if(type!=lasttype) { tofronttex(); lasttype = type; };
+  if (type<0 || type>3) return;
+  if (type!=lasttype) { tofronttex(); lasttype = type; };
   int atype = type==3 ? 1 : type;
   int i = curedittex[atype];
   i = i<0 ? 0 : i+dir;
   curedittex[atype] = i = min(max(i, 0), 255);
   int t = lasttex = hdr.texlists[atype][i];
   edittexxy(type, t, sel);
-  addmsg(1, 7, SV_EDITT, sel.x, sel.y, sel.xs, sel.ys, type, t);
+  client::addmsg(1, 7, SV_EDITT, sel.x, sel.y, sel.xs, sel.ys, type, t);
 };
 
 void replace()
@@ -322,12 +322,12 @@ void replace()
   loop(x,ssize) loop(y,ssize)
   {
     sqr *s = S(x, y);
-    switch(lasttype)
+    switch (lasttype)
     {
-      case 0: if(s->ftex == rtex.ftex) s->ftex = lasttex; break;
-      case 1: if(s->wtex == rtex.wtex) s->wtex = lasttex; break;
-      case 2: if(s->ctex == rtex.ctex) s->ctex = lasttex; break;
-      case 3: if(s->utex == rtex.utex) s->utex = lasttex; break;
+      case 0: if (s->ftex == rtex.ftex) s->ftex = lasttex; break;
+      case 1: if (s->wtex == rtex.wtex) s->wtex = lasttex; break;
+      case 2: if (s->ctex == rtex.ctex) s->ctex = lasttex; break;
+      case 3: if (s->utex == rtex.utex) s->utex = lasttex; break;
     };
   };
   block b = { 0, 0, ssize, ssize };
@@ -342,11 +342,11 @@ void edittypexy(int type, block &sel)
 void edittype(int type)
 {
   EDITSEL;
-  if(type==CORNER && (sel.xs!=sel.ys || sel.xs==3 || sel.xs>4) &&
+  if (type==CORNER && (sel.xs!=sel.ys || sel.xs==3 || sel.xs>4) &&
       (sel.xs!=8 || sel.x&~-sel.xs || sel.y&~-sel.ys))
   { console::out("corner selection must be power of 2 aligned"); return; };
   edittypexy(type, sel);
-  addmsg(1, 6, SV_EDITS, sel.x, sel.y, sel.xs, sel.ys, type);
+  client::addmsg(1, 6, SV_EDITS, sel.x, sel.y, sel.xs, sel.ys, type);
 };
 
 void heightfield(int t) { edittype(t==0 ? FHF : CHF); };
@@ -362,13 +362,13 @@ void editequalisexy(bool isfloor, block &sel)
   int low = 127, hi = -128;
   loopselxy(
       {
-      if(s->floor<low) low = s->floor;
-      if(s->ceil>hi) hi = s->ceil;
+      if (s->floor<low) low = s->floor;
+      if (s->ceil>hi) hi = s->ceil;
       });
   loopselxy(
       {
-      if(isfloor) s->floor = low; else s->ceil = hi;
-      if(s->floor>=s->ceil) s->floor = s->ceil-1;
+      if (isfloor) s->floor = low; else s->ceil = hi;
+      if (s->floor>=s->ceil) s->floor = s->ceil-1;
       });
 };
 
@@ -377,7 +377,7 @@ void equalize(int flr)
   bool isfloor = flr==0;
   EDITSEL;
   editequalisexy(isfloor, sel);
-  addmsg(1, 6, SV_EDITE, sel.x, sel.y, sel.xs, sel.ys, isfloor);
+  client::addmsg(1, 6, SV_EDITE, sel.x, sel.y, sel.xs, sel.ys, isfloor);
 };
 
 COMMAND(equalize, ARG_1INT);
@@ -392,7 +392,7 @@ void setvdelta(int delta)
 {
   EDITSEL;
   setvdeltaxy(delta, sel);
-  addmsg(1, 6, SV_EDITD, sel.x, sel.y, sel.xs, sel.ys, delta);
+  client::addmsg(1, 6, SV_EDITD, sel.x, sel.y, sel.xs, sel.ys, delta);
 };
 
 const int MAXARCHVERT = 50;
@@ -401,12 +401,12 @@ bool archvinit = false;
 
 void archvertex(int span, int vert, int delta)
 {
-  if(!archvinit)
+  if (!archvinit)
   {
     archvinit = true;
     loop(s,MAXARCHVERT) loop(v,MAXARCHVERT) archverts[s][v] = 0;
   };
-  if(span>=MAXARCHVERT || vert>=MAXARCHVERT || span<0 || vert<0) return;
+  if (span>=MAXARCHVERT || vert>=MAXARCHVERT || span<0 || vert<0) return;
   archverts[span][vert] = delta;
 };
 
@@ -415,8 +415,8 @@ void arch(int sidedelta, int _a)
   EDITSELMP;
   sel.xs++;
   sel.ys++;
-  if(sel.xs>MAXARCHVERT) sel.xs = MAXARCHVERT;
-  if(sel.ys>MAXARCHVERT) sel.ys = MAXARCHVERT;
+  if (sel.xs>MAXARCHVERT) sel.xs = MAXARCHVERT;
+  if (sel.ys>MAXARCHVERT) sel.ys = MAXARCHVERT;
   loopselxy(s->vdelta =
       sel.xs>sel.ys
       ? (archverts[sel.xs-1][x] + (y==0 || y==sel.ys-1 ? sidedelta : 0))
@@ -428,8 +428,8 @@ void slope(int xd, int yd)
 {
   EDITSELMP;
   int off = 0;
-  if(xd<0) off -= xd*sel.xs;
-  if(yd<0) off -= yd*sel.ys;
+  if (xd<0) off -= xd*sel.xs;
+  if (yd<0) off -= yd*sel.ys;
   sel.xs++;
   sel.ys++;
   loopselxy(s->vdelta = xd*x+yd*y+off);
@@ -453,9 +453,9 @@ void perlin(int scale, int seed, int psize)
 };
 
 VARF(fullbright, 0, 0, 1,
-    if(fullbright)
+    if (fullbright)
     {
-    if(noteditmode()) return;
+    if (noteditmode()) return;
     loopi(mipsize) world[i].r = world[i].g = world[i].b = 176;
     };
     );
@@ -485,4 +485,23 @@ COMMAND(paste, ARG_NONE);
 COMMAND(edittex, ARG_2INT);
 COMMAND(newent, ARG_5STR);
 COMMAND(perlin, ARG_3INT);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 

@@ -16,27 +16,27 @@ void renderclient(dynent *d, bool team, const char *mdlname, bool hellpig, float
   float mz = d->o.z-d->eyeheight+1.55f*scale;
   int cast = (int) (uintptr_t) d;
   int basetime = -(((int)cast)&0xFFF);
-  if(d->state==CS_DEAD)
+  if (d->state==CS_DEAD)
   {
     int r;
-    if(hellpig) { n = 2; r = range[3]; } else { n = (int)cast%3; r = range[n]; };
+    if (hellpig) { n = 2; r = range[3]; } else { n = (int)cast%3; r = range[n]; };
     basetime = d->lastaction;
     int t = lastmillis-d->lastaction;
-    if(t<0 || t>20000) return;
-    if(t>(r-1)*100) { n += 4; if(t>(r+10)*100) { t -= (r+10)*100; mz -= t*t/10000000000.0f*t; }; };
-    if(mz<-1000) return;
+    if (t<0 || t>20000) return;
+    if (t>(r-1)*100) { n += 4; if (t>(r+10)*100) { t -= (r+10)*100; mz -= t*t/10000000000.0f*t; }; };
+    if (mz<-1000) return;
     //mdl = (((int)d>>6)&1)+1;
     //mz = d->o.z-d->eyeheight+0.2f;
     //scale = 1.2f;
   }
-  else if(d->state==CS_EDITING)                   { n = 16; }
-  else if(d->state==CS_LAGGED)                    { n = 17; }
-  else if(d->monsterstate==M_ATTACKING)           { n = 8;  }
-  else if(d->monsterstate==M_PAIN)                { n = 10; } 
-  else if((!d->move && !d->strafe) || !d->moving) { n = 12; } 
-  else if(!d->onfloor && d->timeinair>100)        { n = 18; }
-  else                                            { n = 14; speed = 1200/d->maxspeed*scale; if(hellpig) speed = 300/d->maxspeed;  }; 
-  if(hellpig) { n++; scale *= 32; mz -= 1.9f; };
+  else if (d->state==CS_EDITING)                   { n = 16; }
+  else if (d->state==CS_LAGGED)                    { n = 17; }
+  else if (d->monsterstate==M_ATTACKING)           { n = 8;  }
+  else if (d->monsterstate==M_PAIN)                { n = 10; } 
+  else if ((!d->move && !d->strafe) || !d->moving) { n = 12; } 
+  else if (!d->onfloor && d->timeinair>100)        { n = 18; }
+  else                                            { n = 14; speed = 1200/d->maxspeed*scale; if (hellpig) speed = 300/d->maxspeed;  }; 
+  if (hellpig) { n++; scale *= 32; mz -= 1.9f; };
   rendermodel(mdlname, frame[n], range[n], 0, 1.5f, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, 0, basetime);
 };
 
@@ -45,7 +45,7 @@ extern int democlientnum;
 void renderclients()
 {
   dynent *d;
-  loopv(players) if((d = players[i]) && (!demoplayback || i!=democlientnum))
+  loopv(players) if ((d = players[i]) && (!demoplayback || i!=democlientnum))
     renderclient(d, isteam(player1->team, d->team), "monster/ogro", false, 1.f);
 };
 
@@ -80,25 +80,25 @@ int timeremain = 0;
 
 void addteamscore(dynent *d)
 {
-  if(!d) return;
-  loopi(teamsused) if(strcmp(teamname[i], d->team)==0) { teamscore[i] += d->frags; return; };
-  if(teamsused==maxteams) return;
+  if (!d) return;
+  loopi(teamsused) if (strcmp(teamname[i], d->team)==0) { teamscore[i] += d->frags; return; };
+  if (teamsused==maxteams) return;
   teamname[teamsused] = d->team;
   teamscore[teamsused++] = d->frags;
 };
 
 void renderscores()
 {
-  if(!scoreson) return;
+  if (!scoreson) return;
   scorelines.setsize(0);
-  if(!demoplayback) renderscore(player1);
-  loopv(players) if(players[i]) renderscore(players[i]);
+  if (!demoplayback) renderscore(player1);
+  loopv(players) if (players[i]) renderscore(players[i]);
   menu::sort(0, scorelines.length());
-  if(m_teammode)
+  if (m_teammode)
   {
     teamsused = 0;
     loopv(players) addteamscore(players[i]);
-    if(!demoplayback) addteamscore(player1);
+    if (!demoplayback) addteamscore(player1);
     teamscores[0] = 0;
     loopj(teamsused)
     {
@@ -114,19 +114,19 @@ void renderscores()
 
 void sendmap(char *mapname)
 {
-  if(*mapname) save_world(mapname);
+  if (*mapname) save_world(mapname);
   changemap(mapname);
   mapname = getclientmap();
   int mapsize;
   uchar *mapdata = readmap(mapname, &mapsize); 
-  if(!mapdata) return;
+  if (!mapdata) return;
   ENetPacket *packet = enet_packet_create(NULL, MAXTRANS + mapsize, ENET_PACKET_FLAG_RELIABLE);
   uchar *start = packet->data;
   uchar *p = start+2;
   putint(p, SV_SENDMAP);
   sendstring(mapname, p);
   putint(p, mapsize);
-  if(65535 - (p - start) < mapsize)
+  if (65535 - (p - start) < mapsize)
   {
     console::out("map %s is too large to send", mapname);
     free(mapdata);
@@ -138,10 +138,10 @@ void sendmap(char *mapname)
   free(mapdata); 
   *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
   enet_packet_resize(packet, p-start);
-  sendpackettoserv(packet);
+  client::sendpackettoserv(packet);
   console::out("sending map %s to server...", mapname);
   sprintf_sd(msg)("[map %s uploaded to server, \"getmap\" to receive it]", mapname);
-  toserver(msg);
+  client::toserver(msg);
 }
 
 void getmap()
@@ -152,7 +152,7 @@ void getmap()
   putint(p, SV_RECVMAP);
   *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
   enet_packet_resize(packet, p-start);
-  sendpackettoserv(packet);
+  client::sendpackettoserv(packet);
   console::out("requesting map from server...");
 }
 

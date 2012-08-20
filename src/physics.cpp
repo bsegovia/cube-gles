@@ -7,17 +7,17 @@
 
 bool plcollide(dynent *d, dynent *o, float &headspace, float &hi, float &lo) // collide with player or monster
 {
-    if(o->state!=CS_ALIVE) return true;
+    if (o->state!=CS_ALIVE) return true;
     const float r = o->radius+d->radius;
-    if(fabs(o->o.x-d->o.x)<r && fabs(o->o.y-d->o.y)<r) 
+    if (fabs(o->o.x-d->o.x)<r && fabs(o->o.y-d->o.y)<r) 
     {
-        if(d->o.z-d->eyeheight<o->o.z-o->eyeheight) { if(o->o.z-o->eyeheight<hi) hi = o->o.z-o->eyeheight-1; }
-        else if(o->o.z+o->aboveeye>lo) lo = o->o.z+o->aboveeye+1;
+        if (d->o.z-d->eyeheight<o->o.z-o->eyeheight) { if (o->o.z-o->eyeheight<hi) hi = o->o.z-o->eyeheight-1; }
+        else if (o->o.z+o->aboveeye>lo) lo = o->o.z+o->aboveeye+1;
     
-        if(fabs(o->o.z-d->o.z)<o->aboveeye+d->eyeheight) return false;
-        if(d->monsterstate) return false; // hack
+        if (fabs(o->o.z-d->o.z)<o->aboveeye+d->eyeheight) return false;
+        if (d->monsterstate) return false; // hack
         headspace = d->o.z-o->o.z-o->aboveeye-d->eyeheight;
-        if(headspace<0) headspace = 10;        
+        if (headspace<0) headspace = 10;        
     };
     return true;
 };
@@ -30,7 +30,7 @@ bool cornertest(int mip, int x, int y, int dx, int dy, int &bx, int &by, int &bs
     mip++;
     x /= 2;
     y /= 2;
-    if(SWS(wmip[mip], x, y, ssize>>mip)->type==CORNER)
+    if (SWS(wmip[mip], x, y, ssize>>mip)->type==CORNER)
     {
         bx = x<<mip;
         by = y<<mip;
@@ -45,15 +45,15 @@ void mmcollide(dynent *d, float &hi, float &lo)           // collide with a mapm
     loopv(ents)
     {
         entity &e = ents[i];
-        if(e.type!=MAPMODEL) continue;
+        if (e.type!=MAPMODEL) continue;
         mapmodelinfo &mmi = getmminfo(e.attr2);
-        if(!&mmi || !mmi.h) continue;
+        if (!&mmi || !mmi.h) continue;
         const float r = mmi.rad+d->radius;
-        if(fabs(e.x-d->o.x)<r && fabs(e.y-d->o.y)<r)
+        if (fabs(e.x-d->o.x)<r && fabs(e.y-d->o.y)<r)
         { 
             float mmz = (float)(S(e.x, e.y)->floor+mmi.zoff+e.attr3);
-            if(d->o.z-d->eyeheight<mmz) { if(mmz<hi) hi = mmz; }
-            else if(mmz+mmi.h>lo) lo = mmz+mmi.h;
+            if (d->o.z-d->eyeheight<mmz) { if (mmz<hi) hi = mmz; }
+            else if (mmz+mmi.h>lo) lo = mmz+mmi.h;
         };
     };
 };
@@ -75,13 +75,13 @@ bool collide(dynent *d, bool spawn, float drop, float rise)
     float hi = 127, lo = -128;
     float minfloor = (d->monsterstate && !spawn && d->health>100) ? d->o.z-d->eyeheight-4.5f : -1000.0f;  // big monsters are afraid of heights, unless angry :)
 
-    for(int x = x1; x<=x2; x++) for(int y = y1; y<=y2; y++)     // collide with map
+    for (int x = x1; x<=x2; x++) for (int y = y1; y<=y2; y++)     // collide with map
     {
-        if(OUTBORD(x,y)) return false;
+        if (OUTBORD(x,y)) return false;
         sqr *s = S(x,y);
         float ceil = s->ceil;
         float floor = s->floor;
-        switch(s->type)
+        switch (s->type)
         {
             case SOLID:
                 return false;
@@ -89,7 +89,7 @@ bool collide(dynent *d, bool spawn, float drop, float rise)
             case CORNER:
             {
                 int bx = x, by = y, bs = 1;
-                if((x==x1 && y==y1 && cornertest(0, x, y, -1, -1, bx, by, bs) && fx1-bx+fy1-by<=bs)
+                if ((x==x1 && y==y1 && cornertest(0, x, y, -1, -1, bx, by, bs) && fx1-bx+fy1-by<=bs)
                 || (x==x2 && y==y1 && cornertest(0, x, y,  1, -1, bx, by, bs) && fx2-bx>=fy1-by)
                 || (x==x1 && y==y2 && cornertest(0, x, y, -1,  1, bx, by, bs) && fx1-bx<=fy2-by)
                 || (x==x2 && y==y2 && cornertest(0, x, y,  1,  1, bx, by, bs) && fx2-bx+fy2-by>=bs))
@@ -105,30 +105,30 @@ bool collide(dynent *d, bool spawn, float drop, float rise)
                 ceil += (s->vdelta+S(x+1,y)->vdelta+S(x,y+1)->vdelta+S(x+1,y+1)->vdelta)/16.0f;
 
         };
-        if(ceil<hi) hi = ceil;
-        if(floor>lo) lo = floor;
-        if(floor<minfloor) return false;   
+        if (ceil<hi) hi = ceil;
+        if (floor>lo) lo = floor;
+        if (floor<minfloor) return false;   
     };
 
-    if(hi-lo < d->eyeheight+d->aboveeye) return false;
+    if (hi-lo < d->eyeheight+d->aboveeye) return false;
 
     float headspace = 10;
     loopv(players)       // collide with other players
     {
         dynent *o = players[i]; 
-        if(!o || o==d) continue;
-        if(!plcollide(d, o, headspace, hi, lo)) return false;
+        if (!o || o==d) continue;
+        if (!plcollide(d, o, headspace, hi, lo)) return false;
     };
-    if(d!=player1) if(!plcollide(d, player1, headspace, hi, lo)) return false;
+    if (d!=player1) if (!plcollide(d, player1, headspace, hi, lo)) return false;
     dvector &v = getmonsters();
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
-    loopv(v) if(!vreject(d->o, v[i]->o, 7.0f) && d!=v[i] && !plcollide(d, v[i], headspace, hi, lo)) return false; 
+    loopv(v) if (!vreject(d->o, v[i]->o, 7.0f) && d!=v[i] && !plcollide(d, v[i], headspace, hi, lo)) return false; 
     headspace -= 0.01f;
     
     mmcollide(d, hi, lo);    // collide with map models
 
-    if(spawn)
+    if (spawn)
     {
         d->o.z = lo+d->eyeheight;       // just drop to floor (sideeffect)
         d->onfloor = true;
@@ -136,10 +136,10 @@ bool collide(dynent *d, bool spawn, float drop, float rise)
     else
     {
         const float space = d->o.z-d->eyeheight-lo;
-        if(space<0)
+        if (space<0)
         {
-            if(space>-0.01) d->o.z = lo+d->eyeheight;   // stick on step
-            else if(space>-1.26f) d->o.z += rise;       // rise thru stair
+            if (space>-0.01) d->o.z = lo+d->eyeheight;   // stick on step
+            else if (space>-1.26f) d->o.z += rise;       // rise thru stair
             else return false;
         }
         else
@@ -148,9 +148,9 @@ bool collide(dynent *d, bool spawn, float drop, float rise)
         };
 
         const float space2 = hi-(d->o.z+d->aboveeye);
-        if(space2<0)
+        if (space2<0)
         {
-            if(space2<-0.1) return false;     // hack alert!
+            if (space2<-0.1) return false;     // hack alert!
             d->o.z = hi-d->aboveeye;          // glue to ceiling
             d->vel.z = 0;                     // cancel out jumping velocity
         };
@@ -169,7 +169,7 @@ const int MINFRAMETIME = 20; // physics always simulated at 50fps or better
 
 void physicsframe()          // optimally schedule physics frames inside the graphics frames
 {
-    if(curtime>=MINFRAMETIME)
+    if (curtime>=MINFRAMETIME)
     {
         int faketime = curtime+physicsfraction;
         physicsrepeat = faketime/MINFRAMETIME;
@@ -182,8 +182,8 @@ void physicsframe()          // optimally schedule physics frames inside the gra
 };
 
 // main physics routine, moves a player/monster for a curtime step
-// moveres indicated the physics precision (which is lower for monsters and multiplayer prediction)
-// local is false for multiplayer prediction
+// moveres indicated the physics precision (which is lower for monsters and client::multiplayer prediction)
+// local is false for client::multiplayer prediction
 
 void moveplayer(dynent *pl, int moveres, bool local, int curtime)
 {
@@ -196,7 +196,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     d.y = (float)(pl->move*sin(rad(pl->yaw-90)));
     d.z = 0;
 
-    if(floating || water)
+    if (floating || water)
     {
         d.x *= (float)cos(rad(pl->pitch));
         d.y *= (float)cos(rad(pl->pitch));
@@ -220,27 +220,27 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     pl->blocked = false;
     pl->moving = true;
 
-    if(floating)                // just apply velocity
+    if (floating)                // just apply velocity
     {
         vadd(pl->o, d);
-        if(pl->jumpnext) { pl->jumpnext = false; pl->vel.z = 2;    }
+        if (pl->jumpnext) { pl->jumpnext = false; pl->vel.z = 2;    }
     }
     else                        // apply velocity with collision
     {
-        if(pl->onfloor || water)
+        if (pl->onfloor || water)
         {
-            if(pl->jumpnext)
+            if (pl->jumpnext)
             {
                 pl->jumpnext = false;
                 pl->vel.z = 1.7f;       // physics impulse upwards
-                if(water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
-                if(local) sound::playc(S_JUMP);
-                else if(pl->monsterstate) sound::play(S_JUMP, &pl->o);
+                if (water) { pl->vel.x /= 8; pl->vel.y /= 8; };      // dampen velocity change even harder, gives correct water feel
+                if (local) sound::playc(S_JUMP);
+                else if (pl->monsterstate) sound::play(S_JUMP, &pl->o);
             }
-            else if(pl->timeinair>800)  // if we land after long time must have been a high jump, make thud sound
+            else if (pl->timeinair>800)  // if we land after long time must have been a high jump, make thud sound
             {
-                if(local) sound::playc(S_LAND);
-                else if(pl->monsterstate) sound::play(S_LAND, &pl->o);
+                if (local) sound::playc(S_LAND);
+                else if (pl->monsterstate) sound::play(S_LAND, &pl->o);
             };
             pl->timeinair = 0;
         }
@@ -252,7 +252,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
         const float gravity = 20;
         const float f = 1.0f/moveres;
         float dropf = ((gravity-1)+pl->timeinair/15.0f);        // incorrect, but works fine
-        if(water) { dropf = 5; pl->timeinair = 0; };            // float slowly down in water
+        if (water) { dropf = 5; pl->timeinair = 0; };            // float slowly down in water
         const float drop = dropf*curtime/gravity/100/moveres;   // at high fps, gravity kicks in too fast
         const float rise = speed/moveres/1.2f;                  // extra smoothness when lifting up stairs
 
@@ -262,21 +262,21 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
             pl->o.x += f*d.x;
             pl->o.y += f*d.y;
             pl->o.z += f*d.z;
-            if(collide(pl, false, drop, rise)) continue;                     
+            if (collide(pl, false, drop, rise)) continue;                     
             // player stuck, try slide along y axis
             pl->blocked = true;
             pl->o.x -= f*d.x;
-            if(collide(pl, false, drop, rise)) { d.x = 0; continue; };   
+            if (collide(pl, false, drop, rise)) { d.x = 0; continue; };   
             pl->o.x += f*d.x;
             // still stuck, try x axis
             pl->o.y -= f*d.y;
-            if(collide(pl, false, drop, rise)) { d.y = 0; continue; };       
+            if (collide(pl, false, drop, rise)) { d.y = 0; continue; };       
             pl->o.y += f*d.y;
             // try just dropping down
             pl->moving = false;
             pl->o.x -= f*d.x;
             pl->o.y -= f*d.y;
-            if(collide(pl, false, drop, rise)) { d.y = d.x = 0; continue; }; 
+            if (collide(pl, false, drop, rise)) { d.y = d.x = 0; continue; }; 
             pl->o.z -= f*d.z;
             break;
         };
@@ -284,7 +284,7 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
 
     // detect wether player is outside map, used for skipping zbuffer clear mostly
 
-    if(pl->o.x < 0 || pl->o.x >= ssize || pl->o.y <0 || pl->o.y > ssize)
+    if (pl->o.x < 0 || pl->o.x >= ssize || pl->o.y <0 || pl->o.y > ssize)
     {
         pl->outsidemap = true;
     }
@@ -298,21 +298,21 @@ void moveplayer(dynent *pl, int moveres, bool local, int curtime)
     
     // automatically apply smooth roll when strafing
 
-    if(pl->strafe==0) 
+    if (pl->strafe==0) 
     {
         pl->roll = pl->roll/(1+(float)sqrt((float)curtime)/25);
     }
     else
     {
         pl->roll += pl->strafe*curtime/-30.0f;
-        if(pl->roll>maxroll) pl->roll = (float)maxroll;
-        if(pl->roll<-maxroll) pl->roll = (float)-maxroll;
+        if (pl->roll>maxroll) pl->roll = (float)maxroll;
+        if (pl->roll<-maxroll) pl->roll = (float)-maxroll;
     };
     
     // play sounds on water transitions
     
-    if(!pl->inwater && water) { sound::play(S_SPLASH2, &pl->o); pl->vel.z = 0; }
-    else if(pl->inwater && !water) sound::play(S_SPLASH1, &pl->o);
+    if (!pl->inwater && water) { sound::play(S_SPLASH2, &pl->o); pl->vel.z = 0; }
+    else if (pl->inwater && !water) sound::play(S_SPLASH1, &pl->o);
     pl->inwater = water;
 };
 
@@ -320,4 +320,23 @@ void moveplayer(dynent *pl, int moveres, bool local)
 {
     loopi(physicsrepeat) moveplayer(pl, moveres, local, i ? curtime/physicsrepeat : curtime-curtime/physicsrepeat*(physicsrepeat-1));
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
