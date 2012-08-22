@@ -40,8 +40,8 @@ void toggleedit()
   if (!editmode && !client::allowedittoggle()) return;         // not in most client::multiplayer modes
   if (!(editmode = !editmode))
   {
-    settagareas();                                  // reset triggers to allow quick playtesting
-    entinmap(player1);                              // find spawn closest to current floating pos
+    settagareas(); // reset triggers to allow quick playtesting
+    game::entinmap(player1); // find spawn closest to current floating pos
   }
   else
   {

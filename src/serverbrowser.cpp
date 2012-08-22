@@ -238,7 +238,7 @@ void refreshservers(void)
       else
         sprintf_s(si.full)("%d\t%d\t%s, %s: %s %s",
           si.ping, si.numplayers, si.map[0] ? si.map : "[unknown]",
-          modestr(si.mode), si.name, si.sdesc);
+          game::modestr(si.mode), si.name, si.sdesc);
     } else
       sprintf_s(si.full)(si.address.host != ENET_HOST_ANY ?
         "%s [waiting for server response]" :

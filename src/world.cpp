@@ -167,7 +167,7 @@ int closestent()        // used for delent and edit mode ent display
     {
         entity &e = ents[i];
         if (e.type==NOTUSED) continue;
-        vec v = { e.x, e.y, e.z };
+        vec v = { float(e.x), float(e.y), float(e.z) };
         vdist(dist, t, player1->o, v);
         if (dist<bdist)
         {
@@ -212,7 +212,8 @@ int findtype(char *what)
 entity *newentity(int x, int y, int z, char *what, int v1, int v2, int v3, int v4)
 {
     int type = findtype(what);
-    persistent_entity e = { x, y, z, v1, type, v2, v3, v4 };
+    persistent_entity e = {short(x), short(y), short(z),short(v1),
+      uchar(type), uchar(v2), uchar(v3), uchar(v4)};
     switch (type)
     {
         case LIGHT:
@@ -352,7 +353,7 @@ void empty_world(int factor, bool force)    // main empty world creation routine
     };
     
     calclight();
-    startmap("base/unnamed");
+    game::startmap("base/unnamed");
     if (oldworld)
     {
         free(oldworld);

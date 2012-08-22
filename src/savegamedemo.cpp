@@ -33,7 +33,7 @@ void stop()
     demorecording = false;
     demoplayback = false;
     demoloading = false;
-    loopv(playerhistory) zapdynent(playerhistory[i]);
+    loopv(playerhistory) game::zapdynent(playerhistory[i]);
     playerhistory.setsize(0);
 };
 
@@ -48,7 +48,7 @@ void savestate(char *fn)
     gzputc(f, islittleendian);  
     gzputi(SAVEGAMEVERSION);
     gzputi(sizeof(dynent));
-    gzwrite(f, getclientmap(), _MAXDEFSTR);
+    gzwrite(f, game::getclientmap(), _MAXDEFSTR);
     gzputi(gamemode);
     gzputi(ents.length());
     loopv(ents) gzputc(f, ents[i].spawned);
@@ -88,7 +88,7 @@ void loadstate(char *fn)
     string mapname;
     gzread(f, mapname, _MAXDEFSTR);
     nextmode = gzgeti();
-    changemap(mapname); // continue below once map has been loaded and client & server have updated 
+    client::changemap(mapname); // continue below once map has been loaded and client & server have updated 
     return;
     out:    
     console::out("aborting: savegame/demo from a different version of cube or cpu architecture");
@@ -137,7 +137,7 @@ void loadgamerest()
     int nplayers = gzgeti();
     loopi(nplayers) if (!gzget())
     {
-        dynent *d = getclient(i);
+        dynent *d = game::getclient(i);
         assert(d);
         gzread(f, d, sizeof(dynent));        
     };
@@ -207,7 +207,7 @@ void stopreset()
 {
     console::out("demo stopped (%d msec elapsed)", lastmillis-starttime);
     stop();
-    loopv(players) zapdynent(players[i]);
+    loopv(players) game::zapdynent(players[i]);
     client::disconnect(0, 0);
 };
 
@@ -230,7 +230,7 @@ void startdemo()
     demoplayback = true;
     starttime = lastmillis;
     console::out("now playing demo");
-    dynent *d = getclient(democlientnum);
+    dynent *d = game::getclient(democlientnum);
     assert(d);
     *d = *player1;
     readdemotime();
@@ -302,13 +302,13 @@ void demoplaybackstep()
         // insert latest copy of player into history
         if (extras && (playerhistory.empty() || playerhistory.last()->lastupdate!=playbacktime))
         {
-            dynent *d = newdynent();
+            dynent *d = game::newdynent();
             *d = *target;
             d->lastupdate = playbacktime;
             playerhistory.add(d);
             if (playerhistory.length()>20)
             {
-                zapdynent(playerhistory[0]);
+                game::zapdynent(playerhistory[0]);
                 playerhistory.remove(0);
             };
         };
@@ -342,7 +342,7 @@ void demoplaybackstep()
 					catmulrom(z->o, a->o, b->o, c->o, bf, player1->o);
 					catmulrom(*(vec *)&z->yaw, *(vec *)&a->yaw, *(vec *)&b->yaw, *(vec *)&c->yaw, bf, *(vec *)&player1->yaw);
 				};
-				fixplayer1range();
+				game::fixplayer1range();
 			};
             break;
         };
@@ -357,23 +357,4 @@ COMMAND(demo, ARG_1STR);
 COMMANDN(stop, stopn, ARG_NONE);
 COMMAND(savegame, ARG_1STR);
 COMMAND(loadgame, ARG_1STR);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

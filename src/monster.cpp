@@ -39,7 +39,7 @@ dynent *basicmonster(int type, int yaw, int state, int trigger, int move)
         console::out("warning: unknown monster in spawn: %d", type);
         type = 0;
     };
-    dynent *m = newdynent();
+    dynent *m = game::newdynent();
     monstertype *t = &monstertypes[m->mtype = type];
     m->eyeheight = 2.0f;
     m->aboveeye = 1.9f;
@@ -47,7 +47,7 @@ dynent *basicmonster(int type, int yaw, int state, int trigger, int move)
     m->eyeheight *= t->bscale/10.0f;
     m->aboveeye *= t->bscale/10.0f;
     m->monsterstate = state;
-    if (state!=M_SLEEP) spawnplayer(m);
+    if (state!=M_SLEEP) game::spawnplayer(m);
     m->trigger = lastmillis+trigger;
     m->targetyaw = m->yaw = (float)yaw;
     m->move = move;
@@ -94,7 +94,7 @@ void monsterclear()     // called after map start of when toggling edit mode to 
             m->o.x = ents[i].x;
             m->o.y = ents[i].y;
             m->o.z = ents[i].z;
-            entinmap(m);
+            game::entinmap(m);
             monstertotal++;
         };
     };
@@ -311,7 +311,7 @@ void monsterthink()
         entity &e = ents[i];
         if (e.type!=TELEPORT) continue;
         if (OUTBORD(e.x, e.y)) continue;
-        vec v = { e.x, e.y, S(e.x, e.y)->floor };
+        vec v = { float(e.x), float(e.y), float(S(e.x, e.y)->floor) };
         loopv(monsters) if (monsters[i]->state==CS_DEAD)
         {
 			if (lastmillis-monsters[i]->lastaction<2000)

@@ -130,7 +130,7 @@ void save_world(const char *mname)
     resettagareas();    // wouldn't be able to reproduce tagged areas otherwise
     voptimize();
     toptimize();
-    if (!*mname) mname = getclientmap();
+    if (!*mname) mname = game::getclientmap();
     setnames(mname);
     backup(cgzname, bakname);
     gzFile f = gzopen(cgzname, "wb9");
@@ -314,7 +314,7 @@ void load_world(const char *mname)        // still supports all map formats that
     loopi(256) lookuptexture(i, xs, ys);
     console::out("read map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
     console::out("%s", hdr.maptitle);
-    startmap(mname);
+    game::startmap(mname);
     loopl(256)
     {
         sprintf_sd(aliasname)("level_trigger_%d", l);     // can this be done smarter?

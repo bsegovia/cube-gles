@@ -34,10 +34,10 @@ namespace client
   bool netmapstart(void);
   /*! Return our client ID in the game */
   int getclientnum(void);
-  /*! Process forced map change from the server */
-  void changemapserv(const char *name, int mode);
   /*! Outputs name and team in the given file */
   void writeclientinfo(FILE *f);
+  /*! Request map change, server may ignore */
+  void changemap(const char *name);
 }
 
 #endif /* __QBE_CLIENT_HPP__ */

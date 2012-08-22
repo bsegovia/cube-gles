@@ -138,7 +138,8 @@ bool vote(char *map, int reqmode, int sender)
         else no++;
     };
     if (yes==1 && no==0) return true;  // single player
-    sprintf_sd(msg)("%s suggests %s on map %s (set map to vote)", clients[sender].name, modestr(reqmode), map);
+    sprintf_sd(msg)("%s suggests %s on map %s (set map to vote)",
+      clients[sender].name, game::modestr(reqmode), map);
     sendservmsg(msg);
     if (yes/(float)(yes+no) <= 0.5f) return false;
     sendservmsg("vote passed");

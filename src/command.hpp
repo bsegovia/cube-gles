@@ -52,7 +52,7 @@ enum
 
 /*! Register a command with a given name */
 #define COMMANDN(name, fun, nargs) \
-  bool __dummy_##fun = cmd::addcommand(#name, (void (*)())fun, nargs)
+  static bool __dummy_##fun = cmd::addcommand(#name, (void (*)())fun, nargs)
 
 /*! Register a command with a name given by the function name */
 #define COMMAND(name, nargs) COMMANDN(name, name, nargs)
@@ -78,19 +78,4 @@ enum
   void var_##name() { body; }
 
 #endif /* __QBE_COMMAND_HPP__ */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

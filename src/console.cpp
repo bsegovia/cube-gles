@@ -21,7 +21,8 @@ namespace console
   static void setconskip(int n)
   {
     conskip += n;
-    if (conskip<0) conskip = 0;
+    if (conskip < 0)
+      conskip = 0;
   }
 
   static void line(const char *sf, bool highlight)
@@ -173,7 +174,10 @@ namespace console
             if (SDL_GetModState()&(KMOD_LCTRL|KMOD_RCTRL)) { paste(); return; }
           default:
             cmd::resetcomplete();
-            if (cooked) { char add[] = { cooked, 0 }; strcat_s(commandbuf, add); }
+            if (cooked) {
+              const char add[] = { char(cooked), 0 };
+              strcat_s(commandbuf, add);
+            }
         }
       } else {
         if (code==SDLK_RETURN) {
@@ -216,20 +220,5 @@ namespace console
   COMMAND(saycommand, ARG_VARI);
   COMMAND(mapmsg, ARG_1STR);
   COMMAND(history, ARG_1INT);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+} /* namespace console */
 

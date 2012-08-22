@@ -26,14 +26,17 @@ void sendstring(const char *t, uchar *&p)
     putint(p, 0);
 };
 
-const char *modenames[] =
+namespace game
 {
+  static const char *modenames[] = {
     "SP", "DMSP", "ffa/default", "coopedit", "ffa/duel", "teamplay",
     "instagib", "instagib team", "efficiency", "efficiency team",
     "insta arena", "insta clan arena", "tactics arena", "tactics clan arena",
-};
-      
-const char *modestr(int n) { return (n>=-2 && n<12) ? modenames[n+2] : "unknown"; };
+  };
+  const char *modestr(int n) {
+    return (n>=-2 && n<12) ? modenames[n+2] : "unknown";
+  }
+} /* namespace game */
 
 char msgsizesl[] =               // size inclusive message token, 0 for variable or not-checked sizes
 { 

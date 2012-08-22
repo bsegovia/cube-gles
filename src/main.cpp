@@ -126,7 +126,7 @@ int main(int argc, char **argv)
     log("net");
     if (enet_initialize()<0) fatal("Unable to initialise network module");
 
-    initclient();
+    game::initclient();
     initserver(dedicated, uprate, sdesc, ip, master, passwd, maxcl);  // never returns if dedicated
       
     log("world");
@@ -177,7 +177,7 @@ int main(int argc, char **argv)
 
     log("localconnect");
     localconnect();
-    changemap("metl3");        // if this map is changed, also change depthcorrect()
+    client::changemap("metl3");        // if this map is changed, also change depthcorrect()
 
     log("mainloop");
     int ignore = 5;
@@ -188,7 +188,7 @@ int main(int argc, char **argv)
         else if (millis-lastmillis<1) lastmillis = millis-1;
         if (millis-lastmillis<minmillis) SDL_Delay(minmillis-(millis-lastmillis));
         cleardlights();
-        updateworld(millis);
+        game::updateworld(millis);
         if (!demoplayback) serverslice((int)time(NULL), 0);
         static float fps = 30.0f;
         fps = (1000.0f/curtime+fps*50)/51;
@@ -220,7 +220,7 @@ int main(int argc, char **argv)
 
                 case SDL_MOUSEMOTION:
                     if (ignore) { ignore--; break; };
-                    mousemove(event.motion.xrel, event.motion.yrel);
+                    game::mousemove(event.motion.xrel, event.motion.yrel);
                     break;
 
                 case SDL_MOUSEBUTTONDOWN:
@@ -235,24 +235,5 @@ int main(int argc, char **argv)
     }
     quit();
     return 1;
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+}
 

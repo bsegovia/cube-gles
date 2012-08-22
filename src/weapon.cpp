@@ -129,7 +129,7 @@ void newprojectile(vec &from, vec &to, float speed, bool local, dynent *owner, i
 
 void hit(int target, int damage, dynent *d, dynent *at)
 {
-    if (d==player1) selfdamage(damage, at==player1 ? -1 : -2, at);
+    if (d==player1) game::selfdamage(damage, at==player1 ? -1 : -2, at);
     else if (d->monsterstate) monsterpain(d, damage, at);
     else { client::addmsg(1, 4, SV_DAMAGE, target, damage, d->lifesequence); sound::play(S_PAIN1+rnd(5), &d->o); };
     particle_splash(3, damage, 1000, d->o);

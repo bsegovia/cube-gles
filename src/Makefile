@@ -7,7 +7,6 @@ CLIENT_OBJS= \
 	client.o \
 	clientextras.o \
 	clientgame.o \
-	clients2c.o \
 	command.o \
 	console.o \
 	editing.o \

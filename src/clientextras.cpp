@@ -115,8 +115,8 @@ void renderscores()
 void sendmap(char *mapname)
 {
   if (*mapname) save_world(mapname);
-  changemap(mapname);
-  mapname = getclientmap();
+  client::changemap(mapname);
+  mapname = game::getclientmap();
   int mapsize;
   uchar *mapdata = readmap(mapname, &mapsize); 
   if (!mapdata) return;

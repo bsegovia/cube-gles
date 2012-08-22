@@ -6,6 +6,7 @@
 #include "menu.hpp"
 #include "sound.hpp"
 #include "client.hpp"
+#include "clientgame.hpp"
 
 // serverbrowser
 extern void addserver(const char *servername);
@@ -34,11 +35,11 @@ extern int renderwater(float hf);
 extern void finishstrips();
 extern void setarraypointers();
 
+#if 0
 // clientgame
 extern void mousemove(int dx, int dy); 
 extern void updateworld(int millis);
 extern void startmap(const char *name);
-extern void changemap(const char *name);
 extern void initclient();
 extern void spawnplayer(dynent *d);
 extern void selfdamage(int damage, int actor, dynent *act);
@@ -50,6 +51,7 @@ extern dynent *getclient(int cn);
 extern void timeupdate(int timeremain);
 extern void resetmovement(dynent *d);
 extern void fixplayer1range();
+#endif
 
 // clientextras
 extern void renderclients();
@@ -140,7 +142,6 @@ extern void demoblend(int damage);
 // physics
 extern void moveplayer(dynent *pl, int moveres, bool local);
 extern bool collide(dynent *d, bool spawn, float drop, float rise);
-extern void entinmap(dynent *d);
 extern void setentphysics(int mml, int mmr);
 extern void physicsframe();
 

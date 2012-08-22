@@ -20,8 +20,10 @@ namespace menu
 
   void set(int menu)
   {
-    if ((vmenu = menu)>=1) resetmovement(player1);
-    if (vmenu==1) menus[1].menusel = 0;
+    if ((vmenu = menu)>=1)
+      game::resetmovement(player1);
+    if (vmenu==1)
+      menus[1].menusel = 0;
   }
 
   static void show(char *name)
@@ -43,7 +45,7 @@ namespace menu
 
   void sort(int start, int num)
   {
-    qsort(&menus[0].items[start], num, sizeof(mitem), (int (__cdecl *)(const void *,const void *))compare);
+    qsort(&menus[0].items[start], num, sizeof(mitem),(int (__cdecl *)(const void *,const void *))compare);
   }
 
   bool render(void)
@@ -136,19 +138,4 @@ namespace menu
   COMMANDN(showmenu, show, ARG_1STR);
   COMMANDN(newmenu, newm, ARG_1STR);
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

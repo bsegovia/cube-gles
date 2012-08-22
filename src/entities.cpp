@@ -135,7 +135,7 @@ void teleport(int n, dynent *d)     // also used by monsters
       d->yaw = ents[e].attr1;
       d->pitch = 0;
       d->vel.x = d->vel.y = d->vel.z = 0;
-      entinmap(d);
+      game::entinmap(d);
       sound::playc(S_TELEPORT);
       break;
     };
@@ -200,20 +200,24 @@ void pickup(int n, dynent *d)
   };
 };
 
-void checkitems()
+void checkitems(void)
 {
-  if (editmode) return;
-  loopv(ents)
-  {
+  if (editmode)
+    return;
+  loopv(ents) {
     entity &e = ents[i];
-    if (e.type==NOTUSED) continue;
-    if (!ents[i].spawned && e.type!=TELEPORT && e.type!=JUMPPAD) continue;
-    if (OUTBORD(e.x, e.y)) continue;
-    vec v = { e.x, e.y, S(e.x, e.y)->floor+player1->eyeheight };
+    if (e.type==NOTUSED)
+      continue;
+    if (!ents[i].spawned && e.type!=TELEPORT && e.type!=JUMPPAD)
+      continue;
+    if (OUTBORD(e.x, e.y))
+      continue;
+    const vec v = {float(e.x), float(e.y), S(e.x, e.y)->floor+player1->eyeheight};
     vdist(dist, t, player1->o, v);
-    if (dist<(e.type==TELEPORT ? 4 : 2.5)) pickup(i, player1);
-  };
-};
+    if (dist<(e.type==TELEPORT ? 4 : 2.5))
+      pickup(i, player1);
+  }
+}
 
 void checkquad(int time)
 {
