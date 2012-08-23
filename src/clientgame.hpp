@@ -33,6 +33,12 @@ namespace game
   void entinmap(dynent *d);
   /* Called just after a map load */
   void startmap(const char *name);
+  /*! Render all the clients */
+  void renderclients(void);
+  /*! Render the client */
+  void renderclient(dynent *d, bool team, const char *mdlname, bool hellpig, float scale);
+  /*! Render the score on screen */
+  void renderscores(void);
 } /* namespace game */
 
 #endif /* __QBE_GAME_HPP__ */

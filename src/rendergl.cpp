@@ -367,7 +367,7 @@ void gl_drawframe(int w, int h, float curfps)
 
     xtraverts = 0;
 
-    renderclients();
+    game::renderclients();
     monsterrender();
 
     renderentities();

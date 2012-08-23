@@ -304,7 +304,7 @@ void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwat
     else if (closeent[0]) draw_text(closeent, 20, 1570, 2);
     else if (player) draw_text(player, 20, 1570, 2);
 
-    renderscores();
+    game::renderscores();
     if (!menu::render())
     {
         glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);

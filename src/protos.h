@@ -35,30 +35,6 @@ extern int renderwater(float hf);
 extern void finishstrips();
 extern void setarraypointers();
 
-#if 0
-// clientgame
-extern void mousemove(int dx, int dy); 
-extern void updateworld(int millis);
-extern void startmap(const char *name);
-extern void initclient();
-extern void spawnplayer(dynent *d);
-extern void selfdamage(int damage, int actor, dynent *act);
-extern dynent *newdynent();
-extern char *getclientmap();
-extern const char *modestr(int n);
-extern void zapdynent(dynent *&d);
-extern dynent *getclient(int cn);
-extern void timeupdate(int timeremain);
-extern void resetmovement(dynent *d);
-extern void fixplayer1range();
-#endif
-
-// clientextras
-extern void renderclients();
-extern void renderclient(dynent *d, bool team, const char *mdlname, bool hellpig, float scale);
-void showscores(bool on);
-extern void renderscores();
-
 // world
 extern void setupworld(int factor);
 extern void empty_world(int factor, bool force);
@@ -130,7 +106,7 @@ extern void render_particles(int time);
 extern void save_world(const char *fname);
 extern void load_world(const char *mname);
 extern void writemap(char *mname, int msize, uchar *mdata);
-extern uchar *readmap(char *mname, int *msize);
+extern uchar *readmap(const char *mname, int *msize);
 extern void loadgamerest();
 extern void incomingdemodata(uchar *buf, int len, bool extras = false);
 extern void demoplaybackstep();

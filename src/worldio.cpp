@@ -113,7 +113,7 @@ void writemap(char *mname, int msize, uchar *mdata)
     console::out("wrote map %s as file %s", mname, cgzname);
 }
 
-uchar *readmap(char *mname, int *msize)
+uchar *readmap(const char *mname, int *msize)
 {
     setnames(mname);
     uchar *mdata = (uchar *)loadfile(cgzname, msize);
