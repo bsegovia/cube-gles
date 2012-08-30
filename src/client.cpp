@@ -333,7 +333,7 @@ namespace client
   static void changemapserv(const char *name, int mode)
   {
     gamemode = mode;
-    load_world(name);
+    world::load(name);
   }
 
   void localservertoclient(uchar *buf, int len)
@@ -601,7 +601,7 @@ namespace client
         ents[i].attr4 = getint(p);
         ents[i].spawned = false;
         if (ents[i].type==LIGHT || to==LIGHT)
-          calclight();
+          world::calclight();
         break;
       }
 
@@ -636,7 +636,7 @@ namespace client
         sgetstr();
         console::out("received map \"%s\" from server, reloading..", text);
         const int mapsize = getint(p);
-        writemap(text, mapsize, p);
+        world::writemap(text, mapsize, p);
         p += mapsize;
         changemapserv(text, gamemode);
         break;

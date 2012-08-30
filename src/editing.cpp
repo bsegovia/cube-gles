@@ -20,7 +20,7 @@ static block sel =
 int selh = 0;
 bool selset = false;
 
-#define loopselxy(b) { makeundo(); loop(x,sel.xs) loop(y,sel.ys) { sqr *s = S(sel.x+x, sel.y+y); b; }; remip(sel); }
+#define loopselxy(b) { makeundo(); loop(x,sel.xs) loop(y,sel.ys) { sqr *s = S(sel.x+x, sel.y+y); b; }; world::remip(sel); }
 
 int cx, cy, ch;
 
@@ -40,12 +40,12 @@ void toggleedit()
   if (!editmode && !client::allowedittoggle()) return;         // not in most client::multiplayer modes
   if (!(editmode = !editmode))
   {
-    settagareas(); // reset triggers to allow quick playtesting
+    world::settagareas(); // reset triggers to allow quick playtesting
     game::entinmap(player1); // find spawn closest to current floating pos
   }
   else
   {
-    resettagareas();                                // clear trigger areas to allow them to be edited
+    world::resettagareas();                                // clear trigger areas to allow them to be edited
     player1->health = 100;
     if (m_classicsp) monsterclear();                 // all monsters back at their spawns for editing
     projreset();
@@ -198,7 +198,7 @@ void pruneundos(int maxremain)         // bound memory
 
 void makeundo()
 {
-  undos.add(blockcopy(sel));
+  undos.add(world::blockcopy(sel));
   pruneundos(undomegs<<20);
 };
 
@@ -207,7 +207,7 @@ void editundo()
   EDITMP;
   if (undos.empty()) { console::out("nothing more to undo"); return; };
   block *p = undos.pop();
-  blockpaste(*p);
+  world::blockpaste(*p);
   free(p);
 };
 
@@ -217,7 +217,7 @@ void copy()
 {
   EDITSELMP;
   if (copybuf) free(copybuf);
-  copybuf = blockcopy(sel);
+  copybuf = world::blockcopy(sel);
 };
 
 void paste()
@@ -231,7 +231,7 @@ void paste()
   makeundo();
   copybuf->x = sel.x;
   copybuf->y = sel.y;
-  blockpaste(*copybuf);
+  world::blockpaste(*copybuf);
 };
 
 void tofronttex()                                       // maintain most recently used of the texture lists when applying texture
@@ -331,7 +331,7 @@ void replace()
     };
   };
   block b = { 0, 0, ssize, ssize };
-  remip(b);
+  world::remip(b);
 };
 
 void edittypexy(int type, block &sel)
@@ -385,7 +385,7 @@ COMMAND(equalize, ARG_1INT);
 void setvdeltaxy(int delta, block &sel)
 {
   loopselxy(s->vdelta = max(s->vdelta+delta, 0));
-  remipmore(sel);
+  world::remipmore(sel);
 };
 
 void setvdelta(int delta)
@@ -421,7 +421,7 @@ void arch(int sidedelta, int _a)
       sel.xs>sel.ys
       ? (archverts[sel.xs-1][x] + (y==0 || y==sel.ys-1 ? sidedelta : 0))
       : (archverts[sel.ys-1][y] + (x==0 || x==sel.xs-1 ? sidedelta : 0)));
-  remipmore(sel);
+  world::remipmore(sel);
 };
 
 void slope(int xd, int yd)
@@ -433,7 +433,7 @@ void slope(int xd, int yd)
   sel.xs++;
   sel.ys++;
   loopselxy(s->vdelta = xd*x+yd*y+off);
-  remipmore(sel);
+  world::remipmore(sel);
 };
 
 void perlin(int scale, int seed, int psize)
@@ -447,7 +447,7 @@ void perlin(int scale, int seed, int psize)
   perlinarea(sel, scale, seed, psize);
   sel.xs++;
   sel.ys++;
-  remipmore(sel);
+  world::remipmore(sel);
   sel.xs--;
   sel.ys--;
 };
@@ -456,7 +456,7 @@ VARF(fullbright, 0, 0, 1,
     if (fullbright)
     {
     if (noteditmode()) return;
-    loopi(mipsize) world[i].r = world[i].g = world[i].b = 176;
+    loopi(mipsize) map[i].r = map[i].g = map[i].b = 176;
     };
     );
 
@@ -469,7 +469,7 @@ void edittag(int tag)
 void newent(char *what, char *a1, char *a2, char *a3, char *a4)
 {
   EDITSEL;
-  newentity(sel.x, sel.y, (int)player1->o.z, what, ATOI(a1), ATOI(a2), ATOI(a3), ATOI(a4));
+  world::newentity(sel.x, sel.y, (int)player1->o.z, what, ATOI(a1), ATOI(a2), ATOI(a3), ATOI(a4));
 };
 
 COMMANDN(select, selectpos, ARG_4INT);

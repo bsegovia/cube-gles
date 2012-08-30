@@ -281,7 +281,7 @@ namespace game
   void spawnplayer(dynent *d)
   {
     const int r = fixspawn-->0 ? 4 : rnd(10)+1;
-    loopi(r) spawncycle = findentity(PLAYERSTART, spawncycle+1);
+    loopi(r) spawncycle = world::findentity(PLAYERSTART, spawncycle+1);
     if (spawncycle!=-1) {
       d->o.x = ents[spawncycle].x;
       d->o.y = ents[spawncycle].y;
@@ -577,11 +577,11 @@ namespace game
   static void sendmap(const char *mapname)
   {
     if (*mapname)
-      save_world(mapname);
+      world::save(mapname);
     client::changemap(mapname);
     mapname = game::getclientmap();
     int mapsize;
-    uchar *mapdata = readmap(mapname, &mapsize);
+    uchar *mapdata = world::readmap(mapname, &mapsize);
     if (!mapdata)
       return;
     ENetPacket *packet = enet_packet_create(NULL, MAXTRANS + mapsize, ENET_PACKET_FLAG_RELIABLE);

@@ -167,7 +167,7 @@ void splash(projectile *p, vec &v, vec &vold, int notthisplayer, int notthismons
     {
         sound::play(S_RLHIT, &v);
         newsphere(v, RL_RADIUS, 0);
-        dodynlight(vold, v, 0, 0, p->owner);
+        world::dodynlight(vold, v, 0, 0, p->owner);
         if (!p->local) return;
         radialeffect(player1, v, -1, qdam, p->owner);
         loopv(players)
@@ -222,7 +222,7 @@ void moveprojectiles(float time)
             if (time==dtime) splash(p, v, p->o, -1, -1, qdam);
             else
             {
-                if (p->gun==GUN_RL) { dodynlight(p->o, v, 0, 255, p->owner); particle_splash(5, 2, 200, v); }
+                if (p->gun==GUN_RL) { world::dodynlight(p->o, v, 0, 255, p->owner); particle_splash(5, 2, 200, v); }
                 else { particle_splash(1, 1, 200, v); particle_splash(guns[p->gun].part, 1, 1, v); };
             };       
         };

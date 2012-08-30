@@ -24,13 +24,13 @@ bool plcollide(dynent *d, dynent *o, float &headspace, float &hi, float &lo) // 
 
 bool cornertest(int mip, int x, int y, int dx, int dy, int &bx, int &by, int &bs)    // recursively collide with a mipmapped corner cube
 {
-    sqr *w = wmip[mip];
+    sqr *w = mmip[mip];
     int sz = ssize>>mip;
     bool stest = SOLID(SWS(w, x+dx, y, sz)) && SOLID(SWS(w, x, y+dy, sz));
     mip++;
     x /= 2;
     y /= 2;
-    if (SWS(wmip[mip], x, y, ssize>>mip)->type==CORNER)
+    if (SWS(mmip[mip], x, y, ssize>>mip)->type==CORNER)
     {
         bx = x<<mip;
         by = y<<mip;

@@ -160,7 +160,7 @@ void renderents()       // show sparkly thingies for map entities in edit mode
         vec v = { float(e.x), float(e.y), float(e.z) };
         particle_splash(2, 2, 40, v);
     };
-    int e = closestent();
+    int e = world::closestent();
     if (e>=0)
     {
         entity &c = ents[e];

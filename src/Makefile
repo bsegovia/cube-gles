@@ -29,11 +29,7 @@ CLIENT_OBJS= \
 	sound.o \
 	tools.o \
 	weapon.o \
-	world.o \
-	worldio.o \
-	worldlight.o \
-	worldocull.o \
-	worldrender.o
+	world.o
 
 SERVER_LIBS=-L../enet -lenet
 SERVER_OBJS= \

@@ -124,7 +124,7 @@ void teleport(int n, dynent *d)     // also used by monsters
   int e = -1, tag = ents[n].attr1, beenhere = -1;
   for (;;)
   {
-    e = findentity(TELEDEST, e+1);
+    e = world::findentity(TELEDEST, e+1);
     if (e==beenhere || e<0) { console::out("no teleport destination for tag %d", tag); return; };
     if (beenhere<0) beenhere = e;
     if (ents[e].attr2==tag)
@@ -174,7 +174,7 @@ void pickup(int n, dynent *d)
     case CARROT:
                     ents[n].spawned = false;
                     triggertime = lastmillis;
-                    trigger(ents[n].attr1, ents[n].attr2, false);  // needs to go over server for client::multiplayer
+                    world::trigger(ents[n].attr1, ents[n].attr2, false);  // needs to go over server for client::multiplayer
                     break;
 
     case TELEPORT:

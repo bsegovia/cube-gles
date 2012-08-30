@@ -243,7 +243,7 @@ void rendermodel(const char *mdl, int frame, int range, int tex, float rad, floa
 {
     md2 *m = loadmodel(mdl); 
     
-    if (isoccluded(player1->o.x, player1->o.y, x-rad, z-rad, rad*2)) return;
+    if (world::isoccluded(player1->o.x, player1->o.y, x-rad, z-rad, rad*2)) return;
 
     delayedload(m);
     

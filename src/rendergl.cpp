@@ -340,7 +340,7 @@ void gl_drawframe(int w, int h, float curfps)
     curvert = 0;
     strips.setsize(0);
 
-    render_world(player1->o.x, player1->o.y, player1->o.z,
+    world::render(player1->o.x, player1->o.y, player1->o.z,
             (int)player1->yaw, (int)player1->pitch, (float)fov, w, h);
     finishstrips();
 

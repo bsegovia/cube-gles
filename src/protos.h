@@ -7,6 +7,7 @@
 #include "sound.hpp"
 #include "client.hpp"
 #include "clientgame.hpp"
+#include "world.hpp"
 
 // serverbrowser
 extern void addserver(const char *servername);
@@ -34,32 +35,6 @@ extern void addwaterquad(int x, int y, int size);
 extern int renderwater(float hf);
 extern void finishstrips();
 extern void setarraypointers();
-
-// world
-extern void setupworld(int factor);
-extern void empty_world(int factor, bool force);
-extern void remip(block &b, int level = 0);
-extern void remipmore(block &b, int level = 0);
-extern int closestent();
-extern int findentity(int type, int index = 0);
-extern void trigger(int tag, int type, bool savegame);
-extern void resettagareas();
-extern void settagareas();
-extern entity *newentity(int x, int y, int z, char *what, int v1, int v2, int v3, int v4);
-
-// worldlight
-extern void calclight();
-extern void dodynlight(vec &vold, vec &v, int reach, int strength, dynent *owner);
-extern void cleardlights();
-extern block *blockcopy(block &b);
-extern void blockpaste(block &b);
-
-// worldrender
-extern void render_world(float vx, float vy, float vh, int yaw, int pitch, float widef, int w, int h);
-
-// worldocull
-extern void computeraytable(float vx, float vy);
-extern int isoccluded(float vx, float vy, float cx, float cy, float csize);
 
 // main
 extern void fatal(const char *s, const char *o = "");
@@ -102,11 +77,8 @@ extern void particle_splash(int type, int num, int fade, vec &p);
 extern void particle_trail(int type, int fade, vec &from, vec &to);
 extern void render_particles(int time);
 
-// worldio
-extern void save_world(const char *fname);
-extern void load_world(const char *mname);
-extern void writemap(char *mname, int msize, uchar *mdata);
-extern uchar *readmap(const char *mname, int *msize);
+#if 1
+// demo
 extern void loadgamerest();
 extern void incomingdemodata(uchar *buf, int len, bool extras = false);
 extern void demoplaybackstep();
@@ -114,6 +86,7 @@ extern void stop();
 extern void stopifrecording();
 extern void demodamage(int damage, vec &o);
 extern void demoblend(int damage);
+#endif
 
 // physics
 extern void moveplayer(dynent *pl, int moveres, bool local);
