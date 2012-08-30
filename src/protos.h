@@ -8,6 +8,9 @@
 #include "client.hpp"
 #include "clientgame.hpp"
 #include "world.hpp"
+#include "editing.hpp"
+#include "entities.hpp"
+#include "monster.hpp"
 
 // serverbrowser
 extern void addserver(const char *servername);
@@ -46,18 +49,6 @@ extern void draw_text(const char *str, int left, int top, int gl_num);
 extern void draw_textf(const char *fstr, int left, int top, int gl_num, ...);
 extern int text_width(const char *str);
 extern void draw_envbox(int t, int fogdist);
-
-// editing
-extern void cursorupdate();
-extern void toggleedit();
-extern void editdrag(bool isdown);
-extern void setvdeltaxy(int delta, block &sel);
-extern void editequalisexy(bool isfloor, block &sel);
-extern void edittypexy(int type, block &sel);
-extern void edittexxy(int type, int t, block &sel);
-extern void editheightxy(bool isfloor, int amount, block &sel);
-extern bool noteditmode();
-extern void pruneundos(int maxremain = 0);
 
 // renderextras
 extern void line(int x1, int y1, float z1, int x2, int y2, float z2);
@@ -126,27 +117,6 @@ extern void moveprojectiles(float time);
 extern void projreset();
 extern char *playerincrosshair();
 extern int reloadtime(int gun);
-
-// monster
-extern void monsterclear();
-extern void restoremonsterstate();
-extern void monsterthink();
-extern void monsterrender();
-extern dvector &getmonsters();
-extern void monsterpain(dynent *m, int damage, dynent *d);
-extern void endsp(bool allkilled);
-
-// entities
-extern void renderents();
-extern void putitems(uchar *&p);
-extern void checkquad(int time);
-extern void checkitems();
-extern void realpickup(int n, dynent *d);
-extern void renderentities();
-extern void resetspawns();
-extern void setspawn(uint i, bool on);
-extern void teleport(int n, dynent *d);
-extern void baseammo(int gun);
 
 // rndmap
 extern void perlinarea(block &b, int scale, int seed, int psize);

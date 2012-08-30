@@ -49,7 +49,7 @@ namespace world
     settag(0, 1);
     loopv(ents)
       if (ents[i].type==CARROT)
-        setspawn(i, true);
+        entities::setspawn(i, true);
   }
 
   void trigger(int tag, int type, bool savegame)
@@ -63,7 +63,7 @@ namespace world
     if (cmd::identexists(aliasname))
       cmd::execute(aliasname);
     if (type==2)
-      endsp(false);
+     monster::endsp(false);
   }
 
   void remip(block &b, int level)
@@ -171,7 +171,8 @@ namespace world
 
   int closestent(void)
   {
-    if (noteditmode()) return -1;
+    if (editor::noteditmode())
+      return -1;
     int best = 0;
     float bdist = 99999;
     loopv(ents) {
@@ -255,7 +256,7 @@ namespace world
   static void clearents(char *name)
   {
     int type = findtype(name);
-    if (noteditmode() || client::multiplayer())
+    if (editor::noteditmode() || client::multiplayer())
       return;
     loopv(ents) {
       entity &e = ents[i];
@@ -313,9 +314,9 @@ namespace world
 
   void empty(int factor, bool force)
   {
-    if (!force && noteditmode()) return;
+    if (!force && editor::noteditmode()) return;
     cleardlights();
-    pruneundos();
+    editor::pruneundos();
     sqr *oldmap = map;
     bool copy = false;
     if (oldmap && factor<0) {
@@ -362,14 +363,14 @@ namespace world
       loopk(3) loopi(256) hdr.texlists[k][i] = i;
       ents.setsize(0);
       block b = {8, 8, ssize-16, ssize-16};
-      edittypexy(SPACE, b);
+      editor::edittypexy(SPACE, b);
     }
 
     calclight();
     game::startmap("base/unnamed");
     if (oldmap) {
       free(oldmap);
-      toggleedit();
+      editor::toggleedit();
       string exec_str = "fullbright 1";
       cmd::execute(exec_str);
     }
@@ -1263,7 +1264,7 @@ namespace world
   {
     stopifrecording();
     world::cleardlights();
-    pruneundos();
+    editor::pruneundos();
     setnames(mname);
     gzFile f = gzopen(cgzname, "rb9");
     if (!f) {

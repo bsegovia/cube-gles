@@ -53,7 +53,7 @@ void savestate(char *fn)
     gzputi(ents.length());
     loopv(ents) gzputc(f, ents[i].spawned);
     gzwrite(f, player1, sizeof(dynent));
-    dvector &monsters = getmonsters();
+    dvector &monsters = monster::getmonsters();
     gzputi(monsters.length());
     loopv(monsters) gzwrite(f, monsters[i], sizeof(dynent));
     gzputi(players.length());
@@ -124,7 +124,7 @@ void loadgamerest()
     player1->lastaction = lastmillis;
     
     int nmonsters = gzgeti();
-    dvector &monsters = getmonsters();
+    dvector &monsters = monster::getmonsters();
     if (nmonsters!=monsters.length()) return loadgameout();
     loopv(monsters)
     {
@@ -133,7 +133,7 @@ void loadgamerest()
         monsters[i]->lastaction = monsters[i]->trigger = lastmillis+500;    // also lazy, but no real noticable effect on game
         if (monsters[i]->state==CS_DEAD) monsters[i]->lastaction = 0;
     };
-    restoremonsterstate();
+    monster::restoremonsterstate();
     
     int nplayers = gzgeti();
     loopi(nplayers) if (!gzget())

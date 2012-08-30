@@ -120,7 +120,7 @@ bool collide(dynent *d, bool spawn, float drop, float rise)
         if (!plcollide(d, o, headspace, hi, lo)) return false;
     };
     if (d!=player1) if (!plcollide(d, player1, headspace, hi, lo)) return false;
-    dvector &v = getmonsters();
+    dvector &v = monster::getmonsters();
     // this loop can be a performance bottleneck with many monster on a slow cpu,
     // should replace with a blockmap but seems mostly fast enough
     loopv(v) if (!vreject(d->o, v[i]->o, 7.0f) && d!=v[i] && !plcollide(d, v[i], headspace, hi, lo)) return false; 
@@ -320,23 +320,4 @@ void moveplayer(dynent *pl, int moveres, bool local)
 {
     loopi(physicsrepeat) moveplayer(pl, moveres, local, i ? curtime/physicsrepeat : curtime-curtime/physicsrepeat*(physicsrepeat-1));
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

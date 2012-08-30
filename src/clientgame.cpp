@@ -74,18 +74,18 @@ namespace game
         d->health = 256;
         if (m_tarena) {
           int gun1 = rnd(4)+1;
-          baseammo(d->gunselect = gun1);
+          entities::baseammo(d->gunselect = gun1);
           for (;;) {
             int gun2 = rnd(4)+1;
             if (gun1!=gun2) {
-              baseammo(gun2);
+              entities::baseammo(gun2);
               break;
             }
           }
         } else if (m_arena)    // insta arena
           d->ammo[GUN_RIFLE] = 100;
         else {
-          loopi(4) baseammo(i+1);
+          loopi(4) entities::baseammo(i+1);
           d->gunselect = GUN_CG;
         }
         d->ammo[GUN_CG] /= 2;
@@ -227,7 +227,7 @@ namespace game
         cmd::execute(sleepcmd);
       }
       physicsframe();
-      checkquad(curtime);
+      entities::checkquad(curtime);
       if (m_arena)
         arenarespawn();
       moveprojectiles((float)curtime);
@@ -241,7 +241,7 @@ namespace game
       }
       otherplayers();
       if (!demoplayback) {
-        monsterthink();
+        monster::monsterthink();
         if (player1->state==CS_DEAD) {
           if (lastmillis-player1->lastaction<2000) {
             player1->move = player1->strafe = 0;
@@ -250,7 +250,7 @@ namespace game
             respawn();
         } else if (!intermission) {
           moveplayer(player1, 20, true);
-          checkitems();
+          entities::checkitems();
         }
         // do this last, to reduce the effective frame lag
         client::c2sinfo(player1);
@@ -315,7 +315,7 @@ namespace game
     if (intermission)
       return;
     if (editmode)
-      editdrag(on);
+      editor::editdrag(on);
     else if ((player1->attacking = on) != 0)
       respawn();
   }
@@ -342,7 +342,6 @@ namespace game
     player1->pitch -= (dy/SENSF)*(sensitivity/(float)sensitivityscale)*(invmouse ? -1 : 1);
     fixplayer1range();
   }
-
 
   void selfdamage(int damage, int actor, dynent *act)
   {
@@ -427,15 +426,15 @@ namespace game
       console::out("coop sp not supported yet");
     }
     sleepwait = 0;
-    monsterclear();
+    monster::monsterclear();
     projreset();
     spawncycle = -1;
     spawnplayer(player1);
     player1->frags = 0;
     loopv(players) if (players[i]) players[i]->frags = 0;
-    resetspawns();
+    entities::resetspawns();
     strcpy_s(clientmap, name);
-    if (editmode) toggleedit();
+    if (editmode) editor::toggleedit();
     cmd::setvar("gamespeed", 100);
     cmd::setvar("fog", 180);
     cmd::setvar("fogcolour", 0x8099B3);

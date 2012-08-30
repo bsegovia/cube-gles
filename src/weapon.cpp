@@ -130,7 +130,7 @@ void newprojectile(vec &from, vec &to, float speed, bool local, dynent *owner, i
 void hit(int target, int damage, dynent *d, dynent *at)
 {
     if (d==player1) game::selfdamage(damage, at==player1 ? -1 : -2, at);
-    else if (d->monsterstate) monsterpain(d, damage, at);
+    else if (d->monsterstate) monster::monsterpain(d, damage, at);
     else { client::addmsg(1, 4, SV_DAMAGE, target, damage, d->lifesequence); sound::play(S_PAIN1+rnd(5), &d->o); };
     particle_splash(3, damage, 1000, d->o);
 	demodamage(damage, d->o);
@@ -177,7 +177,7 @@ void splash(projectile *p, vec &v, vec &vold, int notthisplayer, int notthismons
             if (!o) continue; 
             radialeffect(o, v, i, qdam, p->owner);
         };
-        dvector &mv = getmonsters();
+        dvector &mv = monster::getmonsters();
         loopv(mv) if (i!=notthismonster) radialeffect(mv[i], v, i, qdam, p->owner);
     };
 };
@@ -214,7 +214,7 @@ void moveprojectiles(float time)
                 projdamage(o, p, v, i, -1, qdam);
             };
             if (p->owner!=player1) projdamage(player1, p, v, -1, -1, qdam);
-            dvector &mv = getmonsters();
+            dvector &mv = monster::getmonsters();
             loopv(mv) if (!vreject(mv[i]->o, v, 10.0f) && mv[i]!=p->owner) projdamage(mv[i], p, v, -1, i, qdam);
         };
         if (p->inuse)
@@ -333,7 +333,7 @@ void shoot(dynent *d, vec &targ)
         raydamage(o, from, to, d, i);
     };
 
-    dvector &v = getmonsters();
+    dvector &v = monster::getmonsters();
     loopv(v) if (v[i]!=d) raydamage(v[i], from, to, d, -2);
 
     if (d->monsterstate) raydamage(player1, from, to, d, -1);

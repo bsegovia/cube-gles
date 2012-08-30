@@ -254,7 +254,7 @@ namespace client
       if (senditemstoserver) {
         packet->flags = ENET_PACKET_FLAG_RELIABLE;
         putint(p, SV_ITEMLIST);
-        if (!m_noitems) putitems(p);
+        if (!m_noitems) entities::putitems(p);
         putint(p, -1);
         senditemstoserver = false;
         serveriteminitdone = true;
@@ -429,11 +429,11 @@ namespace client
         int n;
         if (mapchanged) {
           senditemstoserver = false;
-          resetspawns();
+          entities::resetspawns();
         }
         while ((n = getint(p))!=-1)
           if (mapchanged)
-            setspawn(n, true);
+            entities::setspawn(n, true);
         break;
       }
 
@@ -540,7 +540,7 @@ namespace client
 
       // Items has been picked up
       case SV_ITEMPICKUP:
-        setspawn(getint(p), false);
+        entities::setspawn(getint(p), false);
         getint(p);
         break;
 
@@ -548,7 +548,7 @@ namespace client
       case SV_ITEMSPAWN:
       {
         uint i = getint(p);
-        setspawn(i, true);
+        entities::setspawn(i, true);
         if (i>=(uint)ents.length()) break;
         const vec v = {float(ents[i].x), float(ents[i].y), float(ents[i].z)};
         sound::play(S_ITEMSPAWN, &v); 
@@ -557,7 +557,7 @@ namespace client
 
       // Server acknowledges that I picked up this item
       case SV_ITEMACC:
-        realpickup(getint(p), player1);
+        entities::realpickup(getint(p), player1);
         break;
 
       // Coop editing messages, should be extended to include all possible
@@ -575,11 +575,11 @@ namespace client
         const int v  = getint(p);
         block b = { x, y, xs, ys };
         switch (type) {
-          case SV_EDITH: editheightxy(v!=0, getint(p), b); break;
-          case SV_EDITT: edittexxy(v, getint(p), b); break;
-          case SV_EDITS: edittypexy(v, b); break;
-          case SV_EDITD: setvdeltaxy(v, b); break;
-          case SV_EDITE: editequalisexy(v!=0, b); break;
+          case SV_EDITH: editor::editheightxy(v!=0, getint(p), b); break;
+          case SV_EDITT: editor::edittexxy(v, getint(p), b); break;
+          case SV_EDITS: editor::edittypexy(v, b); break;
+          case SV_EDITD: editor::setvdeltaxy(v, b); break;
+          case SV_EDITE: editor::editequalisexy(v!=0, b); break;
         }
         break;
       }
