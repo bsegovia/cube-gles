@@ -67,7 +67,8 @@ namespace console
         refs[nd++] = conlines[i].cref;
         if (nd==ndraw) break;
       }
-    loopj(nd) draw_text(refs[j], FONTH/3, (FONTH/4*5)*(nd-j-1)+FONTH/3, 2);
+    loopj(nd)
+      renderer::draw_text(refs[j], FONTH/3, (FONTH/4*5)*(nd-j-1)+FONTH/3, 2);
   }
 
   // keymap is defined externally in keymap.cfg

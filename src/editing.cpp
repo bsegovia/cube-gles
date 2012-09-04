@@ -156,33 +156,33 @@ namespace editor
       float h2 = sheight(s, SWS(s,1,0,ssize), z);
       float h3 = sheight(s, SWS(s,1,1,ssize), z);
       float h4 = sheight(s, SWS(s,0,1,ssize), z);
-      if (s->tag) linestyle(GRIDW, 0xFF, 0x40, 0x40);
-      else if (s->type==FHF || s->type==CHF) linestyle(GRIDW, 0x80, 0xFF, 0x80);
-      else linestyle(GRIDW, 0x80, 0x80, 0x80);
+      if (s->tag) renderer::linestyle(GRIDW, 0xFF, 0x40, 0x40);
+      else if (s->type==FHF || s->type==CHF) renderer::linestyle(GRIDW, 0x80, 0xFF, 0x80);
+      else renderer::linestyle(GRIDW, 0x80, 0x80, 0x80);
       block b = { ix, iy, 1, 1 };
-      box(b, h1, h2, h3, h4);
-      linestyle(GRID8, 0x40, 0x40, 0xFF);
-      if (!(ix&GRIDM))   line(ix,   iy,   h1, ix,   iy+1, h4);
-      if (!((ix+1)&GRIDM)) line(ix+1, iy,   h2, ix+1, iy+1, h3);
-      if (!(iy&GRIDM))   line(ix,   iy,   h1, ix+1, iy,   h2);
-      if (!((iy+1)&GRIDM)) line(ix,   iy+1, h4, ix+1, iy+1, h3);
+      renderer::box(b, h1, h2, h3, h4);
+      renderer::linestyle(GRID8, 0x40, 0x40, 0xFF);
+      if (!(ix&GRIDM))   renderer::line(ix,   iy,   h1, ix,   iy+1, h4);
+      if (!((ix+1)&GRIDM)) renderer::line(ix+1, iy,   h2, ix+1, iy+1, h3);
+      if (!(iy&GRIDM))   renderer::line(ix,   iy,   h1, ix+1, iy,   h2);
+      if (!((iy+1)&GRIDM)) renderer::line(ix,   iy+1, h4, ix+1, iy+1, h3);
     };
 
     if (!SOLID(s))
     {
       float ih = sheight(s, s, z);
-      linestyle(GRIDS, 0xFF, 0xFF, 0xFF);
+      renderer::linestyle(GRIDS, 0xFF, 0xFF, 0xFF);
       block b = { cx, cy, 1, 1 };
-      box(b, ih, sheight(s, SWS(s,1,0,ssize), z), sheight(s, SWS(s,1,1,ssize), z), sheight(s, SWS(s,0,1,ssize), z));
-      linestyle(GRIDS, 0xFF, 0x00, 0x00);
-      dot(cx, cy, ih);
+      renderer::box(b, ih, sheight(s, SWS(s,1,0,ssize), z), sheight(s, SWS(s,1,1,ssize), z), sheight(s, SWS(s,0,1,ssize), z));
+      renderer::linestyle(GRIDS, 0xFF, 0x00, 0x00);
+      renderer::dot(cx, cy, ih);
       ch = (int)ih;
     };
 
     if (selset)
     {
-      linestyle(GRIDS, 0xFF, 0x40, 0x40);
-      box(sel, (float)selh, (float)selh, (float)selh, (float)selh);
+      renderer::linestyle(GRIDS, 0xFF, 0x40, 0x40);
+      renderer::box(sel, (float)selh, (float)selh, (float)selh, (float)selh);
     };
   };
 

@@ -253,7 +253,7 @@ namespace monster
         break;
     };
 
-    moveplayer(m, 1, false);        // use physics to move monster
+    physics::moveplayer(m, 1, false);        // use physics to move monster
   };
 
   void monsterpain(dynent *m, int damage, dynent *d)
@@ -319,7 +319,7 @@ namespace monster
         if (lastmillis-monsters[i]->lastaction<2000)
         {
           monsters[i]->move = 0;
-          moveplayer(monsters[i], 1, false);
+          physics::moveplayer(monsters[i], 1, false);
         };
       }
       else

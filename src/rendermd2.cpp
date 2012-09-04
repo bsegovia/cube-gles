@@ -2,8 +2,10 @@
 
 #include "cube.h"
 
-struct md2_header
+namespace renderer
 {
+  struct md2_header
+  {
     int magic;
     int version;
     int skinWidth, skinHeight;
@@ -12,23 +14,23 @@ struct md2_header
     int numTriangles, numGlCommands, numFrames;
     int offsetSkins, offsetTexcoords, offsetTriangles;
     int offsetFrames, offsetGlCommands, offsetEnd;
-};
+  };
 
-struct md2_vertex
-{
+  struct md2_vertex
+  {
     uchar vertex[3], lightNormalIndex;
-};
+  };
 
-struct md2_frame
-{
+  struct md2_frame
+  {
     float      scale[3];
     float      translate[3];
     char       name[16];
     md2_vertex vertices[1];
-};
+  };
 
-struct md2
-{
+  struct md2
+  {
     int numGlCommands;
     int* glCommands;
     int numTriangles;
@@ -39,7 +41,7 @@ struct md2
     vec **mverts;
     int displaylist;
     int displaylistverts;
-    
+
     mapmodelinfo mmi;
     char *loadname;
     int mdlnum;
@@ -53,16 +55,14 @@ struct md2
 
     ~md2()
     {
-        if (glCommands)
-            delete [] glCommands;
-        if (frames)
-            delete [] frames;
+      if (glCommands) delete [] glCommands;
+      if (frames) delete [] frames;
     }
-};
+  };
 
 
-bool md2::load(char* filename)
-{
+  bool md2::load(char* filename)
+  {
     FILE* file;
     md2_header header;
 
@@ -81,7 +81,7 @@ bool md2::load(char* filename)
 
     for (int i = 0; i < header.numFrames; ++i)
     {
-        endianswap(frames + i * header.frameSize, sizeof(float), 6);
+      endianswap(frames + i * header.frameSize, sizeof(float), 6);
     }
 
     glCommands = new int[header.numGlCommands];
@@ -99,197 +99,179 @@ bool md2::load(char* filename)
     numVerts     = header.numVertices;
 
     fclose(file);
-    
+
     mverts = new vec*[numFrames];
     loopj(numFrames) mverts[j] = NULL;
 
     return true;
-};
+  }
 
-float snap(int sn, float f) { return sn ? (float)(((int)(f+sn*0.5f))&(~(sn-1))) : f; };
+  float snap(int sn, float f) { return sn ? (float)(((int)(f+sn*0.5f))&(~(sn-1))) : f; }
 
-void md2::scale(int frame, float scale, int sn)
-{
+  void md2::scale(int frame, float scale, int sn)
+  {
     mverts[frame] = new vec[numVerts];
     md2_frame *cf = (md2_frame *) ((char*)frames+frameSize*frame);
     float sc = 16.0f/scale;
     loop(vi, numVerts)
     {
-        uchar *cv = (uchar *)&cf->vertices[vi].vertex;
-        vec *v = &(mverts[frame])[vi];
-        v->x =  (snap(sn, cv[0]*cf->scale[0])+cf->translate[0])/sc;
-        v->y = -(snap(sn, cv[1]*cf->scale[1])+cf->translate[1])/sc;
-        v->z =  (snap(sn, cv[2]*cf->scale[2])+cf->translate[2])/sc;
-    };
-};
+      uchar *cv = (uchar *)&cf->vertices[vi].vertex;
+      vec *v = &(mverts[frame])[vi];
+      v->x =  (snap(sn, cv[0]*cf->scale[0])+cf->translate[0])/sc;
+      v->y = -(snap(sn, cv[1]*cf->scale[1])+cf->translate[1])/sc;
+      v->z =  (snap(sn, cv[2]*cf->scale[2])+cf->translate[2])/sc;
+    }
+  }
 
-void md2::render(vec &light, int frame, int range, float x, float y, float z, float yaw, float pitch, float sc, float speed, int snap, int basetime)
-{
+  void md2::render(vec &light, int frame, int range, float x, float y, float z, float yaw, float pitch, float sc, float speed, int snap, int basetime)
+  {
     loopi(range) if (!mverts[frame+i]) scale(frame+i, sc, snap);
-    
+
     glPushMatrix ();
     glTranslatef(x, y, z);
     glRotatef(yaw+180, 0, -1, 0);
     glRotatef(pitch, 0, 0, 1);
-    
-	glColor3fv((float *)&light);
+
+    glColor3fv((float *)&light);
 
     if (displaylist && frame==0 && range==1)
     {
-		glCallList(displaylist);
-		xtraverts += displaylistverts;
+      glCallList(displaylist);
+      xtraverts += displaylistverts;
     }
     else
     {
-		if (frame==0 && range==1)
-		{
-			static int displaylistn = 10;
-			glNewList(displaylist = displaylistn++, GL_COMPILE);
-			displaylistverts = xtraverts;
-		};
-		
-		int time = lastmillis-basetime;
-		int fr1 = (int)(time/speed);
-		float frac1 = (time-fr1*speed)/speed;
-		float frac2 = 1-frac1;
-		fr1 = fr1%range+frame;
-		int fr2 = fr1+1;
-		if (fr2>=frame+range) fr2 = frame;
-		vec *verts1 = mverts[fr1];
-		vec *verts2 = mverts[fr2];
+      if (frame==0 && range==1)
+      {
+        static int displaylistn = 10;
+        glNewList(displaylist = displaylistn++, GL_COMPILE);
+        displaylistverts = xtraverts;
+      }
 
-		for (int *command = glCommands; (*command)!=0;)
-		{
-			int numVertex = *command++;
-			if (numVertex>0) { glBegin(GL_TRIANGLE_STRIP); }
-			else            { glBegin(GL_TRIANGLE_FAN); numVertex = -numVertex; };
+      int time = lastmillis-basetime;
+      int fr1 = (int)(time/speed);
+      float frac1 = (time-fr1*speed)/speed;
+      float frac2 = 1-frac1;
+      fr1 = fr1%range+frame;
+      int fr2 = fr1+1;
+      if (fr2>=frame+range) fr2 = frame;
+      vec *verts1 = mverts[fr1];
+      vec *verts2 = mverts[fr2];
 
-			loopi(numVertex)
-			{
-				float tu = *((float*)command++);
-				float tv = *((float*)command++);
-				glTexCoord2f(tu, tv);
-				int vn = *command++;
-				vec &v1 = verts1[vn];
-				vec &v2 = verts2[vn];
-				#define ip(c) v1.c*frac2+v2.c*frac1
-				glVertex3f(ip(x), ip(z), ip(y));
-			};
+      for (int *command = glCommands; (*command)!=0;)
+      {
+        int numVertex = *command++;
+        if (numVertex>0) { glBegin(GL_TRIANGLE_STRIP); }
+        else            { glBegin(GL_TRIANGLE_FAN); numVertex = -numVertex; }
 
-			xtraverts += numVertex;
+        loopi(numVertex)
+        {
+          float tu = *((float*)command++);
+          float tv = *((float*)command++);
+          glTexCoord2f(tu, tv);
+          int vn = *command++;
+          vec &v1 = verts1[vn];
+          vec &v2 = verts2[vn];
+#define ip(c) v1.c*frac2+v2.c*frac1
+          glVertex3f(ip(x), ip(z), ip(y));
+        }
 
-			glEnd();
-		};
-		
-		if (displaylist)
-		{
-			glEndList();
-			displaylistverts = xtraverts-displaylistverts;
-		};
-	};
+        xtraverts += numVertex;
+
+        glEnd();
+      }
+
+      if (displaylist)
+      {
+        glEndList();
+        displaylistverts = xtraverts-displaylistverts;
+      }
+    }
 
     glPopMatrix();
-}
+  }
 
-hashtable<md2 *> *mdllookup = NULL;
-vector<md2 *> mapmodels;
-const int FIRSTMDL = 20;
+  hashtable<md2 *> *mdllookup = NULL;
+  vector<md2 *> mapmodels;
+  const int FIRSTMDL = 20;
 
-void delayedload(md2 *m)
-{ 
+  void delayedload(md2 *m)
+  {
     if (!m->loaded)
     {
-        sprintf_sd(name1)("packages/models/%s/tris.md2", m->loadname);
-        if (!m->load(path(name1))) fatal("loadmodel: ", name1);
-        sprintf_sd(name2)("packages/models/%s/skin.jpg", m->loadname);
-        int xs, ys;
-        installtex(FIRSTMDL+m->mdlnum, path(name2), xs, ys);
-        m->loaded = true;
-    };
-};
+      sprintf_sd(name1)("packages/models/%s/tris.md2", m->loadname);
+      if (!m->load(path(name1))) fatal("loadmodel: ", name1);
+      sprintf_sd(name2)("packages/models/%s/skin.jpg", m->loadname);
+      int xs, ys;
+      installtex(FIRSTMDL+m->mdlnum, path(name2), xs, ys);
+      m->loaded = true;
+    }
+  }
 
-int modelnum = 0;
+  int modelnum = 0;
 
-md2 *loadmodel(const char *name)
-{
+  md2 *loadmodel(const char *name)
+  {
     if (!mdllookup) mdllookup = new hashtable<md2 *>;
     md2 **mm = mdllookup->access(name);
     if (mm) return *mm;
     md2 *m = new md2();
     m->mdlnum = modelnum++;
-    mapmodelinfo mmi = { 2, 2, 0, 0, "" }; 
+    mapmodelinfo mmi = { 2, 2, 0, 0, "" };
     m->mmi = mmi;
     m->loadname = newstring(name);
     mdllookup->access(m->loadname, &m);
     return m;
-};
+  }
 
-void mapmodel(char *rad, char *h, char *zoff, char *snap, char *name)
-{
-	md2 *m = loadmodel(name);
-    mapmodelinfo mmi = { atoi(rad), atoi(h), atoi(zoff), atoi(snap), m->loadname }; 
+  void mapmodel(char *rad, char *h, char *zoff, char *snap, char *name)
+  {
+    md2 *m = loadmodel(name);
+    mapmodelinfo mmi = { atoi(rad), atoi(h), atoi(zoff), atoi(snap), m->loadname };
     m->mmi = mmi;
     mapmodels.add(m);
-};
+  }
 
-void mapmodelreset() { mapmodels.setsize(0); };
+  void mapmodelreset() { mapmodels.setsize(0); }
 
-mapmodelinfo &getmminfo(int i) { return i<mapmodels.length() ? mapmodels[i]->mmi : *(mapmodelinfo *)0; };
+  mapmodelinfo &getmminfo(int i) { return i<mapmodels.length() ? mapmodels[i]->mmi : *(mapmodelinfo *)0; }
 
-COMMAND(mapmodel, ARG_5STR);
-COMMAND(mapmodelreset, ARG_NONE);
+  COMMAND(mapmodel, ARG_5STR);
+  COMMAND(mapmodelreset, ARG_NONE);
 
-void rendermodel(const char *mdl, int frame, int range, int tex, float rad, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int snap, int basetime)
-{
-    md2 *m = loadmodel(mdl); 
-    
+  void rendermodel(const char *mdl, int frame, int range, int tex, float rad, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int snap, int basetime)
+  {
+    md2 *m = loadmodel(mdl);
+
     if (world::isoccluded(player1->o.x, player1->o.y, x-rad, z-rad, rad*2)) return;
 
     delayedload(m);
-    
+
     int xs, ys;
     glBindTexture(GL_TEXTURE_2D, tex ? lookuptexture(tex, xs, ys) : FIRSTMDL+m->mdlnum);
-    
+
     int ix = (int)x;
     int iy = (int)z;
-    vec light = { 1.0f, 1.0f, 1.0f }; 
-    
+    vec light = { 1.0f, 1.0f, 1.0f };
+
     if (!OUTBORD(ix, iy))
     {
-         sqr *s = S(ix,iy);  
-         float ll = 256.0f; // 0.96f;
-         float of = 0.0f; // 0.1f;      
-         light.x = s->r/ll+of;
-         light.y = s->g/ll+of;
-         light.z = s->b/ll+of;
-    };
-    
+      sqr *s = S(ix,iy);
+      float ll = 256.0f; // 0.96f;
+      float of = 0.0f; // 0.1f;
+      light.x = s->r/ll+of;
+      light.y = s->g/ll+of;
+      light.z = s->b/ll+of;
+    }
+
     if (teammate)
     {
-        light.x *= 0.6f;
-        light.y *= 0.7f;
-        light.z *= 1.2f;
-    };
+      light.x *= 0.6f;
+      light.y *= 0.7f;
+      light.z *= 1.2f;
+    }
 
     m->render(light, frame, range, x, y, z, yaw, pitch, scale, speed, snap, basetime);
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  }
+} /* namespace renderer */
 

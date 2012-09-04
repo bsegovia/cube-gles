@@ -132,8 +132,8 @@ void hit(int target, int damage, dynent *d, dynent *at)
     if (d==player1) game::selfdamage(damage, at==player1 ? -1 : -2, at);
     else if (d->monsterstate) monster::monsterpain(d, damage, at);
     else { client::addmsg(1, 4, SV_DAMAGE, target, damage, d->lifesequence); sound::play(S_PAIN1+rnd(5), &d->o); };
-    particle_splash(3, damage, 1000, d->o);
-	demodamage(damage, d->o);
+    renderer::particle_splash(3, damage, 1000, d->o);
+    demo::damage(damage, d->o);
 };
 
 const float RL_RADIUS = 5;
@@ -156,7 +156,7 @@ void radialeffect(dynent *o, vec &v, int cn, int qdam, dynent *at)
 
 void splash(projectile *p, vec &v, vec &vold, int notthisplayer, int notthismonster, int qdam)
 {
-    particle_splash(0, 50, 300, v);
+    renderer::particle_splash(0, 50, 300, v);
     p->inuse = false;
     if (p->gun!=GUN_RL)
     {
@@ -166,7 +166,7 @@ void splash(projectile *p, vec &v, vec &vold, int notthisplayer, int notthismons
     else
     {
         sound::play(S_RLHIT, &v);
-        newsphere(v, RL_RADIUS, 0);
+        renderer::newsphere(v, RL_RADIUS, 0);
         world::dodynlight(vold, v, 0, 0, p->owner);
         if (!p->local) return;
         radialeffect(player1, v, -1, qdam, p->owner);
@@ -222,8 +222,8 @@ void moveprojectiles(float time)
             if (time==dtime) splash(p, v, p->o, -1, -1, qdam);
             else
             {
-                if (p->gun==GUN_RL) { world::dodynlight(p->o, v, 0, 255, p->owner); particle_splash(5, 2, 200, v); }
-                else { particle_splash(1, 1, 200, v); particle_splash(guns[p->gun].part, 1, 1, v); };
+                if (p->gun==GUN_RL) { world::dodynlight(p->o, v, 0, 255, p->owner); renderer::particle_splash(5, 2, 200, v); }
+                else { renderer::particle_splash(1, 1, 200, v); renderer::particle_splash(guns[p->gun].part, 1, 1, v); };
             };       
         };
         p->o = v;
@@ -241,13 +241,13 @@ void shootv(int gun, vec &from, vec &to, dynent *d, bool local)     // create vi
 
         case GUN_SG:
         {
-            loopi(SGRAYS) particle_splash(0, 5, 200, sg[i]);
+            loopi(SGRAYS) renderer::particle_splash(0, 5, 200, sg[i]);
             break;
         };
 
         case GUN_CG:
-            particle_splash(0, 100, 250, to);
-            //particle_trail(1, 10, from, to);
+            renderer::particle_splash(0, 100, 250, to);
+            //renderer::particle_trail(1, 10, from, to);
             break;
 
         case GUN_RL:
@@ -260,8 +260,8 @@ void shootv(int gun, vec &from, vec &to, dynent *d, bool local)     // create vi
             break;
 
         case GUN_RIFLE: 
-            particle_splash(0, 50, 200, to);
-            particle_trail(1, 500, from, to);
+            renderer::particle_splash(0, 50, 200, to);
+            renderer::particle_trail(1, 500, from, to);
             break;
     };
 };
@@ -338,23 +338,4 @@ void shoot(dynent *d, vec &targ)
 
     if (d->monsterstate) raydamage(player1, from, to, d, -1);
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

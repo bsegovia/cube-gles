@@ -769,7 +769,7 @@ namespace world
           float f2 = s->ceil;
           if (s->type==CHF) { f1 += d1->vdelta/4.0f; f2 += d2->vdelta/4.0f; };
           //if (f1-c1<=0 && f2-c2<=0) return;
-          render_square(o->wtex, c1, c2, f1, f2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
+          renderer::render_square(o->wtex, c1, c2, f1, f2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
           return;
       };
       {
@@ -788,7 +788,7 @@ namespace world
               f2 -= d2->vdelta/4.0f;
           }
           if (f1>=c1 && f2>=c2) goto skip;
-          render_square(o->wtex, f1, f2, c1, c2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
+          renderer::render_square(o->wtex, f1, f2, c1, c2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
       };
       skip:
       {
@@ -807,7 +807,7 @@ namespace world
               c2 += d2->vdelta/4.0f;
           }
           if (c1<=f1 && c2<=f2) return;
-          render_square(o->utex, f1, f2, c1, c2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
+          renderer::render_square(o->utex, f1, f2, c1, c2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
       };
   };
 
@@ -907,22 +907,22 @@ namespace world
           stats[mip]++;
           LOOPD
           if ((s->type==SPACE || s->type==FHF) && s->ceil>=vh && render_ceil)
-              render_flat(s->ctex, xx<<mip, yy<<mip, 1<<mip, s->ceil, s, t, u, v, true);
+              renderer::render_flat(s->ctex, xx<<mip, yy<<mip, 1<<mip, s->ceil, s, t, u, v, true);
           if (s->type==CHF) //if (s->ceil>=vh)
-              render_flatdelta(s->ctex, xx<<mip, yy<<mip, 1<<mip, dc(s), dc(t), dc(u), dc(v), s, t, u, v, true);
+              renderer::render_flatdelta(s->ctex, xx<<mip, yy<<mip, 1<<mip, dc(s), dc(t), dc(u), dc(v), s, t, u, v, true);
       }};
 
       LOOPH continue;     // floors
           LOOPD
           if ((s->type==SPACE || s->type==CHF) && s->floor<=vh && render_floor)
           {
-              render_flat(s->ftex, xx<<mip, yy<<mip, 1<<mip, s->floor, s, t, u, v, false);
-        if (s->floor<hdr.waterlevel && !SOLID(s)) addwaterquad(xx<<mip, yy<<mip, 1<<mip);
+              renderer::render_flat(s->ftex, xx<<mip, yy<<mip, 1<<mip, s->floor, s, t, u, v, false);
+        if (s->floor<hdr.waterlevel && !SOLID(s)) renderer::addwaterquad(xx<<mip, yy<<mip, 1<<mip);
           };
           if (s->type==FHF)
           {
-              render_flatdelta(s->ftex, xx<<mip, yy<<mip, 1<<mip, df(s), df(t), df(u), df(v), s, t, u, v, false);
-        if (s->floor-s->vdelta/4.0f<hdr.waterlevel && !SOLID(s)) addwaterquad(xx<<mip, yy<<mip, 1<<mip);
+              renderer::render_flatdelta(s->ftex, xx<<mip, yy<<mip, 1<<mip, df(s), df(t), df(u), df(v), s, t, u, v, false);
+        if (s->floor-s->vdelta/4.0f<hdr.waterlevel && !SOLID(s)) renderer::addwaterquad(xx<<mip, yy<<mip, 1<<mip);
           };
       }};
 
@@ -967,7 +967,7 @@ namespace world
                       else   { render_wall(h2 = s, h1 = w, xx, yy+1, xx+1, yy, mip, v, t, false); topleft = false; };
                   };
               };
-              render_tris(xx<<mip, yy<<mip, 1<<mip, topleft, h1, h2, s, t, u, v);
+              renderer::render_tris(xx<<mip, yy<<mip, 1<<mip, topleft, h1, h2, s, t, u, v);
           }
 
           if (normalwall)
@@ -1041,7 +1041,7 @@ namespace world
       render_ceil  = -pitch<hyfov;
 
       render_seg_new(vx, vy, vh, MAX_MIP, 0, 0, ssize>>MAX_MIP, ssize>>MAX_MIP);
-      mipstats(stats[0], stats[1], stats[2]);
+      renderer::mipstats(stats[0], stats[1], stats[2]);
   }
 
   ///////////////////////////////////////////////////////////////////////////
@@ -1262,7 +1262,7 @@ namespace world
 
   void load(const char *mname)
   {
-    stopifrecording();
+    demo::stopifrecording();
     world::cleardlights();
     editor::pruneundos();
     setnames(mname);
@@ -1372,7 +1372,7 @@ namespace world
     world::settagareas();
     int xs, ys;
 
-    loopi(256) lookuptexture(i, xs, ys);
+    loopi(256) renderer::lookuptexture(i, xs, ys);
     console::out("read map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
     console::out("%s", hdr.maptitle);
     game::startmap(mname);

@@ -1,7 +1,12 @@
 // rendergl.cpp: core opengl rendering stuff
 
 #include "cube.h"
+// XXX  
+int xtraverts;
+bool hasoverbright = false;
 
+namespace renderer
+{
 #ifdef DARWIN
 #define GL_COMBINE_EXT GL_COMBINE_ARB
 #define GL_COMBINE_RGB_EXT GL_COMBINE_RGB_ARB
@@ -10,19 +15,16 @@
 #define GL_RGB_SCALE_EXT GL_RGB_SCALE_ARB
 #endif
 
-extern int curvert;
+  extern int curvert;
 
-bool hasoverbright = false;
 
-void purgetextures();
+  void purgetextures();
 
-GLUquadricObj *qsphere = NULL;
-int glmaxtexsize = 256;
+  GLUquadricObj *qsphere = NULL;
+  int glmaxtexsize = 256;
 
-void gl_init(int w, int h)
-{
-    //#define fogvalues 0.5f, 0.6f, 0.7f, 1.0f
-
+  void gl_init(int w, int h)
+  {
     glViewport(0, 0, w, h);
     glClearDepth(1.0);
     glDepthFunc(GL_LESS);
@@ -60,19 +62,19 @@ void gl_init(int w, int h)
     glNewList(1, GL_COMPILE);
     gluSphere(qsphere, 1, 12, 6);
     glEndList();
-};
+  }
 
-void cleangl()
-{
+  void cleangl()
+  {
     if (qsphere) gluDeleteQuadric(qsphere);
-};
+  }
 
-bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp)
-{
+  bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp)
+  {
     SDL_Surface *s = IMG_Load(texname);
-    if (!s) { console::out("couldn't load texture %s", texname); return false; };
-    if (s->format->BitsPerPixel!=24) { console::out("texture must be 24bpp: %s", texname); return false; };
-    // loopi(s->w*s->h*3) { uchar *p = (uchar *)s->pixels+i; *p = 255-*p; };
+    if (!s) { console::out("couldn't load texture %s", texname); return false; }
+    if (s->format->BitsPerPixel!=24) { console::out("texture must be 24bpp: %s", texname); return false; }
+    // loopi(s->w*s->h*3) { uchar *p = (uchar *)s->pixels+i; *p = 255-*p; }
     glBindTexture(GL_TEXTURE_2D, tnum);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
@@ -82,83 +84,83 @@ bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp)
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     xs = s->w;
     ys = s->h;
-    while (xs>glmaxtexsize || ys>glmaxtexsize) { xs /= 2; ys /= 2; };
+    while (xs>glmaxtexsize || ys>glmaxtexsize) { xs /= 2; ys /= 2; }
     void *scaledimg = s->pixels;
     if (xs!=s->w)
     {
-        console::out("warning: quality loss: scaling %s", texname);     // for voodoo cards under linux
-        scaledimg = alloc(xs*ys*3);
-        gluScaleImage(GL_RGB, s->w, s->h, GL_UNSIGNED_BYTE, s->pixels, xs, ys, GL_UNSIGNED_BYTE, scaledimg);
-    };
+      console::out("warning: quality loss: scaling %s", texname);     // for voodoo cards under linux
+      scaledimg = alloc(xs*ys*3);
+      gluScaleImage(GL_RGB, s->w, s->h, GL_UNSIGNED_BYTE, s->pixels, xs, ys, GL_UNSIGNED_BYTE, scaledimg);
+    }
     if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, xs, ys, GL_RGB, GL_UNSIGNED_BYTE, scaledimg)) fatal("could not build mipmaps");
     if (xs!=s->w) free(scaledimg);
     SDL_FreeSurface(s);
     return true;
-};
+  }
 
-// management of texture slots
-// each texture slot can have multople texture frames, of which currently only the first is used
-// additional frames can be used for various shaders
+  // management of texture slots
+  // each texture slot can have multople texture frames, of which currently only the first is used
+  // additional frames can be used for various shaders
 
-const int MAXTEX = 1000;
-int texx[MAXTEX];                           // ( loaded texture ) -> ( name, size )
-int texy[MAXTEX];
-string texname[MAXTEX];
-int curtex = 0;
-const int FIRSTTEX = 1000;                  // opengl id = loaded id + FIRSTTEX
-// std 1+, sky 14+, mdls 20+
+  const int MAXTEX = 1000;
+  int texx[MAXTEX];                           // ( loaded texture ) -> ( name, size )
+  int texy[MAXTEX];
+  string texname[MAXTEX];
+  int curtex = 0;
+  const int FIRSTTEX = 1000;                  // opengl id = loaded id + FIRSTTEX
+  // std 1+, sky 14+, mdls 20+
 
-const int MAXFRAMES = 2;                    // increase to allow more complex shader defs
-int mapping[256][MAXFRAMES];                // ( cube texture, frame ) -> ( opengl id, name )
-string mapname[256][MAXFRAMES];
+  const int MAXFRAMES = 2;                    // increase to allow more complex shader defs
+  int mapping[256][MAXFRAMES];                // ( cube texture, frame ) -> ( opengl id, name )
+  string mapname[256][MAXFRAMES];
 
-void purgetextures()
-{
+  void purgetextures()
+  {
     loopi(256) loop(j,MAXFRAMES) mapping[i][j] = 0;
-};
+  }
 
-int curtexnum = 0;
+  int curtexnum = 0;
 
-void texturereset() { curtexnum = 0; };
+  void texturereset() { curtexnum = 0; }
 
-void texture(char *aframe, char *name)
-{
+  void texture(char *aframe, char *name)
+  {
     int num = curtexnum++, frame = atoi(aframe);
     if (num<0 || num>=256 || frame<0 || frame>=MAXFRAMES) return;
     mapping[num][frame] = 1;
     char *n = mapname[num][frame];
     strcpy_s(n, name);
     path(n);
-};
+  }
 
-COMMAND(texturereset, ARG_NONE);
-COMMAND(texture, ARG_2STR);
+  COMMAND(texturereset, ARG_NONE);
+  COMMAND(texture, ARG_2STR);
 
-int lookuptexture(int tex, int &xs, int &ys)
-{
+  int lookuptexture(int tex, int &xs, int &ys)
+  {
     int frame = 0;                      // other frames?
     int tid = mapping[tex][frame];
 
     if (tid>=FIRSTTEX)
     {
-        xs = texx[tid-FIRSTTEX];
-        ys = texy[tid-FIRSTTEX];
-        return tid;
-    };
+      xs = texx[tid-FIRSTTEX];
+      ys = texy[tid-FIRSTTEX];
+      return tid;
+    }
 
     xs = ys = 16;
     if (!tid) return 1;                  // crosshair :)
 
     loopi(curtex)       // lazily happens once per "texture" command, basically
     {
-        if (strcmp(mapname[tex][frame], texname[i])==0)
-        {
-            mapping[tex][frame] = tid = i+FIRSTTEX;
-            xs = texx[i];
-            ys = texy[i];
-            return tid;
-        };
-    };
+      if (strcmp(mapname[tex][frame], texname[i])==0)
+      {
+        mapping[tex][frame] = tid = i+FIRSTTEX;
+        xs = texx[i];
+        ys = texy[i];
+        return tid;
+      }
+    }
 
     if (curtex==MAXTEX) fatal("loaded too many textures");
 
@@ -169,20 +171,20 @@ int lookuptexture(int tex, int &xs, int &ys)
 
     if (installtex(tnum, name, xs, ys))
     {
-        mapping[tex][frame] = tnum;
-        texx[curtex] = xs;
-        texy[curtex] = ys;
-        curtex++;
-        return tnum;
+      mapping[tex][frame] = tnum;
+      texx[curtex] = xs;
+      texy[curtex] = ys;
+      curtex++;
+      return tnum;
     }
     else
     {
-        return mapping[tex][frame] = FIRSTTEX;  // temp fix
-    };
-};
+      return mapping[tex][frame] = FIRSTTEX;  // temp fix
+    }
+  }
 
-void setupworld()
-{
+  void setupworld()
+  {
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
@@ -190,60 +192,60 @@ void setupworld()
 
     if (hasoverbright)
     {
-        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
-        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_TEXTURE);
-        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PRIMARY_COLOR_EXT);
-    };
-};
+      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
+      glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
+      glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_TEXTURE);
+      glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PRIMARY_COLOR_EXT);
+    }
+  }
 
-int skyoglid;
+  int skyoglid;
 
-struct strip { int tex, start, num; };
-vector<strip> strips;
+  struct strip { int tex, start, num; };
+  vector<strip> strips;
 
-void renderstripssky()
-{
+  void renderstripssky()
+  {
     glBindTexture(GL_TEXTURE_2D, skyoglid);
     loopv(strips) if (strips[i].tex==skyoglid) glDrawArrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
-};
+  }
 
-void renderstrips()
-{
+  void renderstrips()
+  {
     int lasttex = -1;
     loopv(strips) if (strips[i].tex!=skyoglid)
     {
-        if (strips[i].tex!=lasttex)
-        {
-            glBindTexture(GL_TEXTURE_2D, strips[i].tex);
-            lasttex = strips[i].tex;
-        };
-        glDrawArrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
-    };
-};
+      if (strips[i].tex!=lasttex)
+      {
+        glBindTexture(GL_TEXTURE_2D, strips[i].tex);
+        lasttex = strips[i].tex;
+      }
+      glDrawArrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
+    }
+  }
 
-void overbright(float amount) { if (hasoverbright) glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, amount ); };
+  void overbright(float amount) { if (hasoverbright) glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, amount ); }
 
-void addstrip(int tex, int start, int n)
-{
+  void addstrip(int tex, int start, int n)
+  {
     strip &s = strips.add();
     s.tex = tex;
     s.start = start;
     s.num = n;
-};
+  }
 
-VARFP(gamma, 30, 100, 300,
-{
-    float f = gamma/100.0f;
-    if (SDL_SetGamma(f,f,f)==-1)
-    {
-        console::out("Could not set gamma (card/driver doesn't support it?)");
-        console::out("sdl: %s", SDL_GetError());
-    };
-});
+  VARFP(gamma, 30, 100, 300,
+      {
+      float f = gamma/100.0f;
+      if (SDL_SetGamma(f,f,f)==-1)
+      {
+      console::out("Could not set gamma (card/driver doesn't support it?)");
+      console::out("sdl: %s", SDL_GetError());
+      }
+      });
 
-void transplayer()
-{
+  void transplayer()
+  {
     glLoadIdentity();
 
     glRotated(player1->roll,0.0,0.0,1.0);
@@ -251,26 +253,24 @@ void transplayer()
     glRotated(player1->yaw,0.0,1.0,0.0);
 
     glTranslated(-player1->o.x, (player1->state==CS_DEAD ? player1->eyeheight-0.2f : 0)-player1->o.z, -player1->o.y);
-};
+  }
 
-VARP(fov, 10, 105, 120);
+  VARP(fov, 10, 105, 120);
 
-int xtraverts;
+  VAR(fog, 64, 180, 1024);
+  VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
 
-VAR(fog, 64, 180, 1024);
-VAR(fogcolour, 0, 0x8099B3, 0xFFFFFF);
+  VARP(hudgun,0,1,1);
 
-VARP(hudgun,0,1,1);
+  const char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle" };
 
-const char *hudgunnames[] = { "hudguns/fist", "hudguns/shotg", "hudguns/chaing", "hudguns/rocket", "hudguns/rifle" };
-
-void drawhudmodel(int start, int end, float speed, int base)
-{
+  void drawhudmodel(int start, int end, float speed, int base)
+  {
     rendermodel(hudgunnames[player1->gunselect], start, end, 0, 1.0f, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 1.0f, speed, 0, base);
-};
+  }
 
-void drawhudgun(float fovy, float aspect, int farplane)
-{
+  void drawhudgun(float fovy, float aspect, int farplane)
+  {
     if (!hudgun /*|| !player1->gunselect*/) return;
 
     glEnable(GL_CULL_FACE);
@@ -284,12 +284,12 @@ void drawhudgun(float fovy, float aspect, int farplane)
     int rtime = reloadtime(player1->gunselect);
     if (player1->lastaction && player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
     {
-        drawhudmodel(7, 18, rtime/18.0f, player1->lastaction);
+      drawhudmodel(7, 18, rtime/18.0f, player1->lastaction);
     }
     else
     {
-        drawhudmodel(6, 1, 100, 0);
-    };
+      drawhudmodel(6, 1, 100, 0);
+    }
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -297,10 +297,10 @@ void drawhudgun(float fovy, float aspect, int farplane)
     glMatrixMode(GL_MODELVIEW);
 
     glDisable(GL_CULL_FACE);
-};
+  }
 
-void gl_drawframe(int w, int h, float curfps)
-{
+  void gl_drawframe(int w, int h, float curfps)
+  {
     float hf = hdr.waterlevel-0.3f;
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
@@ -314,11 +314,11 @@ void gl_drawframe(int w, int h, float curfps)
 
     if (underwater)
     {
-        fovy += (float)sin(lastmillis/1000.0)*2.0f;
-        aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
-        glFogi(GL_FOG_START, 0);
-        glFogi(GL_FOG_END, (fog+96)/8);
-    };
+      fovy += (float)sin(lastmillis/1000.0)*2.0f;
+      aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
+      glFogi(GL_FOG_START, 0);
+      glFogi(GL_FOG_END, (fog+96)/8);
+    }
 
     glClear((player1->outsidemap ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
 
@@ -341,7 +341,7 @@ void gl_drawframe(int w, int h, float curfps)
     strips.setsize(0);
 
     world::render(player1->o.x, player1->o.y, player1->o.z,
-            (int)player1->yaw, (int)player1->pitch, (float)fov, w, h);
+        (int)player1->yaw, (int)player1->pitch, (float)fov, w, h);
     finishstrips();
 
     setupworld();
@@ -373,7 +373,7 @@ void gl_drawframe(int w, int h, float curfps)
     entities::renderentities();
 
     renderspheres(curtime);
-    renderents();
+    renderer::renderents();
 
     glDisable(GL_CULL_FACE);
 
@@ -394,24 +394,6 @@ void gl_drawframe(int w, int h, float curfps)
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_FOG);
-};
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  }
+} /* namespace renderer */
 

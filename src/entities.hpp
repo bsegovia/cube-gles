@@ -1,7 +1,5 @@
 #ifndef __QBE_ENTITIES_HPP__
 #define __QBE_ENTITIES_HPP__
-// XXX
-extern void renderents(void);
 
 namespace entities
 {

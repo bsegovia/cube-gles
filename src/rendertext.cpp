@@ -2,8 +2,10 @@
 
 #include "cube.h"
 
-short char_coords[96][4] = 
-{
+namespace renderer {
+
+  static const short char_coords[96][4] = 
+  {
     {0,0,25,64},        //!
     {25,0,54,64},       //"
     {54,0,107,64},      //#
@@ -97,35 +99,35 @@ short char_coords[96][4] =
     {200,448,241,512},  //{
     {241,448,270,512},  //|
     {270,448,310,512},  //}
-    {310,448,363,512},  //~
-};
+  {310,448,363,512},  //~
+  };
 
-int text_width(const char *str)
-{
+  int text_width(const char *str)
+  {
     int x = 0;
     for (int i = 0; str[i] != 0; i++)
     {
-        int c = str[i];
-        if (c=='\t') { x = (x+PIXELTAB)/PIXELTAB*PIXELTAB; continue; }; 
-        if (c=='\f') continue; 
-        if (c==' ') { x += FONTH/2; continue; };
-        c -= 33;
-        if (c<0 || c>=95) continue;
-        int in_width = char_coords[c][2] - char_coords[c][0];
-        x += in_width + 1;
+      int c = str[i];
+      if (c=='\t') { x = (x+PIXELTAB)/PIXELTAB*PIXELTAB; continue; }; 
+      if (c=='\f') continue; 
+      if (c==' ') { x += FONTH/2; continue; };
+      c -= 33;
+      if (c<0 || c>=95) continue;
+      int in_width = char_coords[c][2] - char_coords[c][0];
+      x += in_width + 1;
     }
     return x;
-}
+  }
 
 
-void draw_textf(const char *fstr, int left, int top, int gl_num, ...)
-{
+  void draw_textf(const char *fstr, int left, int top, int gl_num, ...)
+  {
     sprintf_sdlv(str, gl_num, fstr);
     draw_text(str, left, top, gl_num);
-};
+  }
 
-void draw_text(const char *str, int left, int top, int gl_num)
-{
+  void draw_text(const char *str, int left, int top, int gl_num)
+  {
     glBlendFunc(GL_ONE, GL_ONE);
     glBindTexture(GL_TEXTURE_2D, gl_num);
     glColor3ub(255,255,255);
@@ -139,41 +141,41 @@ void draw_text(const char *str, int left, int top, int gl_num)
 
     for (i = 0; str[i] != 0; i++)
     {
-        int c = str[i];
-        if (c=='\t') { x = (x-left+PIXELTAB)/PIXELTAB*PIXELTAB+left; continue; }; 
-        if (c=='\f') { glColor3ub(64,255,128); continue; };
-        if (c==' ') { x += FONTH/2; continue; };
-        c -= 33;
-        if (c<0 || c>=95) continue;
+      int c = str[i];
+      if (c=='\t') { x = (x-left+PIXELTAB)/PIXELTAB*PIXELTAB+left; continue; }; 
+      if (c=='\f') { glColor3ub(64,255,128); continue; };
+      if (c==' ') { x += FONTH/2; continue; };
+      c -= 33;
+      if (c<0 || c>=95) continue;
 
-        in_left    = ((float) char_coords[c][0])   / 512.0f;
-        in_top     = ((float) char_coords[c][1]+2) / 512.0f;
-        in_right   = ((float) char_coords[c][2])   / 512.0f;
-        in_bottom  = ((float) char_coords[c][3]-2) / 512.0f;
+      in_left    = ((float) char_coords[c][0])   / 512.0f;
+      in_top     = ((float) char_coords[c][1]+2) / 512.0f;
+      in_right   = ((float) char_coords[c][2])   / 512.0f;
+      in_bottom  = ((float) char_coords[c][3]-2) / 512.0f;
 
-        in_width   = char_coords[c][2] - char_coords[c][0];
-        in_height  = char_coords[c][3] - char_coords[c][1];
+      in_width   = char_coords[c][2] - char_coords[c][0];
+      in_height  = char_coords[c][3] - char_coords[c][1];
 
-        glBegin(GL_QUADS);
-        glTexCoord2f(in_left,  in_top   ); glVertex2i(x,            y);
-        glTexCoord2f(in_right, in_top   ); glVertex2i(x + in_width, y);
-        glTexCoord2f(in_right, in_bottom); glVertex2i(x + in_width, y + in_height);
-        glTexCoord2f(in_left,  in_bottom); glVertex2i(x,            y + in_height);
-        glEnd();
-        
-        xtraverts += 4;
-        x += in_width  + 1;
+      glBegin(GL_QUADS);
+      glTexCoord2f(in_left,  in_top   ); glVertex2i(x,            y);
+      glTexCoord2f(in_right, in_top   ); glVertex2i(x + in_width, y);
+      glTexCoord2f(in_right, in_bottom); glVertex2i(x + in_width, y + in_height);
+      glTexCoord2f(in_left,  in_bottom); glVertex2i(x,            y + in_height);
+      glEnd();
+
+      xtraverts += 4;
+      x += in_width  + 1;
     }
-}
+  }
 
-// also Don's code, so goes in here too :)
+  // also Don's code, so goes in here too :)
 
-void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
-                     float s1, float t1, int x1, int y1, int z1,
-                     float s2, float t2, int x2, int y2, int z2,
-                     float s3, float t3, int x3, int y3, int z3,
-                     int texture)
-{
+  void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
+      float s1, float t1, int x1, int y1, int z1,
+      float s2, float t2, int x2, int y2, int z2,
+      float s3, float t3, int x3, int y3, int z3,
+      int texture)
+  {
     glBindTexture(GL_TEXTURE_2D, texture);
     glBegin(GL_QUADS);
     glTexCoord2f(s3, t3); glVertex3d(x3, y3, z3);
@@ -182,61 +184,43 @@ void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
     glTexCoord2f(s0, t0); glVertex3d(x0, y0, z0);
     glEnd();
     xtraverts += 4;
-}
+  }
 
-void draw_envbox(int t, int w)
-{
+  void draw_envbox(int t, int w)
+  {
     glDepthMask(GL_FALSE);
 
     draw_envbox_aux(1.0f, 1.0f, -w, -w,  w,
-                    0.0f, 1.0f,  w, -w,  w,
-                    0.0f, 0.0f,  w, -w, -w,
-                    1.0f, 0.0f, -w, -w, -w, t);
+        0.0f, 1.0f,  w, -w,  w,
+        0.0f, 0.0f,  w, -w, -w,
+        1.0f, 0.0f, -w, -w, -w, t);
 
     draw_envbox_aux(1.0f, 1.0f, +w,  w,  w,
-                    0.0f, 1.0f, -w,  w,  w,
-                    0.0f, 0.0f, -w,  w, -w,
-                    1.0f, 0.0f, +w,  w, -w, t+1);
+        0.0f, 1.0f, -w,  w,  w,
+        0.0f, 0.0f, -w,  w, -w,
+        1.0f, 0.0f, +w,  w, -w, t+1);
 
     draw_envbox_aux(0.0f, 0.0f, -w, -w, -w,
-                    1.0f, 0.0f, -w,  w, -w,
-                    1.0f, 1.0f, -w,  w,  w,
-                    0.0f, 1.0f, -w, -w,  w, t+2);
+        1.0f, 0.0f, -w,  w, -w,
+        1.0f, 1.0f, -w,  w,  w,
+        0.0f, 1.0f, -w, -w,  w, t+2);
 
     draw_envbox_aux(1.0f, 1.0f, +w, -w,  w,
-                    0.0f, 1.0f, +w,  w,  w,
-                    0.0f, 0.0f, +w,  w, -w,
-                    1.0f, 0.0f, +w, -w, -w, t+3);
+        0.0f, 1.0f, +w,  w,  w,
+        0.0f, 0.0f, +w,  w, -w,
+        1.0f, 0.0f, +w, -w, -w, t+3);
 
     draw_envbox_aux(0.0f, 1.0f, -w,  w,  w,
-                    0.0f, 0.0f, +w,  w,  w,
-                    1.0f, 0.0f, +w, -w,  w,
-                    1.0f, 1.0f, -w, -w,  w, t+4);
+        0.0f, 0.0f, +w,  w,  w,
+        1.0f, 0.0f, +w, -w,  w,
+        1.0f, 1.0f, -w, -w,  w, t+4);
 
     draw_envbox_aux(0.0f, 1.0f, +w,  w, -w,
-                    0.0f, 0.0f, -w,  w, -w,
-                    1.0f, 0.0f, -w, -w, -w,
-                    1.0f, 1.0f, +w, -w, -w, t+5);
+        0.0f, 0.0f, -w,  w, -w,
+        1.0f, 0.0f, -w, -w, -w,
+        1.0f, 1.0f, +w, -w, -w, t+5);
 
     glDepthMask(GL_TRUE);
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+  }
+} /* namespace renderer */
 

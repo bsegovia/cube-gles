@@ -130,7 +130,7 @@ namespace client
     localdisconnect();
 
     if (!onlyclean) {
-      stop();
+      demo::stop();
       localconnect();
     }
   }
@@ -290,7 +290,7 @@ namespace client
     }
     *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
     enet_packet_resize(packet, p-start);
-    incomingdemodata(start, p-start, true);
+    demo::incomingdata(start, p-start, true);
     if (clienthost) {
       enet_host_broadcast(clienthost, 0, packet);
       enet_host_flush(clienthost);
@@ -298,7 +298,7 @@ namespace client
       localclienttoserver(packet);
     lastupdate = lastmillis;
     if (serveriteminitdone)
-      loadgamerest();  // hack
+      demo::loadgamerest();  // hack
   }
 
   /*! Update the position of other clients in the game in our world don't care
@@ -340,7 +340,7 @@ namespace client
   {
     if (ENET_NET_TO_HOST_16(*(ushort *)buf) != len)
       neterr("packet length");
-    incomingdemodata(buf, len);
+    demo::incomingdata(buf, len);
 
     uchar *end = buf+len;
     uchar *p = buf+2;

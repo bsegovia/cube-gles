@@ -189,7 +189,7 @@ namespace game
         continue;
       }
       if (lagtime && players[i]->state != CS_DEAD && (!demoplayback || i!=democlientnum))
-        moveplayer(players[i], 2, false); // use physics to extrapolate player position
+        physics::moveplayer(players[i], 2, false); // use physics to extrapolate player position
     }
   }
 
@@ -226,12 +226,12 @@ namespace game
         sleepwait = 0;
         cmd::execute(sleepcmd);
       }
-      physicsframe();
+      physics::physicsframe();
       entities::checkquad(curtime);
       if (m_arena)
         arenarespawn();
       moveprojectiles((float)curtime);
-      demoplaybackstep();
+      demo::playbackstep();
       if (!demoplayback) {
         if (client::getclientnum()>=0)
           shoot(player1, worldpos); // only shoot when connected to server
@@ -245,11 +245,11 @@ namespace game
         if (player1->state==CS_DEAD) {
           if (lastmillis-player1->lastaction<2000) {
             player1->move = player1->strafe = 0;
-            moveplayer(player1, 10, false);
+            physics::moveplayer(player1, 10, false);
           } else if (!m_arena && !m_sp && lastmillis-player1->lastaction>10000)
             respawn();
         } else if (!intermission) {
-          moveplayer(player1, 20, true);
+          physics::moveplayer(player1, 20, true);
           entities::checkitems();
         }
         // do this last, to reduce the effective frame lag
@@ -266,7 +266,7 @@ namespace game
       float dy = (rnd(21)-10)/10.0f*i;
       d->o.x += dx;
       d->o.y += dy;
-      if (collide(d, true, 0, 0))
+      if (physics::collide(d, true, 0, 0))
         return;
       d->o.x -= dx;
       d->o.y -= dy;
@@ -347,8 +347,8 @@ namespace game
   {
     if (player1->state!=CS_ALIVE || editmode || intermission)
       return;
-    damageblend(damage);
-    demoblend(damage);
+    renderer::damageblend(damage);
+    demo::blend(damage);
     // let armour absorb when possible
     int ad = damage*(player1->armourtype+1)*20/100;
     if (ad>player1->armour)
@@ -504,7 +504,7 @@ namespace game
       scale *= 32;
       mz -= 1.9f;
     }
-    rendermodel(mdlname, frame[n], range[n], 0, 1.5f, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, 0, basetime);
+    renderer::rendermodel(mdlname, frame[n], range[n], 0, 1.5f, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, 0, basetime);
   }
 
   void renderclients(void)
