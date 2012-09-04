@@ -1,5 +1,6 @@
 #include "cube.h"
 #include <ctype.h>
+#include <SDL/SDL.h>
 
 #ifndef WIN32
 #include <X11/Xlib.h>
@@ -67,8 +68,8 @@ namespace console
         refs[nd++] = conlines[i].cref;
         if (nd==ndraw) break;
       }
-    loopj(nd)
-      renderer::draw_text(refs[j], FONTH/3, (FONTH/4*5)*(nd-j-1)+FONTH/3, 2);
+    const int h = renderer::FONTH;
+    loopj(nd) renderer::draw_text(refs[j], h/3, (h/4*5)*(nd-j-1)+h/3, 2);
   }
 
   // keymap is defined externally in keymap.cfg

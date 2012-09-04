@@ -1,6 +1,9 @@
 #ifndef __QBE_EDITING_HPP__
 #define __QBE_EDITING_HPP__
 
+// XXX move that
+extern bool editmode;
+
 namespace editor
 {
   void cursorupdate(void);

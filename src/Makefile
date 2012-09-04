@@ -21,7 +21,7 @@ CLIENT_OBJS= \
 	renderparticles.o \
 	rendertext.o \
 	rndmap.o \
-	savegamedemo.o \
+	demo.o \
 	server.o \
 	serverbrowser.o \
 	serverms.o \

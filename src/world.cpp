@@ -1,4 +1,6 @@
 #include "cube.h"
+#include <SDL/SDL.h>
+#include <zlib.h>
 
 // lookup from map entities above to strings
 extern const char *entnames[];

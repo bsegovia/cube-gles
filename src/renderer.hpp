@@ -1,8 +1,20 @@
 #ifndef __QBE_RENDERER_HPP__
 #define __QBE_RENDERER_HPP__
 
+/*! XXX move that to namespace */
+extern int xtraverts;
+
 namespace renderer
 {
+  /*! virtual screen width for text & HUD */
+  static const int VIRTW = 2400;
+  /*! virtual screen height for text & HUD */
+  static const int VIRTH = 1800;
+  /*! font height */
+  static const int FONTH = 64;
+  /*! tabulation size in pixels */
+  static const int PIXELTAB = VIRTW / 12;
+
   // rendergl
   void gl_init(int w, int h);
   void cleangl();

@@ -7,18 +7,18 @@
 #define gamma __gamma
 #endif
 
-#include <math.h>
+#include <cmath>
 
 #ifdef __GNUC__
 #undef gamma
 #endif
 
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <limits.h>
-#include <assert.h>
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
+#include <cstdarg>
+#include <climits>
+#include <cassert>
 #ifdef __GNUC__
 #include <new>
 #else
@@ -87,6 +87,7 @@ struct sprintf_s_f
 #define sprintf_sd(d) string d; sprintf_s(d)
 #define sprintf_sdlv(d,last,fmt) string d; { va_list ap; va_start(ap, last); formatstring(d, fmt, ap); va_end(ap); }
 #define sprintf_sdv(d,fmt) sprintf_sdlv(d,fmt,fmt)
+#define ATOI(s) strtol(s, NULL, 0) // supports hexadecimal numbers
 
 #define fast_f2nat(val) ((int)(val))
 
@@ -94,107 +95,109 @@ extern char *path(char *s);
 extern char *loadfile(char *fn, int *size);
 extern void endianswap(void *, int, int);
 
+#define PI  (3.1415927f)
+#define PI2 (2*PI)
+
 // memory pool that uses buckets and linear allocation for small objects
 // VERY fast, and reasonably good memory reuse
-
 struct pool
 {
-    enum { POOLSIZE = 4096 };   // can be absolutely anything
-    enum { PTRSIZE = sizeof(char *) };
-    enum { MAXBUCKETS = 65 };   // meaning up to size 256 on 32bit pointer systems
-    enum { MAXREUSESIZE = MAXBUCKETS*PTRSIZE-PTRSIZE };
-    inline size_t bucket(size_t s) { return (s+PTRSIZE-1)>>PTRBITS; };
-    enum { PTRBITS = PTRSIZE==2 ? 1 : PTRSIZE==4 ? 2 : 3 };
+  enum { POOLSIZE = 4096 };   // can be absolutely anything
+  enum { PTRSIZE = sizeof(char *) };
+  enum { MAXBUCKETS = 65 };   // meaning up to size 256 on 32bit pointer systems
+  enum { MAXREUSESIZE = MAXBUCKETS*PTRSIZE-PTRSIZE };
+  inline size_t bucket(size_t s) { return (s+PTRSIZE-1)>>PTRBITS; };
+  enum { PTRBITS = PTRSIZE==2 ? 1 : PTRSIZE==4 ? 2 : 3 };
 
-    char *p;
-    size_t left;
-    char *blocks;
-    void *reuse[MAXBUCKETS];
+  char *p;
+  size_t left;
+  char *blocks;
+  void *reuse[MAXBUCKETS];
 
-    pool();
-    ~pool() { dealloc_block(blocks); };
+  pool();
+  ~pool() { dealloc_block(blocks); };
 
-    void *alloc(size_t size);
-    void dealloc(void *p, size_t size);
-    void *realloc(void *p, size_t oldsize, size_t newsize);
+  void *alloc(size_t size);
+  void dealloc(void *p, size_t size);
+  void *realloc(void *p, size_t oldsize, size_t newsize);
 
-    char *string(const char *s, size_t l);
-    char *string(const char *s) { return string(s, strlen(s)); };
-    void deallocstr(char *s) { dealloc(s, strlen(s)+1); };
-    char *stringbuf(const char *s) { return string(s, _MAXDEFSTR-1); };
+  char *string(const char *s, size_t l);
+  char *string(const char *s) { return string(s, strlen(s)); };
+  void deallocstr(char *s) { dealloc(s, strlen(s)+1); };
+  char *stringbuf(const char *s) { return string(s, _MAXDEFSTR-1); };
 
-    void dealloc_block(void *b);
-    void allocnext(size_t allocsize);
+  void dealloc_block(void *b);
+  void allocnext(size_t allocsize);
 };
 
 pool *gp();
 
 template <class T> struct vector
 {
-    T *buf;
-    int alen;
-    int ulen;
-    pool *p;
+  T *buf;
+  int alen;
+  int ulen;
+  pool *p;
 
-    vector()
-    {
-        this->p = gp();
-        alen = 8;
-        buf = (T *)p->alloc(alen*sizeof(T));
-        ulen = 0;
-    };
+  vector()
+  {
+    this->p = gp();
+    alen = 8;
+    buf = (T *)p->alloc(alen*sizeof(T));
+    ulen = 0;
+  };
 
-    ~vector() { setsize(0); p->dealloc(buf, alen*sizeof(T)); };
+  ~vector() { setsize(0); p->dealloc(buf, alen*sizeof(T)); };
 
-    vector(vector<T> &v);
-    void operator=(vector<T> &v);
+  vector(vector<T> &v);
+  void operator=(vector<T> &v);
 
-    T &add(const T &x)
-    {
-        if(ulen==alen) realloc();
-        new (&buf[ulen]) T(x);
-        return buf[ulen++];
-    };
+  T &add(const T &x)
+  {
+    if(ulen==alen) realloc();
+    new (&buf[ulen]) T(x);
+    return buf[ulen++];
+  };
 
-    T &add()
-    {
-        if(ulen==alen) realloc();
-        new (&buf[ulen]) T;
-        return buf[ulen++];
-    };
+  T &add()
+  {
+    if(ulen==alen) realloc();
+    new (&buf[ulen]) T;
+    return buf[ulen++];
+  };
 
-    T &pop() { return buf[--ulen]; };
-    T &last() { return buf[ulen-1]; };
-    bool empty() { return ulen==0; };
+  T &pop() { return buf[--ulen]; };
+  T &last() { return buf[ulen-1]; };
+  bool empty() { return ulen==0; };
 
-    int length() { return ulen; };
-    T &operator[](int i) { assert(i>=0 && i<ulen); return buf[i]; };
-    void setsize(int i) { for(; ulen>i; ulen--) buf[ulen-1].~T(); };
-    T *getbuf() { return buf; };
+  int length() { return ulen; };
+  T &operator[](int i) { assert(i>=0 && i<ulen); return buf[i]; };
+  void setsize(int i) { for(; ulen>i; ulen--) buf[ulen-1].~T(); };
+  T *getbuf() { return buf; };
 
-    void sort(void *cf) { qsort(buf, ulen, sizeof(T), (int (__cdecl *)(const void *,const void *))cf); };
+  void sort(void *cf) { qsort(buf, ulen, sizeof(T), (int (__cdecl *)(const void *,const void *))cf); };
 
-    void realloc()
-    {
-        int olen = alen;
-        buf = (T *)p->realloc(buf, olen*sizeof(T), (alen *= 2)*sizeof(T));
-    };
+  void realloc()
+  {
+    int olen = alen;
+    buf = (T *)p->realloc(buf, olen*sizeof(T), (alen *= 2)*sizeof(T));
+  };
 
-    T remove(int i)
-    {
-        T e = buf[i];
-        for(int p = i+1; p<ulen; p++) buf[p-1] = buf[p];
-        ulen--;
-        return e;
-    };
+  T remove(int i)
+  {
+    T e = buf[i];
+    for(int p = i+1; p<ulen; p++) buf[p-1] = buf[p];
+    ulen--;
+    return e;
+  };
 
-    T &insert(int i, const T &e)
-    {
-        add(T());
-        for(int p = ulen-1; p>i; p--) buf[p] = buf[p-1];
-        buf[i] = e;
-        return buf[i];
-    };
+  T &insert(int i, const T &e)
+  {
+    add(T());
+    for(int p = ulen-1; p>i; p--) buf[p] = buf[p-1];
+    buf[i] = e;
+    return buf[i];
+  };
 };
 
 #define loopv(v)    if(false) {} else for(int i = 0; i<(v).length(); i++)
@@ -202,52 +205,52 @@ template <class T> struct vector
 
 template <class T> struct hashtable
 {
-    struct chain { chain *next; const char *key; T data; };
+  struct chain { chain *next; const char *key; T data; };
 
-    int size;
-    int numelems;
-    chain **table;
-    pool *parent;
-    chain *enumc;
+  int size;
+  int numelems;
+  chain **table;
+  pool *parent;
+  chain *enumc;
 
-    hashtable()
+  hashtable()
+  {
+    this->size = 1<<10;
+    this->parent = gp();
+    numelems = 0;
+    table = (chain **)parent->alloc(size*sizeof(T));
+    for(int i = 0; i<size; i++) table[i] = NULL;
+  };
+
+  hashtable(hashtable<T> &v);
+  void operator=(hashtable<T> &v);
+
+  T *access(const char *key, const T *data = NULL)
+  {
+    unsigned int h = 5381;
+    for(int i = 0, k; (k = key[i]) != 0; i++) h = ((h<<5)+h)^k; // bernstein k=33 xor
+    h = h&(size-1); // primes not much of an advantage
+    for(chain *c = table[h]; c; c = c->next)
     {
-        this->size = 1<<10;
-        this->parent = gp();
-        numelems = 0;
-        table = (chain **)parent->alloc(size*sizeof(T));
-        for(int i = 0; i<size; i++) table[i] = NULL;
+      char ch = 0;
+      for(const char *p1 = key, *p2 = c->key; (ch = *p1++)==*p2++; ) if(!ch)
+      {
+        T *d = &c->data;
+        if(data) c->data = *data;
+        return d;
+      };
     };
-
-    hashtable(hashtable<T> &v);
-    void operator=(hashtable<T> &v);
-
-    T *access(const char *key, const T *data = NULL)
+    if(data)
     {
-        unsigned int h = 5381;
-        for(int i = 0, k; (k = key[i]) != 0; i++) h = ((h<<5)+h)^k; // bernstein k=33 xor
-        h = h&(size-1); // primes not much of an advantage
-        for(chain *c = table[h]; c; c = c->next)
-        {
-          char ch = 0;
-          for(const char *p1 = key, *p2 = c->key; (ch = *p1++)==*p2++; ) if(!ch)
-          {
-            T *d = &c->data;
-            if(data) c->data = *data;
-            return d;
-          };
-        };
-        if(data)
-        {
-            chain *c = (chain *)parent->alloc(sizeof(chain));
-            c->data = *data;
-            c->key = key;
-            c->next = table[h];
-            table[h] = c;
-            numelems++;
-        };
-        return NULL;
+      chain *c = (chain *)parent->alloc(sizeof(chain));
+      c->data = *data;
+      c->key = key;
+      c->next = table[h];
+      table[h] = c;
+      numelems++;
     };
+    return NULL;
+  };
 };
 
 #define enumerate(ht,t,e,b) loopi(ht->size) for(ht->enumc = ht->table[i]; ht->enumc; ht->enumc = ht->enumc->next) { t e = &ht->enumc->data; b; }
@@ -255,6 +258,27 @@ template <class T> struct hashtable
 inline char *newstring(const char *s)           { return gp()->string(s); }
 inline char *newstring(const char *s, size_t l) { return gp()->string(s, l); }
 inline char *newstringbuf(const char *s)        { return gp()->stringbuf(s); }
+
+// simplistic vector ops
+#define dotprod(u,v) ((u).x * (v).x + (u).y * (v).y + (u).z * (v).z)
+#define vmul(u,f)    { (u).x *= (f); (u).y *= (f); (u).z *= (f); }
+#define vdiv(u,f)    { (u).x /= (f); (u).y /= (f); (u).z /= (f); }
+#define vadd(u,v)    { (u).x += (v).x; (u).y += (v).y; (u).z += (v).z; };
+#define vsub(u,v)    { (u).x -= (v).x; (u).y -= (v).y; (u).z -= (v).z; };
+#define vdist(d,v,e,s) vec v = s; vsub(v,e); float d = (float)sqrt(dotprod(v,v));
+#define vreject(v,u,max) ((v).x>(u).x+(max) || (v).x<(u).x-(max) || (v).y>(u).y+(max) || (v).y<(u).y-(max))
+#define vlinterp(v,f,u,g) { (v).x = (v).x*f+(u).x*g; (v).y = (v).y*f+(u).y*g; (v).z = (v).z*f+(u).z*g; }
+
+struct vec { float x, y, z; };
+
+// vertex array format
+struct vertex { float u, v, x, y, z; uchar r, g, b, a; };
+typedef vector<char *> cvector;
+typedef vector<int> ivector;
+
+void fatal(const char *s, const char *o = "");
+void *alloc(int s);
+void keyrepeat(bool on);
 
 #endif /* _TOOLS_H */
 

@@ -1,7 +1,5 @@
-// rendercubes.cpp: sits in between worldrender.cpp and rendergl.cpp and fills
-// the vertex array for different cube surfaces.
-
 #include "cube.h"
+#include <GL/gl.h>
 
 namespace renderer
 {

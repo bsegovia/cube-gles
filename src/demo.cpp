@@ -2,6 +2,7 @@
 // mapents, the full state of all dynents (monsters + player)
 
 #include "cube.h"
+#include <zlib.h>
 
 // XXX
 extern int islittleendian;
@@ -122,7 +123,7 @@ namespace demo
       if (ents[i].type==CARROT && !ents[i].spawned)
         world::trigger(ents[i].attr1, ents[i].attr2, true);
     };
-    restoreserverstate(ents);
+    server::restoreserverstate(ents);
 
     gzread(f, player1, sizeof(dynent));
     player1->lastaction = lastmillis;

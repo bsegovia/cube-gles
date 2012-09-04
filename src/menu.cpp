@@ -1,6 +1,5 @@
 #include "cube.h"
-
-void refreshservers(void);
+#include <SDL/SDL.h>
 
 namespace menu
 {
@@ -50,31 +49,35 @@ namespace menu
 
   bool render(void)
   {
-    if (vmenu<0) { menustack.setsize(0); return false; }
-    if (vmenu==1) refreshservers();
+    if (vmenu<0) {
+      menustack.setsize(0);
+      return false;
+    }
+    if (vmenu==1)
+      browser::refreshservers();
     gmenu &m = menus[vmenu];
     sprintf_sd(title)(vmenu>1 ? "[ %s menu ]" : "%s", m.name);
     int mdisp = m.items.length();
     int w = 0;
-    loopi(mdisp)
-    {
-      int x = renderer::text_width(m.items[i].text);
+    loopi(mdisp) {
+      const int x = renderer::text_width(m.items[i].text);
       if (x>w) w = x;
     }
 
     int tw = renderer::text_width(title);
     if (tw>w) w = tw;
-    int step = FONTH/4*5;
+    const int fh = renderer::FONTH;
+    int step = fh/4*5;
     int h = (mdisp+2)*step;
-    int y = (VIRTH-h)/2;
-    int x = (VIRTW-w)/2;
-    renderer::blendbox(x-FONTH/2*3, y-FONTH, x+w+FONTH/2*3, y+h+FONTH, true);
+    int y = (renderer::VIRTH-h)/2;
+    int x = (renderer::VIRTW-w)/2;
+    renderer::blendbox(x-fh/2*3, y-fh, x+w+fh/2*3, y+h+fh, true);
     renderer::draw_text(title, x, y,2);
-    y += FONTH*2;
+    y += fh*2;
 
     if (vmenu) {
       int bh = y+m.menusel*step;
-      renderer::blendbox(x-FONTH, bh-10, x+w+FONTH, bh+FONTH+10, false);
+      renderer::blendbox(x-fh, bh-10, x+w+fh, bh+fh+10, false);
     }
     loopj(mdisp) {
       renderer::draw_text(m.items[j].text, x, y, 2);
@@ -125,7 +128,8 @@ namespace menu
     } else {
       if (code==SDLK_RETURN || code==-2) {
         char *action = menus[vmenu].items[menusel].action;
-        if (vmenu==1) client::connect(getservername(menusel));
+        if (vmenu==1)
+          client::connect(browser::getservername(menusel));
         menustack.add(vmenu);
         set(-1);
         cmd::execute(action, true);

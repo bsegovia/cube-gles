@@ -223,7 +223,7 @@ namespace monster
         {
           m->lastaction = 0;
           m->attacking = true;
-          shoot(m, m->attacktarget);
+          weapon::shoot(m, m->attacktarget);
           transition(m, M_ATTACKING, 0, 600, 0);
         };
         break;
@@ -294,7 +294,7 @@ namespace monster
     console::out(allkilled ? "you have cleared the map!" : "you reached the exit!");
     console::out("score: %d kills in %d seconds", numkilled, (lastmillis-mtimestart)/1000);
     monstertotal = 0;
-    startintermission();
+    server::startintermission();
   };
 
   void monsterthink()

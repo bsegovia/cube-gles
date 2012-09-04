@@ -236,7 +236,7 @@ namespace entities
   {
     loopv(ents) if ((ents[i].type>=I_SHELLS && ents[i].type<=I_QUAD) || ents[i].type==CARROT)
     {
-      putint(p, i);
+      server::putint(p, i);
       ents[i].spawned = true;
     };
   };

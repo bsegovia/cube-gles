@@ -2,6 +2,9 @@
 #define __QBE_DEMO_HPP__
 
 struct vec;
+#define SAVEGAMEVERSION 4               // bump if dynent/netprotocol changes or any other savegame/demo data
+
+extern bool demoplayback;
 
 namespace demo
 {

@@ -1,6 +1,5 @@
-// rendermd2.cpp: loader code adapted from a nehe tutorial
-
 #include "cube.h"
+#include <GL/gl.h>
 
 namespace renderer
 {

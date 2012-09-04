@@ -51,7 +51,7 @@ namespace editor
       world::resettagareas();                                // clear trigger areas to allow them to be edited
       player1->health = 100;
       if (m_classicsp) monster::monsterclear();                 // all monsters back at their spawns for editing
-      projreset();
+      weapon::projreset();
     };
     keyrepeat(editmode);
     selset = false;

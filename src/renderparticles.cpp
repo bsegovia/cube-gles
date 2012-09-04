@@ -1,6 +1,5 @@
-// renderparticles.cpp
-
 #include "cube.h"
+#include <GL/gl.h>
 
 namespace renderer
 {

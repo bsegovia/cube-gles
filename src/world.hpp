@@ -4,6 +4,7 @@
 struct vec;
 struct dynent;
 
+// XXX move that into namespace?
 enum          // block types, order matters!
 {
   SOLID = 0,  // entirely solid cube [only specifies wtex]
@@ -42,7 +43,38 @@ enum                            // hardcoded texture numbers
   DEFAULT_CEIL
 };
 
+struct header                   // map file format header
+{
+    char head[4];               // "CUBE"
+    int version;                // any >8bit quantity is a little indian
+    int headersize;             // sizeof(header)
+    int sfactor;                // in bits
+    int numents;
+    char maptitle[128];
+    uchar texlists[3][256];
+    int waterlevel;
+    int reserved[15];
+};
+
+extern header hdr;                 // current map header
+
+// XXX
 extern sqr *map, *mmip[];          // map data, the mips are sequential 2D arrays in memory
+extern int sfactor, ssize;         // ssize = 2^sfactor
+extern int cubicsize, mipsize;     // cubicsize = ssize^2
+
+#define MAPVERSION 5            // bump if map format changes, see worldio.cpp
+#define SWS(w,x,y,s) (&(w)[(y)*(s)+(x)])
+#define SW(w,x,y) SWS(w,x,y,ssize)
+#define S(x,y) SW(map,x,y)            // convenient lookup of a lowest mip cube
+#define SMALLEST_FACTOR 6               // determines number of mips there can be
+#define DEFAULT_FACTOR 8
+#define LARGEST_FACTOR 11               // 10 is already insane
+#define SOLID(x) ((x)->type==SOLID)
+#define MINBORD 2                       // 2 cubes from the edge of the world are always solid
+#define OUTBORD(x,y) ((x)<MINBORD || (y)<MINBORD || (x)>=ssize-MINBORD || (y)>=ssize-MINBORD)
+
+struct entity;
 
 namespace world
 {

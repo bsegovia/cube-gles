@@ -1,6 +1,22 @@
 #ifndef __QBE_GAME_HPP__
 #define __QBE_GAME_HPP__
 
+// XXX move that to namespace ? Or use functions?
+extern int lastmillis;             // last time
+extern int curtime;                // current frame time
+extern int gamemode, nextmode;
+extern vec worldpos;               // current target of the crosshair in the world
+
+#define m_noitems     (gamemode>=4)
+#define m_noitemsrail (gamemode<=5)
+#define m_arena       (gamemode>=8)
+#define m_tarena      (gamemode>=10)
+#define m_teammode    (gamemode&1 && gamemode>2)
+#define m_sp          (gamemode<0)
+#define m_dmsp        (gamemode==-1)
+#define m_classicsp   (gamemode==-2)
+#define isteam(a,b)   (m_teammode && strcmp(a, b)==0)
+
 namespace game
 {
   /*! Apply mouse movement to player1 */

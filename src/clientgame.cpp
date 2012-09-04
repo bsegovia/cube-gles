@@ -1,4 +1,5 @@
 #include "cube.h"
+#include <enet/enet.h>
 
 // XXX improve that
 dynent *player1 = game::newdynent();          // our client
@@ -10,6 +11,7 @@ extern int democlientnum;
 VAR(gamemode, 1, 0, 0);
 extern int framesinmap;
 extern int democlientnum;
+vec worldpos;
 
 namespace game
 {
@@ -230,11 +232,11 @@ namespace game
       entities::checkquad(curtime);
       if (m_arena)
         arenarespawn();
-      moveprojectiles((float)curtime);
+      weapon::moveprojectiles((float)curtime);
       demo::playbackstep();
       if (!demoplayback) {
         if (client::getclientnum()>=0)
-          shoot(player1, worldpos); // only shoot when connected to server
+          weapon::shoot(player1, worldpos); // only shoot when connected to server
         // do this first, so we have most accurate information when our player
         // moves
         client::gets2c();
@@ -427,7 +429,7 @@ namespace game
     }
     sleepwait = 0;
     monster::monsterclear();
-    projreset();
+    weapon::projreset();
     spawncycle = -1;
     spawnplayer(player1);
     player1->frags = 0;
@@ -531,7 +533,6 @@ namespace game
   static char *teamname[maxteams];
   static int teamscore[maxteams], teamsused;
   static string teamscores;
-  static int timeremain = 0;
 
   void addteamscore(dynent *d)
   {
@@ -586,9 +587,9 @@ namespace game
     ENetPacket *packet = enet_packet_create(NULL, MAXTRANS + mapsize, ENET_PACKET_FLAG_RELIABLE);
     uchar *start = packet->data;
     uchar *p = start+2;
-    putint(p, SV_SENDMAP);
-    sendstring(mapname, p);
-    putint(p, mapsize);
+    server::putint(p, SV_SENDMAP);
+    server::sendstring(mapname, p);
+    server::putint(p, mapsize);
     if (65535 - (p - start) < mapsize) {
       console::out("map %s is too large to send", mapname);
       free(mapdata);
@@ -611,7 +612,7 @@ namespace game
     ENetPacket *packet = enet_packet_create(NULL, MAXTRANS, ENET_PACKET_FLAG_RELIABLE);
     uchar *start = packet->data;
     uchar *p = start+2;
-    putint(p, SV_RECVMAP);
+    server::putint(p, SV_RECVMAP);
     *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
     enet_packet_resize(packet, p-start);
     client::sendpackettoserv(packet);

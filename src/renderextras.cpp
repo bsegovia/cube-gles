@@ -1,8 +1,8 @@
-// renderextras.cpp: misc gl render code and the HUD
-
 #include "cube.h"
+#include <GL/gl.h>
+#include <GL/glu.h>
+
 // XXX
-vec worldpos;
 const char *entnames[] =
 {
   "none?", "light", "playerstart",
@@ -301,7 +301,7 @@ namespace renderer
     glEnable(GL_TEXTURE_2D);
 
     char *command = console::getcurcommand();
-    char *player = playerincrosshair();
+    char *player = weapon::playerincrosshair();
     if (command) draw_textf("> %s_", 20, 1570, 2, command);
     else if (closeent[0]) draw_text(closeent, 20, 1570, 2);
     else if (player) draw_text(player, 20, 1570, 2);

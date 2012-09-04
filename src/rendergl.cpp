@@ -1,7 +1,11 @@
-// rendergl.cpp: core opengl rendering stuff
-
 #include "cube.h"
-// XXX  
+#include <GL/gl.h>
+#include <GL/glu.h>
+#include <GL/glext.h>
+#include <SDL/SDL.h>
+#include <SDL/SDL_image.h>
+
+// XXX
 int xtraverts;
 bool hasoverbright = false;
 
@@ -17,7 +21,6 @@ namespace renderer
 
   extern int curvert;
 
-
   void purgetextures();
 
   GLUquadricObj *qsphere = NULL;
@@ -30,7 +33,6 @@ namespace renderer
     glDepthFunc(GL_LESS);
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
-
 
     glEnable(GL_FOG);
     glFogi(GL_FOG_MODE, GL_LINEAR);
@@ -281,7 +283,7 @@ namespace renderer
     glMatrixMode(GL_MODELVIEW);
 
     //glClear(GL_DEPTH_BUFFER_BIT);
-    int rtime = reloadtime(player1->gunselect);
+    const int rtime = weapon::reloadtime(player1->gunselect);
     if (player1->lastaction && player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
     {
       drawhudmodel(7, 18, rtime/18.0f, player1->lastaction);

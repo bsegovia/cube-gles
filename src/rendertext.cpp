@@ -1,9 +1,8 @@
-// rendertext.cpp: based on Don's gl_text.cpp
-
 #include "cube.h"
+#include <GL/gl.h>
 
-namespace renderer {
-
+namespace renderer
+{
   static const short char_coords[96][4] = 
   {
     {0,0,25,64},        //!
@@ -99,7 +98,7 @@ namespace renderer {
     {200,448,241,512},  //{
     {241,448,270,512},  //|
     {270,448,310,512},  //}
-  {310,448,363,512},  //~
+    {310,448,363,512}   //~
   };
 
   int text_width(const char *str)
@@ -139,8 +138,7 @@ namespace renderer {
     float in_left, in_top, in_right, in_bottom;
     int in_width, in_height;
 
-    for (i = 0; str[i] != 0; i++)
-    {
+    for (i = 0; str[i] != 0; i++) {
       int c = str[i];
       if (c=='\t') { x = (x-left+PIXELTAB)/PIXELTAB*PIXELTAB+left; continue; }; 
       if (c=='\f') { glColor3ub(64,255,128); continue; };
@@ -171,10 +169,10 @@ namespace renderer {
   // also Don's code, so goes in here too :)
 
   void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
-      float s1, float t1, int x1, int y1, int z1,
-      float s2, float t2, int x2, int y2, int z2,
-      float s3, float t3, int x3, int y3, int z3,
-      int texture)
+                       float s1, float t1, int x1, int y1, int z1,
+                       float s2, float t2, int x2, int y2, int z2,
+                       float s3, float t3, int x3, int y3, int z3,
+                       int texture)
   {
     glBindTexture(GL_TEXTURE_2D, texture);
     glBegin(GL_QUADS);
@@ -189,37 +187,30 @@ namespace renderer {
   void draw_envbox(int t, int w)
   {
     glDepthMask(GL_FALSE);
-
     draw_envbox_aux(1.0f, 1.0f, -w, -w,  w,
-        0.0f, 1.0f,  w, -w,  w,
-        0.0f, 0.0f,  w, -w, -w,
-        1.0f, 0.0f, -w, -w, -w, t);
-
+                    0.0f, 1.0f,  w, -w,  w,
+                    0.0f, 0.0f,  w, -w, -w,
+                    1.0f, 0.0f, -w, -w, -w, t);
     draw_envbox_aux(1.0f, 1.0f, +w,  w,  w,
-        0.0f, 1.0f, -w,  w,  w,
-        0.0f, 0.0f, -w,  w, -w,
-        1.0f, 0.0f, +w,  w, -w, t+1);
-
+                    0.0f, 1.0f, -w,  w,  w,
+                    0.0f, 0.0f, -w,  w, -w,
+                    1.0f, 0.0f, +w,  w, -w, t+1);
     draw_envbox_aux(0.0f, 0.0f, -w, -w, -w,
-        1.0f, 0.0f, -w,  w, -w,
-        1.0f, 1.0f, -w,  w,  w,
-        0.0f, 1.0f, -w, -w,  w, t+2);
-
+                    1.0f, 0.0f, -w,  w, -w,
+                    1.0f, 1.0f, -w,  w,  w,
+                    0.0f, 1.0f, -w, -w,  w, t+2);
     draw_envbox_aux(1.0f, 1.0f, +w, -w,  w,
-        0.0f, 1.0f, +w,  w,  w,
-        0.0f, 0.0f, +w,  w, -w,
-        1.0f, 0.0f, +w, -w, -w, t+3);
-
+                    0.0f, 1.0f, +w,  w,  w,
+                    0.0f, 0.0f, +w,  w, -w,
+                    1.0f, 0.0f, +w, -w, -w, t+3);
     draw_envbox_aux(0.0f, 1.0f, -w,  w,  w,
-        0.0f, 0.0f, +w,  w,  w,
-        1.0f, 0.0f, +w, -w,  w,
-        1.0f, 1.0f, -w, -w,  w, t+4);
-
+                    0.0f, 0.0f, +w,  w,  w,
+                    1.0f, 0.0f, +w, -w,  w,
+                    1.0f, 1.0f, -w, -w,  w, t+4);
     draw_envbox_aux(0.0f, 1.0f, +w,  w, -w,
-        0.0f, 0.0f, -w,  w, -w,
-        1.0f, 0.0f, -w, -w, -w,
-        1.0f, 1.0f, +w, -w, -w, t+5);
-
+                    0.0f, 0.0f, -w,  w, -w,
+                    1.0f, 0.0f, -w, -w, -w,
+                    1.0f, 1.0f, +w, -w, -w, t+5);
     glDepthMask(GL_TRUE);
   }
 } /* namespace renderer */

@@ -1,6 +1,8 @@
-// main.cpp: initialisation & main loop
-
 #include "cube.h"
+#include <GL/gl.h>
+#include <SDL/SDL.h>
+#include <enet/enet.h>
+#include <time.h>
 
 void cleanup(char *msg)         // single program exit point;
 {
@@ -9,7 +11,7 @@ void cleanup(char *msg)         // single program exit point;
   cmd::writecfg();
   renderer::cleangl();
   sound::clean();
-  cleanupserver();
+  server::cleanup();
   SDL_ShowCursor(1);
   if (msg)
   {
@@ -25,7 +27,7 @@ void cleanup(char *msg)         // single program exit point;
 
 void quit() // normal exit
 {
-  writeservercfg();
+  browser::writeservercfg();
   cleanup(NULL);
 };
 
@@ -127,7 +129,7 @@ int main(int argc, char **argv)
   if (enet_initialize()<0) fatal("Unable to initialise network module");
 
   game::initclient();
-  initserver(dedicated, uprate, sdesc, ip, master, passwd, maxcl);  // never returns if dedicated
+  server::init(dedicated, uprate, sdesc, ip, master, passwd, maxcl);  // never returns if dedicated
 
   log("world");
   world::empty(7, true);
@@ -176,7 +178,7 @@ int main(int argc, char **argv)
   cmd::exec("autoexec.cfg");
 
   log("localconnect");
-  localconnect();
+  server::localconnect();
   client::changemap("metl3");        // if this map is changed, also change depthcorrect()
 
   log("mainloop");
@@ -186,10 +188,12 @@ int main(int argc, char **argv)
     int millis = SDL_GetTicks()*gamespeed/100;
     if (millis-lastmillis>200) lastmillis = millis-200;
     else if (millis-lastmillis<1) lastmillis = millis-1;
-    if (millis-lastmillis<minmillis) SDL_Delay(minmillis-(millis-lastmillis));
+    if (millis-lastmillis<minmillis)
+      SDL_Delay(minmillis-(millis-lastmillis));
     world::cleardlights();
     game::updateworld(millis);
-    if (!demoplayback) serverslice((int)time(NULL), 0);
+    if (!demoplayback)
+      server::slice((int)time(NULL), 0);
     static float fps = 30.0f;
     fps = (1000.0f/curtime+fps*50)/51;
     world::computeraytable(player1->o.x, player1->o.y);
@@ -226,7 +230,7 @@ int main(int argc, char **argv)
           lastbut = event.button.button;
         break;
       }
-    };
+    }
   }
   quit();
   return 1;
