@@ -1,7 +1,7 @@
 // generic useful stuff for any C++ program
 
-#ifndef _TOOLS_H
-#define _TOOLS_H
+#ifndef __QBE_TOOLS_HPP__
+#define __QBE_TOOLS_HPP__
 
 #ifdef __GNUC__
 #define gamma __gamma
@@ -280,5 +280,5 @@ void fatal(const char *s, const char *o = "");
 void *alloc(int s);
 void keyrepeat(bool on);
 
-#endif /* _TOOLS_H */
+#endif /* __QBE_TOOLS_HPP__ */
 

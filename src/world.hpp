@@ -18,15 +18,15 @@ enum          // block types, order matters!
 
 struct sqr
 {
-  uchar type;                 // one of the above
-  char floor, ceil;           // height, in cubes
-  uchar wtex, ftex, ctex;     // wall/floor/ceil texture ids
-  uchar r, g, b;              // light value at upper left vertex
-  uchar vdelta;               // vertex delta, used for heightfield cubes
-  char defer;                 // used in mipmapping, when true this cube is not a perfect mip
-  char occluded;              // true when occluded
-  uchar utex;                 // upper wall tex id
-  uchar tag;                  // used by triggers
+  uchar type;              // one of the above
+  char floor, ceil;        // height, in cubes
+  uchar wtex, ftex, ctex;  // wall/floor/ceil texture ids
+  uchar r, g, b;           // light value at upper left vertex
+  uchar vdelta;            // vertex delta, used for heightfield cubes
+  char defer;              // used in mipmapping, when true this cube is not a perfect mip
+  char occluded;           // true when occluded
+  uchar utex;              // upper wall tex id
+  uchar tag;               // used by triggers
 };
 
 struct block
@@ -45,15 +45,15 @@ enum                            // hardcoded texture numbers
 
 struct header                   // map file format header
 {
-    char head[4];               // "CUBE"
-    int version;                // any >8bit quantity is a little indian
-    int headersize;             // sizeof(header)
-    int sfactor;                // in bits
-    int numents;
-    char maptitle[128];
-    uchar texlists[3][256];
-    int waterlevel;
-    int reserved[15];
+  char head[4];               // "CUBE"
+  int version;                // any >8bit quantity is a little indian
+  int headersize;             // sizeof(header)
+  int sfactor;                // in bits
+  int numents;
+  char maptitle[128];
+  uchar texlists[3][256];
+  int waterlevel;
+  int reserved[15];
 };
 
 extern header hdr;                 // current map header

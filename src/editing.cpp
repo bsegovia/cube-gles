@@ -5,6 +5,7 @@
 
 // XXX
 bool editmode = false;
+extern void perlinarea(block &b, int scale, int seed, int psize);
 
 namespace editor
 {
@@ -272,16 +273,14 @@ namespace editor
 
   void editheightxy(bool isfloor, int amount, block &sel)
   {
-    loopselxy(if (isfloor)
-        {
-        s->floor += amount;
-        if (s->floor>=s->ceil) s->floor = s->ceil-1;
-        }
-        else
-        {
-        s->ceil += amount;
-        if (s->ceil<=s->floor) s->ceil = s->floor+1;
-        });
+    loopselxy(
+    if (isfloor) {
+      s->floor += amount;
+      if (s->floor>=s->ceil) s->floor = s->ceil-1;
+    } else {
+      s->ceil += amount;
+      if (s->ceil<=s->floor) s->ceil = s->floor+1;
+    });
   };
 
   void editheight(int flr, int amount)
@@ -296,14 +295,14 @@ namespace editor
 
   void edittexxy(int type, int t, block &sel)
   {
-    loopselxy(switch (type)
-        {
+    loopselxy(
+      switch (type) {
         case 0: s->ftex = t; break;
         case 1: s->wtex = t; break;
         case 2: s->ctex = t; break;
         case 3: s->utex = t; break;
-        });
-  };
+      });
+  }
 
   void edittex(int type, int dir)
   {
