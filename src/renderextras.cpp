@@ -169,11 +169,12 @@ namespace rdr
     static string lastsky = "";
     if (strcmp(lastsky, basename)==0) return;
     const char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
-    int texnum = 14;
+    const int texnum = 14;
     loopi(6) {
       sprintf_sd(name)("packages/%s_%s.jpg", basename, side[i]);
       int xs, ys;
-      if (!installtex(texnum+i, path(name), xs, ys, true)) console::out("could not load sky textures");
+      if (!ogl::installtex(texnum+i, path(name), xs, ys, true))
+        console::out("could not load sky textures");
     }
     strcpy_s(lastsky, basename);
   }
@@ -255,7 +256,7 @@ namespace rdr
   VAR(hidestats, 0, 0, 1);
   VARP(crosshairfx, 0, 1, 1);
 
-  void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
+  void drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
   {
     readmatrices();
     if (editmode) {

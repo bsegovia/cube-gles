@@ -202,7 +202,7 @@ namespace rdr
       if (!m->load(path(name1))) fatal("loadmodel: ", name1);
       sprintf_sd(name2)("packages/models/%s/skin.jpg", m->loadname);
       int xs, ys;
-      installtex(FIRSTMDL+m->mdlnum, path(name2), xs, ys);
+      ogl::installtex(FIRSTMDL+m->mdlnum, path(name2), xs, ys);
       m->loaded = true;
     }
   }
@@ -247,7 +247,7 @@ namespace rdr
     delayedload(m);
 
     int xs, ys;
-    glBindTexture(GL_TEXTURE_2D, tex ? lookuptexture(tex, xs, ys) : FIRSTMDL+m->mdlnum);
+    glBindTexture(GL_TEXTURE_2D, tex ? ogl::lookuptex(tex, xs, ys) : FIRSTMDL+m->mdlnum);
 
     int ix = (int)x;
     int iy = (int)z;

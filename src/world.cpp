@@ -350,8 +350,7 @@ namespace world
     hdr.headersize = sizeof(header);
     hdr.sfactor = sfactor;
 
-    if (copy)
-    {
+    if (copy) {
       loop(x,ssize/2) loop(y,ssize/2)
         *S(x+ssize/4, y+ssize/4) = *SWS(oldmap, x, y, ssize/2);
       loopv(ents) {
@@ -1373,7 +1372,7 @@ namespace world
     world::settagareas();
     int xs, ys;
 
-    loopi(256) rdr::lookuptexture(i, xs, ys);
+    loopi(256) rdr::ogl::lookuptex(i, xs, ys);
     console::out("read map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
     console::out("%s", hdr.maptitle);
     game::startmap(mname);

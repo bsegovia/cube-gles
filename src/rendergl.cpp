@@ -7,14 +7,10 @@
 int xtraverts;
 bool hasoverbright = false;
 
-namespace rdr
-{
-  extern int curvert;
+namespace rdr { extern int curvert; }
 
-  void purgetextures(void);
-
-  static int glmaxtexsize = 256;
-
+namespace rdr {
+namespace ogl {
   void sphere(GLdouble radius, int slices, int stacks)
   {
     const int CACHE_SIZE = 240;
@@ -83,42 +79,27 @@ namespace rdr
     }
   }
 
-  void gl_init(int w, int h)
-  {
-    glViewport(0, 0, w, h);
-    glClearDepth(1.f);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_DEPTH_TEST);
-    glShadeModel(GL_SMOOTH);
+  /* management of texture slots each texture slot can have multople texture
+   * frames, of which currently only the first is used additional frames can be
+   * used for various shaders
+   */
+  static const int MAXTEX = 1000;
+  static const int FIRSTTEX = 1000; /* opengl id = loaded id + FIRSTTEX */
+  static const int MAXFRAMES = 2; /* increase for more complex shader defs */
+  static int texx[MAXTEX]; /* (loaded texture) -> (name, size) */
+  static int texy[MAXTEX];
+  static string texname[MAXTEX];
+  static int curtex = 0;
+  static int glmaxtexsize = 256;
+  static int curtexnum = 0;
 
-    glEnable(GL_FOG);
-    glFogi(GL_FOG_MODE, GL_LINEAR);
-    glFogf(GL_FOG_DENSITY, 0.25f);
-    glHint(GL_FOG_HINT, GL_NICEST);
+  /* std 1+, sky 14+, mdls 20+ */
+  static int mapping[256][MAXFRAMES]; /* (texture, frame) -> (oglid, name) */
+  static string mapname[256][MAXFRAMES];
 
-    glEnable(GL_LINE_SMOOTH);
-    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    //glEnable(GL_POLYGON_OFFSET_LINE);
-    //glPolygonOffset(-3.f, -3.f);
-
-    glCullFace(GL_FRONT);
-    glEnable(GL_CULL_FACE);
-
-    const char *exts = (const char *)glGetString(GL_EXTENSIONS);
-
-    if (strstr(exts, "GL_EXT_texture_env_combine")) hasoverbright = true;
-    else console::out("WARNING: cannot use overbright lighting, using old lighting model!");
-
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glmaxtexsize);
-
-    purgetextures();
-
-    glNewList(1, GL_COMPILE);
-    sphere(1, 12, 6);
-    glEndList();
+  static void purgetextures(void) {
+    loopi(256) loop(j,MAXFRAMES) mapping[i][j] = 0;
   }
-
-  void cleangl() {}
 
   bool installtex(int tnum, const char *texname, int &xs, int &ys, bool clamp)
   {
@@ -147,29 +128,45 @@ namespace rdr
     return true;
   }
 
-  /* management of texture slots each texture slot can have multople texture
-   * frames, of which currently only the first is used additional frames can be
-   * used for various shaders
-   */
-  static const int MAXTEX = 1000;
-  static const int FIRSTTEX = 1000; /* opengl id = loaded id + FIRSTTEX */
-  static const int MAXFRAMES = 2; /* increase for more complex shader defs */
-  static int texx[MAXTEX]; /* (loaded texture) -> (name, size) */
-  static int texy[MAXTEX];
-  static string texname[MAXTEX];
-  static int curtex = 0;
+  void init(int w, int h)
+  {
+    glViewport(0, 0, w, h);
+    glClearDepth(1.f);
+    glDepthFunc(GL_LESS);
+    glEnable(GL_DEPTH_TEST);
+    glShadeModel(GL_SMOOTH);
 
-  /* std 1+, sky 14+, mdls 20+ */
-  static int mapping[256][MAXFRAMES]; /* (texture, frame) -> (oglid, name) */
-  static string mapname[256][MAXFRAMES];
+    glEnable(GL_FOG);
+    glFogi(GL_FOG_MODE, GL_LINEAR);
+    glFogf(GL_FOG_DENSITY, 0.25f);
+    glHint(GL_FOG_HINT, GL_NICEST);
 
-  void purgetextures() { loopi(256) loop(j,MAXFRAMES) mapping[i][j] = 0; }
+    glEnable(GL_LINE_SMOOTH);
+    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
-  static int curtexnum = 0;
+    glCullFace(GL_FRONT);
+    glEnable(GL_CULL_FACE);
 
-  void texturereset() { curtexnum = 0; }
+    const char *exts = (const char *)glGetString(GL_EXTENSIONS);
 
-  void texture(char *aframe, char *name)
+    if (strstr(exts, "GL_EXT_texture_env_combine")) hasoverbright = true;
+    else console::out("WARNING: cannot use overbright lighting, using old lighting model!");
+
+    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glmaxtexsize);
+
+    purgetextures();
+
+    glNewList(1, GL_COMPILE);
+    sphere(1, 12, 6);
+    glEndList();
+  }
+
+  void clean(void) {}
+
+
+  static void texturereset(void) { curtexnum = 0; }
+
+  static void texture(char *aframe, char *name)
   {
     int num = curtexnum++, frame = atoi(aframe);
     if (num<0 || num>=256 || frame<0 || frame>=MAXFRAMES) return;
@@ -182,7 +179,7 @@ namespace rdr
   COMMAND(texturereset, ARG_NONE);
   COMMAND(texture, ARG_2STR);
 
-  int lookuptexture(int tex, int &xs, int &ys)
+  int lookuptex(int tex, int &xs, int &ys)
   {
     int frame = 0;  /* other frames? */
     int tid = mapping[tex][frame];
@@ -222,7 +219,7 @@ namespace rdr
       return mapping[tex][frame] = FIRSTTEX;  // temp fix
   }
 
-  void setupworld()
+  static void setupworld(void)
   {
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_COLOR_ARRAY);
@@ -241,7 +238,7 @@ namespace rdr
   struct strip { int tex, start, num; };
   static vector<strip> strips;
 
-  void renderstripssky(void)
+  static void renderstripssky(void)
   {
     glBindTexture(GL_TEXTURE_2D, skyoglid);
     loopv(strips)
@@ -249,7 +246,7 @@ namespace rdr
         glDrawArrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
   }
 
-  void renderstrips(void)
+  static void renderstrips(void)
   {
     int lasttex = -1;
     loopv(strips) if (strips[i].tex!=skyoglid) {
@@ -261,7 +258,11 @@ namespace rdr
     }
   }
 
-  void overbright(float amount) { if (hasoverbright) glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, amount ); }
+  static void overbright(float amount)
+  {
+    if (hasoverbright)
+      glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, amount);
+  }
 
   void addstrip(int tex, int start, int n)
   {
@@ -271,7 +272,7 @@ namespace rdr
     s.num = n;
   }
 
-  void transplayer(void)
+  static void transplayer(void)
   {
     glLoadIdentity();
     glRotated(player1->roll,0.0,0.0,1.0);
@@ -293,15 +294,15 @@ namespace rdr
     "hudguns/rifle"
   };
 
-  void drawhudmodel(int start, int end, float speed, int base)
+  static void drawhudmodel(int start, int end, float speed, int base)
   {
     rendermodel(hudgunnames[player1->gunselect], start, end, 0, 1.0f, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 1.0f, speed, 0, base);
   }
 
-  void drawhudgun(float fovy, float aspect, int farplane)
+  static void drawhudgun(float fovy, float aspect, int farplane)
   {
     double p[16];
-    if (!hudgun /*|| !player1->gunselect*/) return;
+    if (!hudgun) return;
 
     glEnable(GL_CULL_FACE);
 
@@ -326,7 +327,7 @@ namespace rdr
     glDisable(GL_CULL_FACE);
   }
 
-  void gl_drawframe(int w, int h, float curfps)
+  void drawframe(int w, int h, float curfps)
   {
     float hf = hdr.waterlevel-0.3f;
     float fovy = (float)fov*h/w;
@@ -361,7 +362,7 @@ namespace rdr
     glEnable(GL_TEXTURE_2D);
 
     int xs, ys;
-    skyoglid = lookuptexture(DEFAULT_SKY, xs, ys);
+    skyoglid = lookuptex(DEFAULT_SKY, xs, ys);
 
     resetcubes();
 
@@ -418,11 +419,12 @@ namespace rdr
 
     glDisable(GL_TEXTURE_2D);
 
-    gl_drawhud(w, h, (int)curfps, nquads, curvert, underwater);
+    drawhud(w, h, (int)curfps, nquads, curvert, underwater);
 
     glEnable(GL_CULL_FACE);
     glEnable(GL_FOG);
   }
+} /* namespace ogl */
 } /* namespace rdr */
 
 
