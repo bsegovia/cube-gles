@@ -16,11 +16,11 @@ namespace renderer
 {
   void line(int x1, int y1, float z1, int x2, int y2, float z2)
   {
-    glBegin(GL_POLYGON);
+    glBegin(GL_TRIANGLE_STRIP);
     glVertex3f((float)x1, z1, (float)y1);
     glVertex3f((float)x1, z1, y1+0.01f);
-    glVertex3f((float)x2, z2, y2+0.01f);
     glVertex3f((float)x2, z2, (float)y2);
+    glVertex3f((float)x2, z2, y2+0.01f);
     glEnd();
     xtraverts += 4;
   }
@@ -31,25 +31,26 @@ namespace renderer
     glColor3ub(r,g,b);
   }
 
-  void box(block &b, float z1, float z2, float z3, float z4)
+  void box(const block &b, float z1, float z2, float z3, float z4)
   {
-    glBegin(GL_POLYGON);
+    glBegin(GL_LINE_LOOP);
     glVertex3f((float)b.x,      z1, (float)b.y);
     glVertex3f((float)b.x+b.xs, z2, (float)b.y);
     glVertex3f((float)b.x+b.xs, z3, (float)b.y+b.ys);
     glVertex3f((float)b.x,      z4, (float)b.y+b.ys);
     glEnd();
+    assert(glGetError() == GL_NO_ERROR);
     xtraverts += 4;
   }
 
   void dot(int x, int y, float z)
   {
     const float DOF = 0.1f;
-    glBegin(GL_POLYGON);
+    glBegin(GL_TRIANGLE_STRIP);
     glVertex3f(x-DOF, (float)z, y-DOF);
     glVertex3f(x+DOF, (float)z, y-DOF);
-    glVertex3f(x+DOF, (float)z, y+DOF);
     glVertex3f(x-DOF, (float)z, y+DOF);
+    glVertex3f(x+DOF, (float)z, y+DOF);
     glEnd();
     xtraverts += 4;
   }
@@ -59,18 +60,20 @@ namespace renderer
     glDepthMask(GL_FALSE);
     glDisable(GL_TEXTURE_2D);
     glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-    glBegin(GL_QUADS);
-    if (border) glColor3d(0.5, 0.3, 0.4); 
-    else glColor3d(1.0, 1.0, 1.0);
+    glBegin(GL_TRIANGLE_STRIP);
+    if (border)
+      glColor3d(0.5, 0.3, 0.4);
+    else
+      glColor3d(1.0, 1.0, 1.0);
     glVertex2i(x1, y1);
     glVertex2i(x2, y1);
-    glVertex2i(x2, y2);
     glVertex2i(x1, y2);
+    glVertex2i(x2, y2);
     glEnd();
     glDisable(GL_BLEND);
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glBegin(GL_POLYGON);
-    glColor3d(0.2, 0.7, 0.4); 
+    glBegin(GL_LINE_LOOP);
+    glColor3d(0.2, 0.7, 0.4);
     glVertex2i(x1, y1);
     glVertex2i(x2, y1);
     glVertex2i(x2, y2);
@@ -90,17 +93,14 @@ namespace renderer
 
   void newsphere(vec &o, float max, int type)
   {
-    if (!sinit)
-    {
-      loopi(MAXSPHERES)
-      {
+    if (!sinit) {
+      loopi(MAXSPHERES) {
         spheres[i].next = sempty;
         sempty = &spheres[i];
       }
       sinit = true;
     }
-    if (sempty)
-    {
+    if (sempty) {
       sphere *p = sempty;
       sempty = p->next;
       p->o = o;
@@ -117,10 +117,9 @@ namespace renderer
     glDepthMask(GL_FALSE);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-    glBindTexture(GL_TEXTURE_2D, 4);  
+    glBindTexture(GL_TEXTURE_2D, 4);
 
-    for (sphere *p, **pp = &slist; (p = *pp);)
-    {
+    for (sphere *p, **pp = &slist; (p = *pp);) {
       glPushMatrix();
       float size = p->size/p->max;
       glColor4f(1.0f, 1.0f, 1.0f, 1.0f-size);
@@ -133,15 +132,12 @@ namespace renderer
       glPopMatrix();
       xtraverts += 12*6*2;
 
-      if (p->size>p->max)
-      {
+      if (p->size>p->max) {
         *pp = p->next;
         p->next = sempty;
         sempty = p;
-      }
-      else
-      {
-        p->size += time/100.0f;   
+      } else {
+        p->size += time/100.0f;
         pp = &p->next;
       }
     }
@@ -155,16 +151,14 @@ namespace renderer
   {
     closeent[0] = 0;
     if (!editmode) return;
-    loopv(ents)
-    {
+    loopv(ents) {
       entity &e = ents[i];
       if (e.type==NOTUSED) continue;
       vec v = { float(e.x), float(e.y), float(e.z) };
       particle_splash(2, 2, 40, v);
     }
     int e = world::closestent();
-    if (e>=0)
-    {
+    if (e>=0) {
       entity &c = ents[e];
       sprintf_s(closeent)("closest entity = %s (%d, %d, %d, %d), selection = (%d, %d)", entnames[c.type], c.attr1, c.attr2, c.attr3, c.attr4, cmd::getvar("selxs"), cmd::getvar("selys"));
     }
@@ -176,8 +170,7 @@ namespace renderer
     if (strcmp(lastsky, basename)==0) return;
     const char *side[] = { "ft", "bk", "lf", "rt", "dn", "up" };
     int texnum = 14;
-    loopi(6)
-    {
+    loopi(6) {
       sprintf_sd(name)("packages/%s_%s.jpg", basename, side[i]);
       int xs, ys;
       if (!installtex(texnum+i, path(name), xs, ys, true)) console::out("could not load sky textures");
@@ -225,32 +218,32 @@ namespace renderer
 
   void drawicon(float tx, float ty, int x, int y)
   {
-    glBindTexture(GL_TEXTURE_2D, 5);
-    glBegin(GL_QUADS);
+    const float o = 1/3.0f;
+    const int s = 120;
     tx /= 192;
     ty /= 192;
-    float o = 1/3.0f;
-    int s = 120;
+    glBindTexture(GL_TEXTURE_2D, 5);
+    glBegin(GL_TRIANGLE_STRIP);
     glTexCoord2f(tx,   ty);   glVertex2i(x,   y);
     glTexCoord2f(tx+o, ty);   glVertex2i(x+s, y);
-    glTexCoord2f(tx+o, ty+o); glVertex2i(x+s, y+s);
     glTexCoord2f(tx,   ty+o); glVertex2i(x,   y+s);
+    glTexCoord2f(tx+o, ty+o); glVertex2i(x+s, y+s);
     glEnd();
     xtraverts += 4;
   }
 
   void invertperspective()
   {
-    // This only generates a valid inverse matrix for matrices generated by gluPerspective()
+    /* Generates a valid inverse matrix for matrices generated by
+     * gluPerspective
+     */
     GLdouble inv[16];
     memset(inv, 0, sizeof(inv));
-
     inv[0*4+0] = 1.0/pm[0*4+0];
     inv[1*4+1] = 1.0/pm[1*4+1];
     inv[2*4+3] = 1.0/pm[3*4+2];
     inv[3*4+2] = -1.0;
     inv[3*4+3] = pm[2*4+2]/pm[3*4+2];
-
     glLoadMatrixd(inv);
   }
 
@@ -265,32 +258,32 @@ namespace renderer
   void gl_drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
   {
     readmatrices();
-    if (editmode)
-    {
+    if (editmode) {
       if (cursordepth==1.0f) worldpos = player1->o;
       glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-      editor::cursorupdate();
+      edit::cursorupdate();
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     glDisable(GL_DEPTH_TEST);
     invertperspective();
-    glPushMatrix();  
+    glPushMatrix();
     glOrtho(0, VIRTW, VIRTH, 0, -1, 1);
     glEnable(GL_BLEND);
 
     glDepthMask(GL_FALSE);
 
-    if (dblend || underwater)
-    {
+    if (dblend || underwater) {
       glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-      glBegin(GL_QUADS);
-      if (dblend) glColor3d(0.0f, 0.9f, 0.9f);
-      else glColor3d(0.9f, 0.5f, 0.0f);
+      glBegin(GL_TRIANGLE_STRIP);
+      if (dblend)
+        glColor3d(0.0f, 0.9f, 0.9f);
+      else
+        glColor3d(0.9f, 0.5f, 0.0f);
       glVertex2i(0, 0);
       glVertex2i(VIRTW, 0);
-      glVertex2i(VIRTW, VIRTH);
       glVertex2i(0, VIRTH);
+      glVertex2i(VIRTW, VIRTH);
       glEnd();
       dblend -= curtime/3;
       if (dblend<0) dblend = 0;
@@ -305,11 +298,10 @@ namespace renderer
     else if (player) draw_text(player, 20, 1570, 2);
 
     game::renderscores();
-    if (!menu::render())
-    {
+    if (!menu::render()) {
       glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
       glBindTexture(GL_TEXTURE_2D, 1);
-      glBegin(GL_QUADS);
+      glBegin(GL_TRIANGLE_STRIP);
       glColor3ub(255,255,255);
       if (crosshairfx)
       {
@@ -317,35 +309,33 @@ namespace renderer
         else if (player1->health<=25) glColor3ub(255,0,0);
         else if (player1->health<=50) glColor3ub(255,128,0);
       }
-      float chsize = (float)crosshairsize;
-      glTexCoord2d(0.0, 0.0); glVertex2f(VIRTW/2 - chsize, VIRTH/2 - chsize);
-      glTexCoord2d(1.0, 0.0); glVertex2f(VIRTW/2 + chsize, VIRTH/2 - chsize);
-      glTexCoord2d(1.0, 1.0); glVertex2f(VIRTW/2 + chsize, VIRTH/2 + chsize);
-      glTexCoord2d(0.0, 1.0); glVertex2f(VIRTW/2 - chsize, VIRTH/2 + chsize);
+      const float chsize = float(crosshairsize);
+      glTexCoord2f(0.f, 0.f); glVertex2f(VIRTW/2 - chsize, VIRTH/2 - chsize);
+      glTexCoord2f(1.f, 0.f); glVertex2f(VIRTW/2 + chsize, VIRTH/2 - chsize);
+      glTexCoord2f(0.f, 1.f); glVertex2f(VIRTW/2 - chsize, VIRTH/2 + chsize);
+      glTexCoord2f(1.f, 1.f); glVertex2f(VIRTW/2 + chsize, VIRTH/2 + chsize);
       glEnd();
     }
 
     glPopMatrix();
 
-    glPushMatrix();    
+    glPushMatrix();
     glOrtho(0, VIRTW*4/3, VIRTH*4/3, 0, -1, 1);
     console::render();
 
-    if (!hidestats)
-    {
+    if (!hidestats) {
       glPopMatrix();
       glPushMatrix();
       glOrtho(0, VIRTW*3/2, VIRTH*3/2, 0, -1, 1);
       draw_textf("fps %d", 3200, 2390, 2, curfps);
-      draw_textf("wqd %d", 3200, 2460, 2, nquads); 
+      draw_textf("wqd %d", 3200, 2460, 2, nquads);
       draw_textf("wvt %d", 3200, 2530, 2, curvert);
       draw_textf("evt %d", 3200, 2600, 2, xtraverts);
     }
 
     glPopMatrix();
 
-    if (player1->state==CS_ALIVE)
-    {
+    if (player1->state==CS_ALIVE) {
       glPushMatrix();
       glOrtho(0, VIRTW/2, VIRTH/2, 0, -1, 1);
       draw_textf("%d",  90, 827, 2, player1->health);
@@ -356,11 +346,11 @@ namespace renderer
       glOrtho(0, VIRTW, VIRTH, 0, -1, 1);
       glDisable(GL_BLEND);
       drawicon(128, 128, 20, 1650);
-      if (player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650); 
+      if (player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650);
       int g = player1->gunselect;
       int r = 64;
       if (g>2) { g -= 3; r = 128; }
-      drawicon((float)(g*64), (float)r, 1220, 1650);   
+      drawicon((float)(g*64), (float)r, 1220, 1650);
       glPopMatrix();
     }
 

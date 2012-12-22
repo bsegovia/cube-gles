@@ -154,11 +154,11 @@ namespace renderer
       in_width   = char_coords[c][2] - char_coords[c][0];
       in_height  = char_coords[c][3] - char_coords[c][1];
 
-      glBegin(GL_QUADS);
+      glBegin(GL_TRIANGLE_STRIP);
       glTexCoord2f(in_left,  in_top   ); glVertex2i(x,            y);
       glTexCoord2f(in_right, in_top   ); glVertex2i(x + in_width, y);
-      glTexCoord2f(in_right, in_bottom); glVertex2i(x + in_width, y + in_height);
       glTexCoord2f(in_left,  in_bottom); glVertex2i(x,            y + in_height);
+      glTexCoord2f(in_right, in_bottom); glVertex2i(x + in_width, y + in_height);
       glEnd();
 
       xtraverts += 4;
@@ -175,11 +175,11 @@ namespace renderer
                        int texture)
   {
     glBindTexture(GL_TEXTURE_2D, texture);
-    glBegin(GL_QUADS);
+    glBegin(GL_TRIANGLE_STRIP);
     glTexCoord2f(s3, t3); glVertex3d(x3, y3, z3);
     glTexCoord2f(s2, t2); glVertex3d(x2, y2, z2);
-    glTexCoord2f(s1, t1); glVertex3d(x1, y1, z1);
     glTexCoord2f(s0, t0); glVertex3d(x0, y0, z0);
+    glTexCoord2f(s1, t1); glVertex3d(x1, y1, z1);
     glEnd();
     xtraverts += 4;
   }

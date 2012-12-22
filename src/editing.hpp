@@ -4,7 +4,7 @@
 // XXX move that
 extern bool editmode;
 
-namespace editor
+namespace edit
 {
   void cursorupdate(void);
   void toggleedit(void);
@@ -16,7 +16,7 @@ namespace editor
   void editheightxy(bool isfloor, int amount, block &sel);
   bool noteditmode(void);
   void pruneundos(int maxremain = 0);
-} /* namespace editor */
+} /* namespace edit */
 
 #endif /* __QBE_EDITING_HPP__ */
 

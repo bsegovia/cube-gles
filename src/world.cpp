@@ -173,7 +173,7 @@ namespace world
 
   int closestent(void)
   {
-    if (editor::noteditmode())
+    if (edit::noteditmode())
       return -1;
     int best = 0;
     float bdist = 99999;
@@ -258,7 +258,7 @@ namespace world
   static void clearents(char *name)
   {
     int type = findtype(name);
-    if (editor::noteditmode() || client::multiplayer())
+    if (edit::noteditmode() || client::multiplayer())
       return;
     loopv(ents) {
       entity &e = ents[i];
@@ -316,9 +316,9 @@ namespace world
 
   void empty(int factor, bool force)
   {
-    if (!force && editor::noteditmode()) return;
+    if (!force && edit::noteditmode()) return;
     cleardlights();
-    editor::pruneundos();
+    edit::pruneundos();
     sqr *oldmap = map;
     bool copy = false;
     if (oldmap && factor<0) {
@@ -365,14 +365,14 @@ namespace world
       loopk(3) loopi(256) hdr.texlists[k][i] = i;
       ents.setsize(0);
       block b = {8, 8, ssize-16, ssize-16};
-      editor::edittypexy(SPACE, b);
+      edit::edittypexy(SPACE, b);
     }
 
     calclight();
     game::startmap("base/unnamed");
     if (oldmap) {
       free(oldmap);
-      editor::toggleedit();
+      edit::toggleedit();
       string exec_str = "fullbright 1";
       cmd::execute(exec_str);
     }
@@ -659,8 +659,9 @@ namespace world
     rndtime();
   }
 
-  // median filter, smooths out random noise in light and makes it more
-  // mipable
+  /* median filter, smooths out random noise in light
+   * and makes it more mipable
+   */
   void postlightarea(block &a)
   {
     loop(x,a.xs)
@@ -775,22 +776,20 @@ namespace world
           return;
       };
       {
-          float f1 = s->floor;
-          float f2 = s->floor;
-          float c1 = o->floor;
-          float c2 = o->floor;
-          if (o->type==FHF && s->type!=FHF)
-          {
-              c1 -= d1->vdelta/4.0f;
-              c2 -= d2->vdelta/4.0f;
-          }
-          if (s->type==FHF && o->type!=FHF)
-          {
-              f1 -= d1->vdelta/4.0f;
-              f2 -= d2->vdelta/4.0f;
-          }
-          if (f1>=c1 && f2>=c2) goto skip;
-          renderer::render_square(o->wtex, f1, f2, c1, c2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
+        float f1 = s->floor;
+        float f2 = s->floor;
+        float c1 = o->floor;
+        float c2 = o->floor;
+        if (o->type==FHF && s->type!=FHF) {
+          c1 -= d1->vdelta/4.0f;
+          c2 -= d2->vdelta/4.0f;
+        }
+        if (s->type==FHF && o->type!=FHF) {
+          f1 -= d1->vdelta/4.0f;
+          f2 -= d2->vdelta/4.0f;
+        }
+        if (f1>=c1 && f2>=c2) goto skip;
+        renderer::render_square(o->wtex, f1, f2, c1, c2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
       };
       skip:
       {
@@ -1266,7 +1265,7 @@ namespace world
   {
     demo::stopifrecording();
     world::cleardlights();
-    editor::pruneundos();
+    edit::pruneundos();
     setnames(mname);
     gzFile f = gzopen(cgzname, "rb9");
     if (!f) {

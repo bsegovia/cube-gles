@@ -574,11 +574,11 @@ namespace client
         const int v  = server::getint(p);
         block b = { x, y, xs, ys };
         switch (type) {
-          case SV_EDITH: editor::editheightxy(v!=0, server::getint(p), b); break;
-          case SV_EDITT: editor::edittexxy(v, server::getint(p), b); break;
-          case SV_EDITS: editor::edittypexy(v, b); break;
-          case SV_EDITD: editor::setvdeltaxy(v, b); break;
-          case SV_EDITE: editor::editequalisexy(v!=0, b); break;
+          case SV_EDITH: edit::editheightxy(v!=0, server::getint(p), b); break;
+          case SV_EDITT: edit::edittexxy(v, server::getint(p), b); break;
+          case SV_EDITS: edit::edittypexy(v, b); break;
+          case SV_EDITD: edit::setvdeltaxy(v, b); break;
+          case SV_EDITE: edit::editequalisexy(v!=0, b); break;
         }
         break;
       }

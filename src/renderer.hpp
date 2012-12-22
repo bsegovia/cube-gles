@@ -44,7 +44,7 @@ namespace renderer
 
   // renderextras
   void line(int x1, int y1, float z1, int x2, int y2, float z2);
-  void box(block &b, float z1, float z2, float z3, float z4);
+  void box(const block &b, float z1, float z2, float z3, float z4);
   void dot(int x, int y, float z);
   void linestyle(float width, int r, int g, int b);
   void newsphere(vec &o, float max, int type);

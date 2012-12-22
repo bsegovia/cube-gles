@@ -317,7 +317,7 @@ namespace game
     if (intermission)
       return;
     if (editmode)
-      editor::editdrag(on);
+      edit::editdrag(on);
     else if ((player1->attacking = on) != 0)
       respawn();
   }
@@ -436,7 +436,7 @@ namespace game
     loopv(players) if (players[i]) players[i]->frags = 0;
     entities::resetspawns();
     strcpy_s(clientmap, name);
-    if (editmode) editor::toggleedit();
+    if (editmode) edit::toggleedit();
     cmd::setvar("gamespeed", 100);
     cmd::setvar("fog", 180);
     cmd::setvar("fogcolour", 0x8099B3);

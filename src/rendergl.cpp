@@ -415,7 +415,7 @@ namespace renderer
     drawhudgun(fovy, aspect, farplane);
 
     overbright(1);
-    int nquads = renderwater(hf);
+    const int nquads = renderwater(hf);
 
     overbright(2);
     render_particles(curtime);

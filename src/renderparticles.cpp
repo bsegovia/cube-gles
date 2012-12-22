@@ -76,15 +76,15 @@ namespace renderer
       parttype *pt = &parttypes[p->type];
 
       glBindTexture(GL_TEXTURE_2D, pt->tex);
-      glBegin(GL_QUADS);
+      glBegin(GL_TRIANGLE_STRIP);
 
       glColor3d(pt->r, pt->g, pt->b);
       float sz = pt->sz*particlesize/100.0f;
       // perf varray?
-      glTexCoord2f(0.0, 1.0); glVertex3d(p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz);
-      glTexCoord2f(1.0, 1.0); glVertex3d(p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz);
-      glTexCoord2f(1.0, 0.0); glVertex3d(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
-      glTexCoord2f(0.0, 0.0); glVertex3d(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
+      glTexCoord2f(0.f, 1.f); glVertex3d(p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz);
+      glTexCoord2f(1.f, 1.f); glVertex3d(p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz);
+      glTexCoord2f(0.f, 0.f); glVertex3d(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
+      glTexCoord2f(1.f, 0.f); glVertex3d(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
       glEnd();
       xtraverts += 4;
 

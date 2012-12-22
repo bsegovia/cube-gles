@@ -7,12 +7,11 @@
 bool editmode = false;
 extern void perlinarea(block &b, int scale, int seed, int psize);
 
-namespace editor
+namespace edit
 {
   // the current selection, used by almost all editing commands invariant: all
   // code assumes that these are kept inside MINBORD distance of the edge of the
   // map
-
   static block sel =
   {
     cmd::variable("selx",  0, 0, 4096, &sel.x,  NULL, false),
@@ -53,11 +52,11 @@ namespace editor
       player1->health = 100;
       if (m_classicsp) monster::monsterclear();                 // all monsters back at their spawns for editing
       weapon::projreset();
-    };
+    }
     keyrepeat(editmode);
     selset = false;
     editing = editmode;
-  };
+  }
 
   COMMANDN(edittoggle, toggleedit, ARG_NONE);
 
@@ -68,20 +67,20 @@ namespace editor
     if (sel.xs+sel.x>bsize) sel.xs = bsize-sel.x;
     if (sel.ys+sel.y>bsize) sel.ys = bsize-sel.y;
     if (sel.xs<=0 || sel.ys<=0) selset = false;
-  };
+  }
 
   bool noteditmode()
   {
     correctsel();
     if (!editmode) console::out("this function is only allowed in edit mode");
     return !editmode;
-  };
+  }
 
   bool noselection()
   {
     if (!selset) console::out("no selection");
     return !selset;
-  };
+  }
 
 #define EDITSEL   if (noteditmode() || noselection()) return;
 #define EDITSELMP if (noteditmode() || noselection() || client::multiplayer()) return;
@@ -93,7 +92,7 @@ namespace editor
     sel = s;
     selh = 0;
     correctsel();
-  };
+  }
 
   void makesel()
   {
@@ -102,7 +101,7 @@ namespace editor
     selh = max(lasth,ch);
     correctsel();
     if (selset) rtex = *S(sel.x, sel.y);
-  };
+  }
 
   VAR(flrceil,0,0,2);
 
@@ -111,15 +110,14 @@ namespace editor
     return !flrceil //z-s->floor<s->ceil-z
       ? (s->type==FHF ? s->floor-t->vdelta/4.0f : (float)s->floor)
       : (s->type==CHF ? s->ceil+t->vdelta/4.0f : (float)s->ceil);
-  };
+  }
 
-  void cursorupdate()                                     // called every frame from hud
+  void cursorupdate(void) // called every frame from hud
   {
     flrceil = ((int)(player1->pitch>=0))*2;
-
-    volatile float x = worldpos.x;                      // volatile needed to prevent msvc7 optimizer bug?
-    volatile float y = worldpos.y;
-    volatile float z = worldpos.z;
+    float x = worldpos.x;
+    float y = worldpos.y;
+    float z = worldpos.z;
 
     cx = (int)x;
     cy = (int)y;
@@ -127,16 +125,13 @@ namespace editor
     if (OUTBORD(cx, cy)) return;
     sqr *s = S(cx,cy);
 
-    if (fabs(sheight(s,s,z)-z)>1)                        // selected wall
-    {
-      x += x>player1->o.x ? 0.5f : -0.5f;             // find right wall cube
+    if (fabs(sheight(s,s,z)-z)>1) { // selected wall
+      x += x>player1->o.x ? 0.5f : -0.5f; // find right wall cube
       y += y>player1->o.y ? 0.5f : -0.5f;
-
       cx = (int)x;
       cy = (int)y;
-
       if (OUTBORD(cx, cy)) return;
-    };
+    }
 
     if (dragging) makesel();
 
@@ -146,59 +141,64 @@ namespace editor
     const float GRIDS = 2.0f;
     const int GRIDM = 0x7;
 
-    // render editing grid
-
-    for (int ix = cx-GRIDSIZE; ix<=cx+GRIDSIZE; ix++) for (int iy = cy-GRIDSIZE; iy<=cy+GRIDSIZE; iy++)
-    {
+    /* render editing grid */
+    for (int ix = cx-GRIDSIZE; ix<=cx+GRIDSIZE; ix++)
+    for (int iy = cy-GRIDSIZE; iy<=cy+GRIDSIZE; iy++) {
       if (OUTBORD(ix, iy)) continue;
       sqr *s = S(ix,iy);
       if (SOLID(s)) continue;
-      float h1 = sheight(s, s, z);
-      float h2 = sheight(s, SWS(s,1,0,ssize), z);
-      float h3 = sheight(s, SWS(s,1,1,ssize), z);
-      float h4 = sheight(s, SWS(s,0,1,ssize), z);
-      if (s->tag) renderer::linestyle(GRIDW, 0xFF, 0x40, 0x40);
-      else if (s->type==FHF || s->type==CHF) renderer::linestyle(GRIDW, 0x80, 0xFF, 0x80);
-      else renderer::linestyle(GRIDW, 0x80, 0x80, 0x80);
-      block b = { ix, iy, 1, 1 };
+      const float dh = flrceil?-.01f:+.01f;
+      float h1 = sheight(s, s, z)+dh;
+      float h2 = sheight(s, SWS(s,1,0,ssize), z)+dh;
+      float h3 = sheight(s, SWS(s,1,1,ssize), z)+dh;
+      float h4 = sheight(s, SWS(s,0,1,ssize), z)+dh;
+      if (s->tag)
+        renderer::linestyle(GRIDW, 0xFF, 0x40, 0x40);
+      else if (s->type==FHF || s->type==CHF)
+        renderer::linestyle(GRIDW, 0x80, 0xFF, 0x80);
+      else
+        renderer::linestyle(GRIDW, 0x80, 0x80, 0x80);
+      block b = {ix, iy, 1, 1};
       renderer::box(b, h1, h2, h3, h4);
       renderer::linestyle(GRID8, 0x40, 0x40, 0xFF);
-      if (!(ix&GRIDM))   renderer::line(ix,   iy,   h1, ix,   iy+1, h4);
-      if (!((ix+1)&GRIDM)) renderer::line(ix+1, iy,   h2, ix+1, iy+1, h3);
-      if (!(iy&GRIDM))   renderer::line(ix,   iy,   h1, ix+1, iy,   h2);
-      if (!((iy+1)&GRIDM)) renderer::line(ix,   iy+1, h4, ix+1, iy+1, h3);
-    };
+      if (!(ix&GRIDM)) renderer::line(ix,iy,h1,ix,  iy+1,h4);
+      if (!(iy&GRIDM)) renderer::line(ix,iy,h1,ix+1,iy,  h2);
+      if (!((ix+1)&GRIDM)) renderer::line(ix+1,iy,  h2,ix+1,iy+1,h3);
+      if (!((iy+1)&GRIDM)) renderer::line(ix,  iy+1,h4,ix+1,iy+1,h3);
+    }
 
-    if (!SOLID(s))
-    {
-      float ih = sheight(s, s, z);
+    if (!SOLID(s)) {
+      const float dh = flrceil?-.02f:+.02f;
+      const float ih = sheight(s, s, z);
+      const block b = { cx, cy, 1, 1 };
       renderer::linestyle(GRIDS, 0xFF, 0xFF, 0xFF);
-      block b = { cx, cy, 1, 1 };
-      renderer::box(b, ih, sheight(s, SWS(s,1,0,ssize), z), sheight(s, SWS(s,1,1,ssize), z), sheight(s, SWS(s,0,1,ssize), z));
+      renderer::box(b, ih+dh,
+                    sheight(s, SWS(s,1,0,ssize), z)+dh,
+                    sheight(s, SWS(s,1,1,ssize), z)+dh,
+                    sheight(s, SWS(s,0,1,ssize), z)+dh);
       renderer::linestyle(GRIDS, 0xFF, 0x00, 0x00);
       renderer::dot(cx, cy, ih);
       ch = (int)ih;
-    };
+    }
 
-    if (selset)
-    {
+    if (selset) {
+      const float h = float(selh) + (flrceil?-0.03f:+0.03f);
       renderer::linestyle(GRIDS, 0xFF, 0x40, 0x40);
-      renderer::box(sel, (float)selh, (float)selh, (float)selh, (float)selh);
-    };
-  };
+      renderer::box(sel, h, h, h, h);
+    }
+  }
 
-  vector<block *> undos;                 // unlimited undo
-  VARP(undomegs, 0, 1, 10);              // bounded by n megs
+  static vector<block *> undos; /* unlimited undo */
+  VARP(undomegs, 0, 1, 10); /* bounded by n megs */
 
   void pruneundos(int maxremain)         // bound memory
   {
     int t = 0;
-    loopvrev(undos)
-    {
+    loopvrev(undos) {
       t += undos[i]->xs*undos[i]->ys*sizeof(sqr);
       if (t>maxremain) free(undos.remove(i));
-    };
-  };
+    }
+  }
 
   void makeundo()
   {
@@ -213,7 +213,7 @@ namespace editor
     block *p = undos.pop();
     world::blockpaste(*p);
     free(p);
-  };
+  }
 
   static block *copybuf = NULL;
 
@@ -222,21 +222,21 @@ namespace editor
     EDITSELMP;
     if (copybuf) free(copybuf);
     copybuf = world::blockcopy(sel);
-  };
+  }
 
   void paste()
   {
     EDITMP;
-    if (!copybuf) { console::out("nothing to paste"); return; };
+    if (!copybuf) { console::out("nothing to paste"); return; }
     sel.xs = copybuf->xs;
     sel.ys = copybuf->ys;
     correctsel();
-    if (!selset || sel.xs!=copybuf->xs || sel.ys!=copybuf->ys) { console::out("incorrect selection"); return; };
+    if (!selset || sel.xs!=copybuf->xs || sel.ys!=copybuf->ys) { console::out("incorrect selection"); return; }
     makeundo();
     copybuf->x = sel.x;
     copybuf->y = sel.y;
     world::blockpaste(*copybuf);
-  };
+  }
 
   void tofronttex()                                       // maintain most recently used of the texture lists when applying texture
   {
@@ -250,27 +250,26 @@ namespace editor
         for (int a = c-1; a>=0; a--) p[a+1] = p[a];
         p[0] = t;
         curedittex[i] = -1;
-      };
-    };
-  };
+      }
+    }
+  }
 
   void editdrag(bool isdown)
   {
-    if ((dragging = isdown) != 0)
-    {
+    if ((dragging = isdown) != 0) {
       lastx = cx;
       lasty = cy;
       lasth = ch;
       selset = false;
       tofronttex();
-    };
+    }
     makesel();
-  };
+  }
 
-  // the core editing function. all the *xy functions perform the core operations
-  // and are also called directly from the network, the function below it is
-  // strictly triggered locally. They all have very similar structure.
-
+  // the core editing function. all the *xy functions perform the core
+  // operations and are also called directly from the network, the function
+  // below it is strictly triggered locally. They all have very similar
+  // structure.
   void editheightxy(bool isfloor, int amount, block &sel)
   {
     loopselxy(
@@ -281,7 +280,7 @@ namespace editor
       s->ceil += amount;
       if (s->ceil<=s->floor) s->ceil = s->floor+1;
     });
-  };
+  }
 
   void editheight(int flr, int amount)
   {
@@ -289,19 +288,18 @@ namespace editor
     bool isfloor = flr==0;
     editheightxy(isfloor, amount, sel);
     client::addmsg(1, 7, SV_EDITH, sel.x, sel.y, sel.xs, sel.ys, isfloor, amount);
-  };
+  }
 
   COMMAND(editheight, ARG_2INT);
 
   void edittexxy(int type, int t, block &sel)
   {
-    loopselxy(
-      switch (type) {
-        case 0: s->ftex = t; break;
-        case 1: s->wtex = t; break;
-        case 2: s->ctex = t; break;
-        case 3: s->utex = t; break;
-      });
+    loopselxy(switch (type) {
+      case 0: s->ftex = t; break;
+      case 1: s->wtex = t; break;
+      case 2: s->ctex = t; break;
+      case 3: s->utex = t; break;
+    });
   }
 
   void edittex(int type, int dir)
@@ -316,30 +314,28 @@ namespace editor
     int t = lasttex = hdr.texlists[atype][i];
     edittexxy(type, t, sel);
     client::addmsg(1, 7, SV_EDITT, sel.x, sel.y, sel.xs, sel.ys, type, t);
-  };
+  }
 
-  void replace()
+  void replace(void)
   {
     EDITSELMP;
-    loop(x,ssize) loop(y,ssize)
-    {
+    loop(x,ssize) loop(y,ssize) {
       sqr *s = S(x, y);
-      switch (lasttype)
-      {
+      switch (lasttype) {
         case 0: if (s->ftex == rtex.ftex) s->ftex = lasttex; break;
         case 1: if (s->wtex == rtex.wtex) s->wtex = lasttex; break;
         case 2: if (s->ctex == rtex.ctex) s->ctex = lasttex; break;
         case 3: if (s->utex == rtex.utex) s->utex = lasttex; break;
-      };
-    };
+      }
+    }
     block b = { 0, 0, ssize, ssize };
     world::remip(b);
-  };
+  }
 
   void edittypexy(int type, block &sel)
   {
     loopselxy(s->type = type);
-  };
+  }
 
   void edittype(int type)
   {
@@ -349,11 +345,11 @@ namespace editor
     { console::out("corner selection must be power of 2 aligned"); return; };
     edittypexy(type, sel);
     client::addmsg(1, 6, SV_EDITS, sel.x, sel.y, sel.xs, sel.ys, type);
-  };
+  }
 
-  void heightfield(int t) { edittype(t==0 ? FHF : CHF); };
-  void solid(int t)       { edittype(t==0 ? SPACE : SOLID); };
-  void corner()           { edittype(CORNER); };
+  void heightfield(int t) { edittype(t==0 ? FHF : CHF); }
+  void solid(int t)       { edittype(t==0 ? SPACE : SOLID); }
+  void corner()           { edittype(CORNER); }
 
   COMMAND(heightfield, ARG_1INT);
   COMMAND(solid, ARG_1INT);
@@ -372,7 +368,7 @@ namespace editor
         if (isfloor) s->floor = low; else s->ceil = hi;
         if (s->floor>=s->ceil) s->floor = s->ceil-1;
         });
-  };
+  }
 
   void equalize(int flr)
   {
@@ -380,7 +376,7 @@ namespace editor
     EDITSEL;
     editequalisexy(isfloor, sel);
     client::addmsg(1, 6, SV_EDITE, sel.x, sel.y, sel.xs, sel.ys, isfloor);
-  };
+  }
 
   COMMAND(equalize, ARG_1INT);
 
@@ -388,14 +384,14 @@ namespace editor
   {
     loopselxy(s->vdelta = max(s->vdelta+delta, 0));
     world::remipmore(sel);
-  };
+  }
 
   void setvdelta(int delta)
   {
     EDITSEL;
     setvdeltaxy(delta, sel);
     client::addmsg(1, 6, SV_EDITD, sel.x, sel.y, sel.xs, sel.ys, delta);
-  };
+  }
 
   const int MAXARCHVERT = 50;
   int archverts[MAXARCHVERT][MAXARCHVERT];
@@ -407,10 +403,10 @@ namespace editor
     {
       archvinit = true;
       loop(s,MAXARCHVERT) loop(v,MAXARCHVERT) archverts[s][v] = 0;
-    };
+    }
     if (span>=MAXARCHVERT || vert>=MAXARCHVERT || span<0 || vert<0) return;
     archverts[span][vert] = delta;
-  };
+  }
 
   void arch(int sidedelta, int _a)
   {
@@ -424,7 +420,7 @@ namespace editor
         ? (archverts[sel.xs-1][x] + (y==0 || y==sel.ys-1 ? sidedelta : 0))
         : (archverts[sel.ys-1][y] + (x==0 || x==sel.xs-1 ? sidedelta : 0)));
     world::remipmore(sel);
-  };
+  }
 
   void slope(int xd, int yd)
   {
@@ -436,7 +432,7 @@ namespace editor
     sel.ys++;
     loopselxy(s->vdelta = xd*x+yd*y+off);
     world::remipmore(sel);
-  };
+  }
 
   void perlin(int scale, int seed, int psize)
   {
@@ -452,27 +448,26 @@ namespace editor
     world::remipmore(sel);
     sel.xs--;
     sel.ys--;
-  };
+  }
 
   VARF(fullbright, 0, 0, 1,
-      if (fullbright)
-      {
-      if (noteditmode()) return;
-      loopi(mipsize) map[i].r = map[i].g = map[i].b = 176;
-      };
-      );
+  if (fullbright)
+  {
+    if (noteditmode()) return;
+    loopi(mipsize) map[i].r = map[i].g = map[i].b = 176;
+  });
 
   void edittag(int tag)
   {
     EDITSELMP;
     loopselxy(s->tag = tag);
-  };
+  }
 
   void newent(char *what, char *a1, char *a2, char *a3, char *a4)
   {
     EDITSEL;
     world::newentity(sel.x, sel.y, (int)player1->o.z, what, ATOI(a1), ATOI(a2), ATOI(a3), ATOI(a4));
-  };
+  }
 
   COMMANDN(select, selectpos, ARG_4INT);
   COMMAND(edittag, ARG_1INT);
@@ -488,5 +483,5 @@ namespace editor
   COMMAND(newent, ARG_5STR);
   COMMAND(perlin, ARG_3INT);
 
-} /* namespace editor */
+} /* namespace edit */
 
