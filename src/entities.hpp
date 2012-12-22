@@ -1,5 +1,5 @@
-#ifndef __QBE_ENTITIES_HPP__
-#define __QBE_ENTITIES_HPP__
+#ifndef __CUBE_ENTITIES_HPP__
+#define __CUBE_ENTITIES_HPP__
 
 // XXX move that into the namespace
 enum                            // static entity types
@@ -91,5 +91,5 @@ namespace entities
   void baseammo(int gun);
 } /* namespace entities */
 
-#endif /* __QBE_ENTITIES_HPP__ */
+#endif /* __CUBE_ENTITIES_HPP__ */
 

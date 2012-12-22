@@ -60,7 +60,7 @@ namespace entities
     };
   };
 
-  struct itemstat { int add, max, sound; } itemstats[] = {
+  static const struct itemstat { int add, max, sound; } itemstats[] = {
     {     10,    50, S_ITEMAMMO},
     {     20,   100, S_ITEMAMMO},
     {      5,    25, S_ITEMAMMO},
@@ -79,7 +79,7 @@ namespace entities
 
   void radditem(int i, int &v)
   {
-    itemstat &is = itemstats[ents[i].type-I_SHELLS];
+    const itemstat &is = itemstats[ents[i].type-I_SHELLS];
     ents[i].spawned = false;
     v += is.add;
     if (v>is.max) v = is.max;

@@ -1,8 +1,8 @@
 CXX=g++
-CXXOPTFLAGS=-Wall -g -fsigned-char -fomit-frame-pointer
+CXXOPTFLAGS=-Wall -DGL_GLEXT_PROTOTYPES -g -fsigned-char -fomit-frame-pointer
 CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include `sdl-config --cflags`
 
-CLIENT_LIBS=-L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lX11 -lGLU 
+CLIENT_LIBS=-L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lX11
 CLIENT_OBJS= \
 	client.o \
 	clientgame.o \

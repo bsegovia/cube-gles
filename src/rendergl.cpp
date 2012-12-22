@@ -1,7 +1,5 @@
 #include "cube.h"
 #include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glext.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 
@@ -23,8 +21,484 @@ namespace renderer
 
   void purgetextures();
 
-  GLUquadricObj *qsphere = NULL;
   int glmaxtexsize = 256;
+
+  struct quadric {
+    int	normals;
+    int	textureCoords;
+    int	orientation;
+    int	drawStyle;
+  };
+#define CACHE_SIZE	240
+#define GLU_POINT                          100010
+#define GLU_LINE                           100011
+#define GLU_FILL                           100012
+#define GLU_SILHOUETTE                     100013
+#define GLU_SMOOTH                         100000
+#define GLU_FLAT                           100001
+#define GLU_NONE                           100002
+#define GLU_OUTSIDE                        100020
+#define GLU_INSIDE                         100021
+
+  void sphere(quadric *qobj, GLdouble radius, GLint slices, GLint stacks)
+  {
+    GLint i,j;
+    GLfloat sinCache1a[CACHE_SIZE];
+    GLfloat cosCache1a[CACHE_SIZE];
+    GLfloat sinCache2a[CACHE_SIZE];
+    GLfloat cosCache2a[CACHE_SIZE];
+    GLfloat sinCache3a[CACHE_SIZE];
+    GLfloat cosCache3a[CACHE_SIZE];
+    GLfloat sinCache1b[CACHE_SIZE];
+    GLfloat cosCache1b[CACHE_SIZE];
+    GLfloat sinCache2b[CACHE_SIZE];
+    GLfloat cosCache2b[CACHE_SIZE];
+    GLfloat sinCache3b[CACHE_SIZE];
+    GLfloat cosCache3b[CACHE_SIZE];
+    GLfloat angle;
+    GLfloat zLow, zHigh;
+    GLfloat sintemp1 = 0.0, sintemp2 = 0.0, sintemp3 = 0.0, sintemp4 = 0.0;
+    GLfloat costemp1 = 0.0, costemp2 = 0.0, costemp3 = 0.0, costemp4 = 0.0;
+    GLboolean needCache2, needCache3;
+    GLint start, finish;
+
+    if (slices >= CACHE_SIZE) slices = CACHE_SIZE-1;
+    if (stacks >= CACHE_SIZE) stacks = CACHE_SIZE-1;
+    if (slices < 2 || stacks < 1 || radius < 0.0) return;
+
+    /* Cache is the vertex locations cache */
+    /* Cache2 is the various normals at the vertices themselves */
+    /* Cache3 is the various normals for the faces */
+    needCache2 = needCache3 = GL_FALSE;
+
+    if (qobj->normals == GLU_SMOOTH) {
+      needCache2 = GL_TRUE;
+    }
+
+    if (qobj->normals == GLU_FLAT) {
+      if (qobj->drawStyle != GLU_POINT) {
+        needCache3 = GL_TRUE;
+      }
+      if (qobj->drawStyle == GLU_LINE) {
+        needCache2 = GL_TRUE;
+      }
+    }
+
+    for (i = 0; i < slices; i++) {
+      angle = 2 * PI * i / slices;
+      sinCache1a[i] = sinf(angle);
+      cosCache1a[i] = cosf(angle);
+      if (needCache2) {
+        sinCache2a[i] = sinCache1a[i];
+        cosCache2a[i] = cosCache1a[i];
+      }
+    }
+
+    for (j = 0; j <= stacks; j++) {
+      angle = PI * j / stacks;
+      if (needCache2) {
+        if (qobj->orientation == GLU_OUTSIDE) {
+          sinCache2b[j] = sinf(angle);
+          cosCache2b[j] = cosf(angle);
+        } else {
+          sinCache2b[j] = -sinf(angle);
+          cosCache2b[j] = -cosf(angle);
+        }
+      }
+      sinCache1b[j] = radius * sinf(angle);
+      cosCache1b[j] = radius * cosf(angle);
+    }
+    /* Make sure it comes to a point */
+    sinCache1b[0] = 0;
+    sinCache1b[stacks] = 0;
+
+    if (needCache3) {
+      for (i = 0; i < slices; i++) {
+        angle = 2 * PI * (i-0.5) / slices;
+        sinCache3a[i] = sinf(angle);
+        cosCache3a[i] = cosf(angle);
+      }
+      for (j = 0; j <= stacks; j++) {
+        angle = PI * (j - 0.5) / stacks;
+        if (qobj->orientation == GLU_OUTSIDE) {
+          sinCache3b[j] = sinf(angle);
+          cosCache3b[j] = cosf(angle);
+        } else {
+          sinCache3b[j] = -sinf(angle);
+          cosCache3b[j] = -cosf(angle);
+        }
+      }
+    }
+
+    sinCache1a[slices] = sinCache1a[0];
+    cosCache1a[slices] = cosCache1a[0];
+    if (needCache2) {
+      sinCache2a[slices] = sinCache2a[0];
+      cosCache2a[slices] = cosCache2a[0];
+    }
+    if (needCache3) {
+      sinCache3a[slices] = sinCache3a[0];
+      cosCache3a[slices] = cosCache3a[0];
+    }
+
+    switch (qobj->drawStyle) {
+      case GLU_FILL:
+        /* Do ends of sphere as TRIANGLE_FAN's (if not texturing)
+         ** We don't do it when texturing because we need to respecify the
+         ** texture coordinates of the apex for every adjacent vertex (because
+         ** it isn't a constant for that point)
+         */
+        if (!(qobj->textureCoords)) {
+          start = 1;
+          finish = stacks - 1;
+
+          /* Low end first (j == 0 iteration) */
+          sintemp2 = sinCache1b[1];
+          zHigh = cosCache1b[1];
+          switch(qobj->normals) {
+            case GLU_FLAT:
+              sintemp3 = sinCache3b[1];
+              costemp3 = cosCache3b[1];
+              break;
+            case GLU_SMOOTH:
+              sintemp3 = sinCache2b[1];
+              costemp3 = cosCache2b[1];
+              glNormal3f(sinCache2a[0] * sinCache2b[0],
+                  cosCache2a[0] * sinCache2b[0],
+                  cosCache2b[0]);
+              break;
+            default:
+              break;
+          }
+          glBegin(GL_TRIANGLE_FAN);
+          glVertex3f(0.0, 0.0, radius);
+          if (qobj->orientation == GLU_OUTSIDE) {
+            for (i = slices; i >= 0; i--) {
+              switch(qobj->normals) {
+                case GLU_SMOOTH:
+                  glNormal3f(sinCache2a[i] * sintemp3,
+                      cosCache2a[i] * sintemp3,
+                      costemp3);
+                  break;
+                case GLU_FLAT:
+                  if (i != slices) {
+                    glNormal3f(sinCache3a[i+1] * sintemp3,
+                        cosCache3a[i+1] * sintemp3,
+                        costemp3);
+                  }
+                  break;
+                case GLU_NONE:
+                default:
+                  break;
+              }
+              glVertex3f(sintemp2 * sinCache1a[i],
+                  sintemp2 * cosCache1a[i], zHigh);
+            }
+          } else {
+            for (i = 0; i <= slices; i++) {
+              switch(qobj->normals) {
+                case GLU_SMOOTH:
+                  glNormal3f(sinCache2a[i] * sintemp3,
+                      cosCache2a[i] * sintemp3,
+                      costemp3);
+                  break;
+                case GLU_FLAT:
+                  glNormal3f(sinCache3a[i] * sintemp3,
+                      cosCache3a[i] * sintemp3,
+                      costemp3);
+                  break;
+                case GLU_NONE:
+                default:
+                  break;
+              }
+              glVertex3f(sintemp2 * sinCache1a[i],
+                  sintemp2 * cosCache1a[i], zHigh);
+            }
+          }
+          glEnd();
+
+          /* High end next (j == stacks-1 iteration) */
+          sintemp2 = sinCache1b[stacks-1];
+          zHigh = cosCache1b[stacks-1];
+          switch(qobj->normals) {
+            case GLU_FLAT:
+              sintemp3 = sinCache3b[stacks];
+              costemp3 = cosCache3b[stacks];
+              break;
+            case GLU_SMOOTH:
+              sintemp3 = sinCache2b[stacks-1];
+              costemp3 = cosCache2b[stacks-1];
+              glNormal3f(sinCache2a[stacks] * sinCache2b[stacks],
+                  cosCache2a[stacks] * sinCache2b[stacks],
+                  cosCache2b[stacks]);
+              break;
+            default:
+              break;
+          }
+          glBegin(GL_TRIANGLE_FAN);
+          glVertex3f(0.0, 0.0, -radius);
+          if (qobj->orientation == GLU_OUTSIDE) {
+            for (i = 0; i <= slices; i++) {
+              switch(qobj->normals) {
+                case GLU_SMOOTH:
+                  glNormal3f(sinCache2a[i] * sintemp3,
+                      cosCache2a[i] * sintemp3,
+                      costemp3);
+                  break;
+                case GLU_FLAT:
+                  glNormal3f(sinCache3a[i] * sintemp3,
+                      cosCache3a[i] * sintemp3,
+                      costemp3);
+                  break;
+                case GLU_NONE:
+                default:
+                  break;
+              }
+              glVertex3f(sintemp2 * sinCache1a[i],
+                  sintemp2 * cosCache1a[i], zHigh);
+            }
+          } else {
+            for (i = slices; i >= 0; i--) {
+              switch(qobj->normals) {
+                case GLU_SMOOTH:
+                  glNormal3f(sinCache2a[i] * sintemp3,
+                      cosCache2a[i] * sintemp3,
+                      costemp3);
+                  break;
+                case GLU_FLAT:
+                  if (i != slices) {
+                    glNormal3f(sinCache3a[i+1] * sintemp3,
+                        cosCache3a[i+1] * sintemp3,
+                        costemp3);
+                  }
+                  break;
+                case GLU_NONE:
+                default:
+                  break;
+              }
+              glVertex3f(sintemp2 * sinCache1a[i],
+                  sintemp2 * cosCache1a[i], zHigh);
+            }
+          }
+          glEnd();
+        } else {
+          start = 0;
+          finish = stacks;
+        }
+        for (j = start; j < finish; j++) {
+          zLow = cosCache1b[j];
+          zHigh = cosCache1b[j+1];
+          sintemp1 = sinCache1b[j];
+          sintemp2 = sinCache1b[j+1];
+          switch(qobj->normals) {
+            case GLU_FLAT:
+              sintemp4 = sinCache3b[j+1];
+              costemp4 = cosCache3b[j+1];
+              break;
+            case GLU_SMOOTH:
+              if (qobj->orientation == GLU_OUTSIDE) {
+                sintemp3 = sinCache2b[j+1];
+                costemp3 = cosCache2b[j+1];
+                sintemp4 = sinCache2b[j];
+                costemp4 = cosCache2b[j];
+              } else {
+                sintemp3 = sinCache2b[j];
+                costemp3 = cosCache2b[j];
+                sintemp4 = sinCache2b[j+1];
+                costemp4 = cosCache2b[j+1];
+              }
+              break;
+            default:
+              break;
+          }
+
+          glBegin(GL_QUAD_STRIP);
+          for (i = 0; i <= slices; i++) {
+            switch(qobj->normals) {
+              case GLU_SMOOTH:
+                glNormal3f(sinCache2a[i] * sintemp3,
+                    cosCache2a[i] * sintemp3,
+                    costemp3);
+                break;
+              case GLU_FLAT:
+              case GLU_NONE:
+              default:
+                break;
+            }
+            if (qobj->orientation == GLU_OUTSIDE) {
+              if (qobj->textureCoords) {
+                glTexCoord2f(1 - (float) i / slices,
+                    1 - (float) (j+1) / stacks);
+              }
+              glVertex3f(sintemp2 * sinCache1a[i],
+                  sintemp2 * cosCache1a[i], zHigh);
+            } else {
+              if (qobj->textureCoords) {
+                glTexCoord2f(1 - (float) i / slices,
+                    1 - (float) j / stacks);
+              }
+              glVertex3f(sintemp1 * sinCache1a[i],
+                  sintemp1 * cosCache1a[i], zLow);
+            }
+            switch(qobj->normals) {
+              case GLU_SMOOTH:
+                glNormal3f(sinCache2a[i] * sintemp4,
+                    cosCache2a[i] * sintemp4,
+                    costemp4);
+                break;
+              case GLU_FLAT:
+                glNormal3f(sinCache3a[i] * sintemp4,
+                    cosCache3a[i] * sintemp4,
+                    costemp4);
+                break;
+              case GLU_NONE:
+              default:
+                break;
+            }
+            if (qobj->orientation == GLU_OUTSIDE) {
+              if (qobj->textureCoords) {
+                glTexCoord2f(1 - (float) i / slices,
+                    1 - (float) j / stacks);
+              }
+              glVertex3f(sintemp1 * sinCache1a[i],
+                  sintemp1 * cosCache1a[i], zLow);
+            } else {
+              if (qobj->textureCoords) {
+                glTexCoord2f(1 - (float) i / slices,
+                    1 - (float) (j+1) / stacks);
+              }
+              glVertex3f(sintemp2 * sinCache1a[i],
+                  sintemp2 * cosCache1a[i], zHigh);
+            }
+          }
+          glEnd();
+        }
+        break;
+      case GLU_POINT:
+        glBegin(GL_POINTS);
+        for (j = 0; j <= stacks; j++) {
+          sintemp1 = sinCache1b[j];
+          costemp1 = cosCache1b[j];
+          switch(qobj->normals) {
+            case GLU_FLAT:
+            case GLU_SMOOTH:
+              sintemp2 = sinCache2b[j];
+              costemp2 = cosCache2b[j];
+              break;
+            default:
+              break;
+          }
+          for (i = 0; i < slices; i++) {
+            switch(qobj->normals) {
+              case GLU_FLAT:
+              case GLU_SMOOTH:
+                glNormal3f(sinCache2a[i] * sintemp2,
+                    cosCache2a[i] * sintemp2,
+                    costemp2);
+                break;
+              case GLU_NONE:
+              default:
+                break;
+            }
+
+            zLow = j * radius / stacks;
+
+            if (qobj->textureCoords) {
+              glTexCoord2f(1 - (float) i / slices,
+                  1 - (float) j / stacks);
+            }
+            glVertex3f(sintemp1 * sinCache1a[i],
+                sintemp1 * cosCache1a[i], costemp1);
+          }
+        }
+        glEnd();
+        break;
+      case GLU_LINE:
+      case GLU_SILHOUETTE:
+        for (j = 1; j < stacks; j++) {
+          sintemp1 = sinCache1b[j];
+          costemp1 = cosCache1b[j];
+          switch(qobj->normals) {
+            case GLU_FLAT:
+            case GLU_SMOOTH:
+              sintemp2 = sinCache2b[j];
+              costemp2 = cosCache2b[j];
+              break;
+            default:
+              break;
+          }
+
+          glBegin(GL_LINE_STRIP);
+          for (i = 0; i <= slices; i++) {
+            switch(qobj->normals) {
+              case GLU_FLAT:
+                glNormal3f(sinCache3a[i] * sintemp2,
+                    cosCache3a[i] * sintemp2,
+                    costemp2);
+                break;
+              case GLU_SMOOTH:
+                glNormal3f(sinCache2a[i] * sintemp2,
+                    cosCache2a[i] * sintemp2,
+                    costemp2);
+                break;
+              case GLU_NONE:
+              default:
+                break;
+            }
+            if (qobj->textureCoords) {
+              glTexCoord2f(1 - (float) i / slices,
+                  1 - (float) j / stacks);
+            }
+            glVertex3f(sintemp1 * sinCache1a[i],
+                sintemp1 * cosCache1a[i], costemp1);
+          }
+          glEnd();
+        }
+        for (i = 0; i < slices; i++) {
+          sintemp1 = sinCache1a[i];
+          costemp1 = cosCache1a[i];
+          switch(qobj->normals) {
+            case GLU_FLAT:
+            case GLU_SMOOTH:
+              sintemp2 = sinCache2a[i];
+              costemp2 = cosCache2a[i];
+              break;
+            default:
+              break;
+          }
+
+          glBegin(GL_LINE_STRIP);
+          for (j = 0; j <= stacks; j++) {
+            switch(qobj->normals) {
+              case GLU_FLAT:
+                glNormal3f(sintemp2 * sinCache3b[j],
+                    costemp2 * sinCache3b[j],
+                    cosCache3b[j]);
+                break;
+              case GLU_SMOOTH:
+                glNormal3f(sintemp2 * sinCache2b[j],
+                    costemp2 * sinCache2b[j],
+                    cosCache2b[j]);
+                break;
+              case GLU_NONE:
+              default:
+                break;
+            }
+
+            if (qobj->textureCoords) {
+              glTexCoord2f(1 - (float) i / slices,
+                  1 - (float) j / stacks);
+            }
+            glVertex3f(sintemp1 * sinCache1b[j],
+                costemp1 * sinCache1b[j], cosCache1b[j]);
+          }
+          glEnd();
+        }
+        break;
+      default:
+        break;
+    }
+  }
 
   void gl_init(int w, int h)
   {
@@ -57,46 +531,18 @@ namespace renderer
 
     purgetextures();
 
-    if (!(qsphere = gluNewQuadric())) fatal("glu sphere");
-    gluQuadricDrawStyle(qsphere, GLU_FILL);
-    gluQuadricOrientation(qsphere, GLU_INSIDE);
-    gluQuadricTexture(qsphere, GL_TRUE);
+    quadric qsphere;
+    qsphere.normals = GLU_SMOOTH;
+    qsphere.textureCoords = GL_TRUE;
+    qsphere.orientation = GLU_INSIDE;
+    qsphere.drawStyle = GLU_FILL;
     glNewList(1, GL_COMPILE);
-    gluSphere(qsphere, 1, 12, 6);
+    sphere(&qsphere, 1, 12, 6);
     glEndList();
   }
 
-  void cleangl() { if (qsphere) gluDeleteQuadric(qsphere); }
-#if 0
-  static unsigned char *mipmap(unsigned char *dst,
-                               const unsigned char *src,
-                               int w, int h,
-                               int mmw, int mmh,
-                               int cn)
-  {
-    for (int y = 0; y < mmh; ++y) {
-      for (int x = 0; x < mmw; ++x) {
-        const int offset = (x + y*mmw) * cn;
-        const int upperX0 = min(2*x+0, w-1);
-        const int upperY0 = min(2*y+0, h-1);
-        const int upperX1 = min(2*x+1, w-1);
-        const int upperY1 = min(2*y+1, h-1);
-        const int offset0 = (upperX0 + w*upperY0) * cn;
-        const int offset1 = (upperX1 + w*upperY0) * cn;
-        const int offset2 = (upperX0 + w*upperY1) * cn;
-        const int offset3 = (upperX1 + w*upperY1) * cn;
-        for (int c = 0; c < cn; ++c) {
-          const float f = float(src[offset0+c]) +
-                          float(src[offset1+c]) +
-                          float(src[offset2+c]) +
-                          float(src[offset3+c]);
-          dst[offset+c] = (unsigned char) (f * 0.25f);
-        }
-      }
-    }
-    return dst;
-  }
-#endif
+  void cleangl() {}
+
   bool installtex(int tnum, const char *texname, int &xs, int &ys, bool clamp)
   {
     SDL_Surface *s = IMG_Load(texname);
@@ -111,40 +557,35 @@ namespace renderer
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR); //NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     xs = s->w;
     ys = s->h;
     if (xs>glmaxtexsize || ys>glmaxtexsize)
       fatal("texture dimensions are too large");
-    const int level = (int) max(log2(float(xs)), log2(float(ys)));
-    if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, xs, ys, GL_RGB, GL_UNSIGNED_BYTE, s->pixels))
-      fatal("could not build mipmaps");
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, xs, ys, 0, GL_RGB, GL_UNSIGNED_BYTE, s->pixels);
+    glGenerateMipmap(GL_TEXTURE_2D);
     SDL_FreeSurface(s);
     return true;
   }
 
-  // management of texture slots
-  // each texture slot can have multople texture frames, of which currently only the first is used
-  // additional frames can be used for various shaders
-
+  // management of texture slots each texture slot can have multople texture
+  // frames, of which currently only the first is used additional frames can be
+  // used for various shaders
   const int MAXTEX = 1000;
-  int texx[MAXTEX];                           // ( loaded texture ) -> ( name, size )
+  int texx[MAXTEX];            // ( loaded texture ) -> ( name, size )
   int texy[MAXTEX];
   string texname[MAXTEX];
   int curtex = 0;
-  const int FIRSTTEX = 1000;                  // opengl id = loaded id + FIRSTTEX
+  const int FIRSTTEX = 1000;   // opengl id = loaded id + FIRSTTEX
   // std 1+, sky 14+, mdls 20+
 
-  const int MAXFRAMES = 2;                    // increase to allow more complex shader defs
-  int mapping[256][MAXFRAMES];                // ( cube texture, frame ) -> ( opengl id, name )
+  const int MAXFRAMES = 2;     // increase to allow more complex shader defs
+  int mapping[256][MAXFRAMES]; // ( cube texture, frame ) -> ( opengl id, name )
   string mapname[256][MAXFRAMES];
 
-  void purgetextures()
-  {
-    loopi(256) loop(j,MAXFRAMES) mapping[i][j] = 0;
-  }
+  void purgetextures() { loopi(256) loop(j,MAXFRAMES) mapping[i][j] = 0; }
 
   int curtexnum = 0;
 
@@ -322,7 +763,7 @@ namespace renderer
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    perspective(p, fovy, aspect, 0.3f, farplane);
+    perspective(p, fovy, aspect, 0.15f, farplane);
     glMultMatrixd(p);
     glMatrixMode(GL_MODELVIEW);
 

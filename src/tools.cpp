@@ -136,9 +136,9 @@ void perspective(double m[16], double fovy, double aspect, double zNear, double 
 
   deltaZ = zFar - zNear;
   sine = sin(radians);
+  identity(m);
   if ((deltaZ == 0) || (sine == 0) || (aspect == 0)) return;
   cotangent = cos(radians) / sine;
-  identity(m);
   m[4*0+0] = cotangent / aspect;
   m[4*1+1] = cotangent;
   m[4*2+2] = -(zFar + zNear) / deltaZ;

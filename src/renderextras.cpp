@@ -1,6 +1,5 @@
 #include "cube.h"
 #include <GL/gl.h>
-#include <GL/glu.h>
 
 // XXX
 const char *entnames[] =

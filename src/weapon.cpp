@@ -11,7 +11,7 @@ namespace weapon
   const float SGSPREAD = 2;
   vec sg[SGRAYS];
 
-  static guninfo guns[NUMGUNS] =
+  const static guninfo guns[NUMGUNS] =
   {
     { S_PUNCH1,    250,  50, 0,   0,  1, "fist"           },
     { S_SG,       1400,  10, 0,   0, 20, "shotgun"        },  // *SGRAYS
@@ -43,11 +43,8 @@ namespace weapon
 
   int reloadtime(int gun) { return guns[gun].attackdelay; }
 
-  void weapon(char *a1, char *a2, char *a3)
-  {
-    selectgun(a1[0] ? atoi(a1) : -1,
-        a2[0] ? atoi(a2) : -1,
-        a3[0] ? atoi(a3) : -1);
+  void weapon(char *a1, char *a2, char *a3) {
+    selectgun(a1[0]?atoi(a1):-1, a2[0]?atoi(a2):-1, a3[0]?atoi(a3):-1);
   }
 
   COMMAND(weapon, ARG_3STR);
@@ -77,8 +74,7 @@ namespace weapon
     {
       float c2 = dotprod(v, v);
       if (c2<=c1) p = &to;
-      else
-      {
+      else {
         float f = c1/c2;
         vmul(v, f);
         vadd(v, from);
@@ -187,8 +183,7 @@ namespace weapon
   inline void projdamage(dynent *o, projectile *p, vec &v, int i, int im, int qdam)
   {
     if (o->state!=CS_ALIVE) return;
-    if (intersect(o, p->o, v))
-    {
+    if (intersect(o, p->o, v)) {
       splash(p, v, p->o, i, im, qdam);
       hit(i, qdam, o, p->owner);
     }
