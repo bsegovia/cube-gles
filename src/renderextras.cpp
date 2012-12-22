@@ -206,17 +206,16 @@ namespace renderer
     return (d<=1/256.0f) ? d*256 : d;
   }
 
-  // find out the 3d target of the crosshair in the world easily and very acurately.
-  // sadly many very old cards and drivers appear to fuck up on glReadPixels() and give false
-  // coordinates, making shooting and such impossible.
-  // also hits map entities which is unwanted.
-  // could be replaced by a more acurate version of monster.cpp los() if needed
-
+  // find out the 3d target of the crosshair in the world easily and very
+  // acurately. sadly many very old cards and drivers appear to fuck up on
+  // glReadPixels() and give false coordinates, making shooting and such
+  // impossible. also hits map entities which is unwanted.  could be replaced
+  // by a more acurate version of monster.cpp los() if needed
   void readdepth(int w, int h)
   {
     glReadPixels(w/2, h/2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &cursordepth);
     double worldx = 0, worldy = 0, worldz = 0;
-    gluUnProject(w/2, h/2, depthcorrect(cursordepth), mm, pm, viewport, &worldx, &worldz, &worldy);
+    unproject(w/2, h/2, depthcorrect(cursordepth), mm, pm, viewport, &worldx, &worldz, &worldy);
     worldpos.x = (float)worldx;
     worldpos.y = (float)worldy;
     worldpos.z = (float)worldz;

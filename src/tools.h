@@ -1,7 +1,7 @@
 // generic useful stuff for any C++ program
 
-#ifndef __QBE_TOOLS_HPP__
-#define __QBE_TOOLS_HPP__
+#ifndef __CUBE_TOOLS_HPP__
+#define __CUBE_TOOLS_HPP__
 
 #ifdef __GNUC__
 #define gamma __gamma
@@ -253,7 +253,10 @@ template <class T> struct hashtable
   };
 };
 
-#define enumerate(ht,t,e,b) loopi(ht->size) for(ht->enumc = ht->table[i]; ht->enumc; ht->enumc = ht->enumc->next) { t e = &ht->enumc->data; b; }
+#define enumerate(ht,t,e,b) loopi(ht->size) \
+  for(ht->enumc = ht->table[i]; ht->enumc; ht->enumc = ht->enumc->next) {\
+    t e = &ht->enumc->data; b;\
+  }
 
 inline char *newstring(const char *s)           { return gp()->string(s); }
 inline char *newstring(const char *s, size_t l) { return gp()->string(s, l); }
@@ -268,8 +271,19 @@ inline char *newstringbuf(const char *s)        { return gp()->stringbuf(s); }
 #define vdist(d,v,e,s) vec v = s; vsub(v,e); float d = (float)sqrt(dotprod(v,v));
 #define vreject(v,u,max) ((v).x>(u).x+(max) || (v).x<(u).x-(max) || (v).y>(u).y+(max) || (v).y<(u).y-(max))
 #define vlinterp(v,f,u,g) { (v).x = (v).x*f+(u).x*g; (v).y = (v).y*f+(u).y*g; (v).z = (v).z*f+(u).z*g; }
-
 struct vec { float x, y, z; };
+
+// simplistic matrix ops
+void perspective(double m[16], double fovy, double aspect, double zNear, double zFar);
+void mul(const double a[16], const double b[16], double r[16]);
+int invert(const double m[16], double invOut[16]);
+int unproject(double winx, double winy, double winz,
+              const double model[16],
+              const double proj[16],
+              const int vp[4],
+              double *objx, double *objy, double *objz);
+
+#define v4mul(m, in, out) loopi(4) {out[i]=in[0]*m[0*4+i] + in[1]*m[1*4+i] + in[2]*m[2*4+i] + in[3]*m[3*4+i]; }
 
 // vertex array format
 struct vertex { float u, v, x, y, z; uchar r, g, b, a; };
@@ -280,5 +294,5 @@ void fatal(const char *s, const char *o = "");
 void *alloc(int s);
 void keyrepeat(bool on);
 
-#endif /* __QBE_TOOLS_HPP__ */
+#endif /* __CUBE_TOOLS_HPP__ */
 

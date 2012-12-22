@@ -17,9 +17,9 @@ namespace renderer
 
   // rendergl
   void gl_init(int w, int h);
-  void cleangl();
+  void cleangl(void);
   void gl_drawframe(int w, int h, float curfps);
-  bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp = false);
+  bool installtex(int tnum, const char *texname, int &xs, int &ys, bool clamp = false);
   void mipstats(int a, int b, int c);
   void vertf(float v1, float v2, float v3, sqr *ls, float t1, float t2);
   void addstrip(int tex, int start, int n);

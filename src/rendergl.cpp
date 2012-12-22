@@ -66,17 +66,47 @@ namespace renderer
     glEndList();
   }
 
-  void cleangl()
+  void cleangl() { if (qsphere) gluDeleteQuadric(qsphere); }
+#if 0
+  static unsigned char *mipmap(unsigned char *dst,
+                               const unsigned char *src,
+                               int w, int h,
+                               int mmw, int mmh,
+                               int cn)
   {
-    if (qsphere) gluDeleteQuadric(qsphere);
+    for (int y = 0; y < mmh; ++y) {
+      for (int x = 0; x < mmw; ++x) {
+        const int offset = (x + y*mmw) * cn;
+        const int upperX0 = min(2*x+0, w-1);
+        const int upperY0 = min(2*y+0, h-1);
+        const int upperX1 = min(2*x+1, w-1);
+        const int upperY1 = min(2*y+1, h-1);
+        const int offset0 = (upperX0 + w*upperY0) * cn;
+        const int offset1 = (upperX1 + w*upperY0) * cn;
+        const int offset2 = (upperX0 + w*upperY1) * cn;
+        const int offset3 = (upperX1 + w*upperY1) * cn;
+        for (int c = 0; c < cn; ++c) {
+          const float f = float(src[offset0+c]) +
+                          float(src[offset1+c]) +
+                          float(src[offset2+c]) +
+                          float(src[offset3+c]);
+          dst[offset+c] = (unsigned char) (f * 0.25f);
+        }
+      }
+    }
+    return dst;
   }
-
-  bool installtex(int tnum, char *texname, int &xs, int &ys, bool clamp)
+#endif
+  bool installtex(int tnum, const char *texname, int &xs, int &ys, bool clamp)
   {
     SDL_Surface *s = IMG_Load(texname);
-    if (!s) { console::out("couldn't load texture %s", texname); return false; }
-    if (s->format->BitsPerPixel!=24) { console::out("texture must be 24bpp: %s", texname); return false; }
-    // loopi(s->w*s->h*3) { uchar *p = (uchar *)s->pixels+i; *p = 255-*p; }
+    if (!s) {
+      console::out("couldn't load texture %s", texname);
+      return false;
+    } else if (s->format->BitsPerPixel!=24) {
+      console::out("texture must be 24bpp: %s", texname);
+      return false;
+    }
     glBindTexture(GL_TEXTURE_2D, tnum);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
@@ -86,16 +116,11 @@ namespace renderer
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     xs = s->w;
     ys = s->h;
-    while (xs>glmaxtexsize || ys>glmaxtexsize) { xs /= 2; ys /= 2; }
-    void *scaledimg = s->pixels;
-    if (xs!=s->w)
-    {
-      console::out("warning: quality loss: scaling %s", texname);     // for voodoo cards under linux
-      scaledimg = alloc(xs*ys*3);
-      gluScaleImage(GL_RGB, s->w, s->h, GL_UNSIGNED_BYTE, s->pixels, xs, ys, GL_UNSIGNED_BYTE, scaledimg);
-    }
-    if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, xs, ys, GL_RGB, GL_UNSIGNED_BYTE, scaledimg)) fatal("could not build mipmaps");
-    if (xs!=s->w) free(scaledimg);
+    if (xs>glmaxtexsize || ys>glmaxtexsize)
+      fatal("texture dimensions are too large");
+    const int level = (int) max(log2(float(xs)), log2(float(ys)));
+    if (gluBuild2DMipmaps(GL_TEXTURE_2D, GL_RGB, xs, ys, GL_RGB, GL_UNSIGNED_BYTE, s->pixels))
+      fatal("could not build mipmaps");
     SDL_FreeSurface(s);
     return true;
   }
@@ -273,13 +298,15 @@ namespace renderer
 
   void drawhudgun(float fovy, float aspect, int farplane)
   {
+    double p[16];
     if (!hudgun /*|| !player1->gunselect*/) return;
 
     glEnable(GL_CULL_FACE);
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(fovy, aspect, 0.3f, farplane);
+    perspective(p, fovy, aspect, 0.3f, farplane);
+    glMultMatrixd(p);
     glMatrixMode(GL_MODELVIEW);
 
     //glClear(GL_DEPTH_BUFFER_BIT);
@@ -295,7 +322,8 @@ namespace renderer
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(fovy, aspect, 0.15f, farplane);
+    perspective(p, fovy, aspect, 0.3f, farplane);
+    glMultMatrixd(p);
     glMatrixMode(GL_MODELVIEW);
 
     glDisable(GL_CULL_FACE);
@@ -307,6 +335,7 @@ namespace renderer
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
     bool underwater = player1->o.z<hf;
+    double p[16];
 
     glFogi(GL_FOG_START, (fog+64)/8);
     glFogi(GL_FOG_END, fog);
@@ -327,7 +356,8 @@ namespace renderer
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     int farplane = fog*5/2;
-    gluPerspective(fovy, aspect, 0.15f, farplane);
+    perspective(p, fovy, aspect, 0.15f, farplane);
+    glMultMatrixd(p);
     glMatrixMode(GL_MODELVIEW);
 
     transplayer();
