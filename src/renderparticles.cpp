@@ -56,7 +56,7 @@ namespace renderer
     glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
     glDisable(GL_FOG);
 
-    struct parttype { float r, g, b; int gr, tex; float sz; } parttypes[] =
+    const struct parttype { float r, g, b; int gr, tex; float sz; } parttypes[] =
     {
       { 0.7f, 0.6f, 0.3f, 2,  3, 0.06f }, // yellow: sparks
       { 0.5f, 0.5f, 0.5f, 20, 7, 0.15f }, // grey:   small smoke
@@ -73,18 +73,17 @@ namespace renderer
 
     for (particle *p, **pp = &parlist; (p = *pp);)
     {
-      parttype *pt = &parttypes[p->type];
+      const parttype *pt = &parttypes[p->type];
 
       glBindTexture(GL_TEXTURE_2D, pt->tex);
       glBegin(GL_TRIANGLE_STRIP);
-
       glColor3d(pt->r, pt->g, pt->b);
       float sz = pt->sz*particlesize/100.0f;
       // perf varray?
       glTexCoord2f(0.f, 1.f); glVertex3d(p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz);
       glTexCoord2f(1.f, 1.f); glVertex3d(p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz);
-      glTexCoord2f(0.f, 0.f); glVertex3d(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
       glTexCoord2f(1.f, 0.f); glVertex3d(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
+      glTexCoord2f(0.f, 0.f); glVertex3d(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
       glEnd();
       xtraverts += 4;
 

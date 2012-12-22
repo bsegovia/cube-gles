@@ -13,7 +13,7 @@ namespace renderer
 
   void purgetextures(void);
 
-  int glmaxtexsize = 256;
+  static int glmaxtexsize = 256;
 
   void sphere(GLdouble radius, int slices, int stacks)
   {
@@ -150,21 +150,21 @@ namespace renderer
   // management of texture slots each texture slot can have multople texture
   // frames, of which currently only the first is used additional frames can be
   // used for various shaders
-  const int MAXTEX = 1000;
-  int texx[MAXTEX];            // ( loaded texture ) -> ( name, size )
-  int texy[MAXTEX];
-  string texname[MAXTEX];
-  int curtex = 0;
-  const int FIRSTTEX = 1000;   // opengl id = loaded id + FIRSTTEX
+  static const int MAXTEX = 1000;
+  static const int FIRSTTEX = 1000; /* opengl id = loaded id + FIRSTTEX */
+  static const int MAXFRAMES = 2; /* increase for more complex shader defs */
+  static int texx[MAXTEX]; /* (loaded texture) -> (name, size) */
+  static int texy[MAXTEX];
+  static string texname[MAXTEX];
+  static int curtex = 0;
   // std 1+, sky 14+, mdls 20+
 
-  const int MAXFRAMES = 2;     // increase to allow more complex shader defs
-  int mapping[256][MAXFRAMES]; // ( cube texture, frame ) -> ( opengl id, name )
-  string mapname[256][MAXFRAMES];
+  static int mapping[256][MAXFRAMES]; /* (texture, frame) -> (oglid, name) */
+  static string mapname[256][MAXFRAMES];
 
   void purgetextures() { loopi(256) loop(j,MAXFRAMES) mapping[i][j] = 0; }
 
-  int curtexnum = 0;
+  static int curtexnum = 0;
 
   void texturereset() { curtexnum = 0; }
 
@@ -186,8 +186,7 @@ namespace renderer
     int frame = 0;                      // other frames?
     int tid = mapping[tex][frame];
 
-    if (tid>=FIRSTTEX)
-    {
+    if (tid>=FIRSTTEX) {
       xs = texx[tid-FIRSTTEX];
       ys = texy[tid-FIRSTTEX];
       return tid;
@@ -196,10 +195,8 @@ namespace renderer
     xs = ys = 16;
     if (!tid) return 1;                  // crosshair :)
 
-    loopi(curtex)       // lazily happens once per "texture" command, basically
-    {
-      if (strcmp(mapname[tex][frame], texname[i])==0)
-      {
+    loopi(curtex) { /* lazily happens once per "texture" command */
+      if (strcmp(mapname[tex][frame], texname[i])==0) {
         mapping[tex][frame] = tid = i+FIRSTTEX;
         xs = texx[i];
         ys = texy[i];
@@ -214,18 +211,14 @@ namespace renderer
 
     sprintf_sd(name)("packages%c%s", PATHDIV, texname[curtex]);
 
-    if (installtex(tnum, name, xs, ys))
-    {
+    if (installtex(tnum, name, xs, ys)) {
       mapping[tex][frame] = tnum;
       texx[curtex] = xs;
       texy[curtex] = ys;
       curtex++;
       return tnum;
-    }
-    else
-    {
+    } else
       return mapping[tex][frame] = FIRSTTEX;  // temp fix
-    }
   }
 
   void setupworld()
@@ -243,15 +236,16 @@ namespace renderer
     }
   }
 
-  int skyoglid;
-
+  static int skyoglid;
   struct strip { int tex, start, num; };
-  vector<strip> strips;
+  static vector<strip> strips;
 
-  void renderstripssky()
+  void renderstripssky(void)
   {
     glBindTexture(GL_TEXTURE_2D, skyoglid);
-    loopv(strips) if (strips[i].tex==skyoglid) glDrawArrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
+    loopv(strips)
+      if (strips[i].tex==skyoglid)
+        glDrawArrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
   }
 
   void renderstrips(void)
@@ -276,7 +270,7 @@ namespace renderer
     s.num = n;
   }
 
-  void transplayer()
+  void transplayer(void)
   {
     glLoadIdentity();
     glRotated(player1->roll,0.0,0.0,1.0);
@@ -316,7 +310,6 @@ namespace renderer
     glMultMatrixd(p);
     glMatrixMode(GL_MODELVIEW);
 
-    //glClear(GL_DEPTH_BUFFER_BIT);
     const int rtime = weapon::reloadtime(player1->gunselect);
     if (player1->lastaction && player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
       drawhudmodel(7, 18, rtime/18.0f, player1->lastaction);
@@ -346,8 +339,7 @@ namespace renderer
     glFogfv(GL_FOG_COLOR, fogc);
     glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
 
-    if (underwater)
-    {
+    if (underwater) {
       fovy += (float)sin(lastmillis/1000.0)*2.0f;
       aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
       glFogi(GL_FOG_START, 0);
