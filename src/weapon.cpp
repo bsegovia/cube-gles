@@ -130,7 +130,7 @@ namespace weapon
     if (d==player1) game::selfdamage(damage, at==player1 ? -1 : -2, at);
     else if (d->monsterstate) monster::monsterpain(d, damage, at);
     else { client::addmsg(1, 4, SV_DAMAGE, target, damage, d->lifesequence); sound::play(S_PAIN1+rnd(5), &d->o); }
-    renderer::particle_splash(3, damage, 1000, d->o);
+    rdr::particle_splash(3, damage, 1000, d->o);
     demo::damage(damage, d->o);
   }
 
@@ -154,7 +154,7 @@ namespace weapon
 
   void splash(projectile *p, vec &v, vec &vold, int notthisplayer, int notthismonster, int qdam)
   {
-    renderer::particle_splash(0, 50, 300, v);
+    rdr::particle_splash(0, 50, 300, v);
     p->inuse = false;
     if (p->gun!=GUN_RL)
     {
@@ -164,7 +164,7 @@ namespace weapon
     else
     {
       sound::play(S_RLHIT, &v);
-      renderer::newsphere(v, RL_RADIUS, 0);
+      rdr::newsphere(v, RL_RADIUS, 0);
       world::dodynlight(vold, v, 0, 0, p->owner);
       if (!p->local) return;
       radialeffect(player1, v, -1, qdam, p->owner);
@@ -219,8 +219,8 @@ namespace weapon
         if (time==dtime) splash(p, v, p->o, -1, -1, qdam);
         else
         {
-          if (p->gun==GUN_RL) { world::dodynlight(p->o, v, 0, 255, p->owner); renderer::particle_splash(5, 2, 200, v); }
-          else { renderer::particle_splash(1, 1, 200, v); renderer::particle_splash(guns[p->gun].part, 1, 1, v); }
+          if (p->gun==GUN_RL) { world::dodynlight(p->o, v, 0, 255, p->owner); rdr::particle_splash(5, 2, 200, v); }
+          else { rdr::particle_splash(1, 1, 200, v); rdr::particle_splash(guns[p->gun].part, 1, 1, v); }
         }
       }
       p->o = v;
@@ -238,13 +238,13 @@ namespace weapon
 
       case GUN_SG:
         {
-          loopi(SGRAYS) renderer::particle_splash(0, 5, 200, sg[i]);
+          loopi(SGRAYS) rdr::particle_splash(0, 5, 200, sg[i]);
           break;
         }
 
       case GUN_CG:
-        renderer::particle_splash(0, 100, 250, to);
-        //renderer::particle_trail(1, 10, from, to);
+        rdr::particle_splash(0, 100, 250, to);
+        //rdr::particle_trail(1, 10, from, to);
         break;
 
       case GUN_RL:
@@ -257,8 +257,8 @@ namespace weapon
         break;
 
       case GUN_RIFLE:
-        renderer::particle_splash(0, 50, 200, to);
-        renderer::particle_trail(1, 500, from, to);
+        rdr::particle_splash(0, 50, 200, to);
+        rdr::particle_trail(1, 500, from, to);
         break;
     }
   }
@@ -336,4 +336,5 @@ namespace weapon
     if (d->monsterstate) raydamage(player1, from, to, d, -1);
   }
 } /* namespace weapon */
+
 

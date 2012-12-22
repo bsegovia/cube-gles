@@ -1,7 +1,7 @@
 #include "cube.h"
 #include <GL/gl.h>
 
-namespace renderer
+namespace rdr
 {
   struct md2_header
   {
@@ -272,5 +272,6 @@ namespace renderer
 
     m->render(light, frame, range, x, y, z, yaw, pitch, scale, speed, snap, basetime);
   }
-} /* namespace renderer */
+} /* namespace rdr */
+
 

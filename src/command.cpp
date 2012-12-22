@@ -375,3 +375,4 @@ namespace cmd
   static int strcmpa(char *a, char *b) { return strcmp(a,b)==0; }  COMMANDN(strcmp, strcmpa, ARG_2EST);
 }
 
+

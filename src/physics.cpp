@@ -48,7 +48,7 @@ namespace physics
     {
       entity &e = ents[i];
       if (e.type!=MAPMODEL) continue;
-      mapmodelinfo &mmi = renderer::getmminfo(e.attr2);
+      mapmodelinfo &mmi = rdr::getmminfo(e.attr2);
       if (!&mmi || !mmi.h) continue;
       const float r = mmi.rad+d->radius;
       if (fabs(e.x-d->o.x)<r && fabs(e.y-d->o.y)<r)
@@ -323,3 +323,4 @@ namespace physics
     loopi(physicsrepeat) moveplayer(pl, moveres, local, i ? curtime/physicsrepeat : curtime-curtime/physicsrepeat*(physicsrepeat-1));
   };
 } /* namespace physics */
+

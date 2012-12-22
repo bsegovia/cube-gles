@@ -12,7 +12,7 @@ const char *entnames[] =
   "?", "?", "?", "?", "?"
 };
 
-namespace renderer
+namespace rdr
 {
   void line(int x1, int y1, float z1, int x2, int y2, float z2)
   {
@@ -360,5 +360,6 @@ namespace renderer
     glEnable(GL_DEPTH_TEST);
   }
 
-} /* namespace renderer */
+} /* namespace rdr */
+
 

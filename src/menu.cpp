@@ -60,27 +60,27 @@ namespace menu
     int mdisp = m.items.length();
     int w = 0;
     loopi(mdisp) {
-      const int x = renderer::text_width(m.items[i].text);
+      const int x = rdr::text_width(m.items[i].text);
       if (x>w) w = x;
     }
 
-    int tw = renderer::text_width(title);
+    int tw = rdr::text_width(title);
     if (tw>w) w = tw;
-    const int fh = renderer::FONTH;
+    const int fh = rdr::FONTH;
     int step = fh/4*5;
     int h = (mdisp+2)*step;
-    int y = (renderer::VIRTH-h)/2;
-    int x = (renderer::VIRTW-w)/2;
-    renderer::blendbox(x-fh/2*3, y-fh, x+w+fh/2*3, y+h+fh, true);
-    renderer::draw_text(title, x, y,2);
+    int y = (rdr::VIRTH-h)/2;
+    int x = (rdr::VIRTW-w)/2;
+    rdr::blendbox(x-fh/2*3, y-fh, x+w+fh/2*3, y+h+fh, true);
+    rdr::draw_text(title, x, y,2);
     y += fh*2;
 
     if (vmenu) {
       int bh = y+m.menusel*step;
-      renderer::blendbox(x-fh, bh-10, x+w+fh, bh+fh+10, false);
+      rdr::blendbox(x-fh, bh-10, x+w+fh, bh+fh+10, false);
     }
     loopj(mdisp) {
-      renderer::draw_text(m.items[j].text, x, y, 2);
+      rdr::draw_text(m.items[j].text, x, y, 2);
       y += step;
     }
     return true;
@@ -142,4 +142,5 @@ namespace menu
   COMMANDN(showmenu, show, ARG_1STR);
   COMMANDN(newmenu, newm, ARG_1STR);
 }
+
 

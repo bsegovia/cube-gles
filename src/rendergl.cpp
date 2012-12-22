@@ -7,7 +7,7 @@
 int xtraverts;
 bool hasoverbright = false;
 
-namespace renderer
+namespace rdr
 {
   extern int curvert;
 
@@ -17,26 +17,26 @@ namespace renderer
 
   void sphere(GLdouble radius, int slices, int stacks)
   {
-    const int cache_size = 240;
-    float sinCache1a[cache_size];
-    float cosCache1a[cache_size];
-    float sinCache2a[cache_size];
-    float cosCache2a[cache_size];
-    float sinCache1b[cache_size];
-    float cosCache1b[cache_size];
-    float sinCache2b[cache_size];
-    float cosCache2b[cache_size];
+    const int CACHE_SIZE = 240;
+    float sinCache1a[CACHE_SIZE];
+    float cosCache1a[CACHE_SIZE];
+    float sinCache2a[CACHE_SIZE];
+    float cosCache2a[CACHE_SIZE];
+    float sinCache1b[CACHE_SIZE];
+    float cosCache1b[CACHE_SIZE];
+    float sinCache2b[CACHE_SIZE];
+    float cosCache2b[CACHE_SIZE];
     float angle;
     float zLow, zHigh;
-    float sintemp1 = 0.0, sintemp2 = 0.0, sintemp3 = 0.0, sintemp4 = 0.0;
-    float costemp3 = 0.0, costemp4 = 0.0;
+    float sintemp1 = 0.f, sintemp2 = 0.f, sintemp3 = 0.f, sintemp4 = 0.f;
+    float costemp3 = 0.f, costemp4 = 0.f;
     int start, finish;
-    if (slices >= cache_size) slices = cache_size-1;
-    if (stacks >= cache_size) stacks = cache_size-1;
+    if (slices >= CACHE_SIZE) slices = CACHE_SIZE-1;
+    if (stacks >= CACHE_SIZE) stacks = CACHE_SIZE-1;
     if (slices < 2 || stacks < 1 || radius < 0.0) return;
 
     for (int i = 0; i < slices; i++) {
-      angle = 2 * PI * i / slices;
+      angle = 2.f * M_PI * i / slices;
       sinCache1a[i] = sinf(angle);
       cosCache1a[i] = cosf(angle);
       sinCache2a[i] = sinCache1a[i];
@@ -44,7 +44,7 @@ namespace renderer
     }
 
     for (int j = 0; j <= stacks; j++) {
-      angle = PI * j / stacks;
+      angle = M_PI * j / stacks;
       sinCache2b[j] = -sinf(angle);
       cosCache2b[j] = -cosf(angle);
       sinCache1b[j] = radius * sinf(angle);
@@ -86,20 +86,20 @@ namespace renderer
   void gl_init(int w, int h)
   {
     glViewport(0, 0, w, h);
-    glClearDepth(1.0);
+    glClearDepth(1.f);
     glDepthFunc(GL_LESS);
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
 
     glEnable(GL_FOG);
     glFogi(GL_FOG_MODE, GL_LINEAR);
-    glFogf(GL_FOG_DENSITY, 0.25);
+    glFogf(GL_FOG_DENSITY, 0.25f);
     glHint(GL_FOG_HINT, GL_NICEST);
 
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    glEnable(GL_POLYGON_OFFSET_LINE);
-    glPolygonOffset(-3.0, -3.0);
+    //glEnable(GL_POLYGON_OFFSET_LINE);
+    //glPolygonOffset(-3.f, -3.f);
 
     glCullFace(GL_FRONT);
     glEnable(GL_CULL_FACE);
@@ -147,9 +147,10 @@ namespace renderer
     return true;
   }
 
-  // management of texture slots each texture slot can have multople texture
-  // frames, of which currently only the first is used additional frames can be
-  // used for various shaders
+  /* management of texture slots each texture slot can have multople texture
+   * frames, of which currently only the first is used additional frames can be
+   * used for various shaders
+   */
   static const int MAXTEX = 1000;
   static const int FIRSTTEX = 1000; /* opengl id = loaded id + FIRSTTEX */
   static const int MAXFRAMES = 2; /* increase for more complex shader defs */
@@ -157,8 +158,8 @@ namespace renderer
   static int texy[MAXTEX];
   static string texname[MAXTEX];
   static int curtex = 0;
-  // std 1+, sky 14+, mdls 20+
 
+  /* std 1+, sky 14+, mdls 20+ */
   static int mapping[256][MAXFRAMES]; /* (texture, frame) -> (oglid, name) */
   static string mapname[256][MAXFRAMES];
 
@@ -183,7 +184,7 @@ namespace renderer
 
   int lookuptexture(int tex, int &xs, int &ys)
   {
-    int frame = 0;                      // other frames?
+    int frame = 0;  /* other frames? */
     int tid = mapping[tex][frame];
 
     if (tid>=FIRSTTEX) {
@@ -368,7 +369,7 @@ namespace renderer
     strips.setsize(0);
 
     world::render(player1->o.x, player1->o.y, player1->o.z,
-        (int)player1->yaw, (int)player1->pitch, (float)fov, w, h);
+                  (int)player1->yaw, (int)player1->pitch, (float)fov, w, h);
     finishstrips();
 
     setupworld();
@@ -400,7 +401,7 @@ namespace renderer
     entities::renderentities();
 
     renderspheres(curtime);
-    renderer::renderents();
+    rdr::renderents();
 
     glDisable(GL_CULL_FACE);
 
@@ -422,5 +423,6 @@ namespace renderer
     glEnable(GL_CULL_FACE);
     glEnable(GL_FOG);
   }
-} /* namespace renderer */
+} /* namespace rdr */
+
 

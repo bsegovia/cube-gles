@@ -1,7 +1,7 @@
 #include "cube.h"
 #include <GL/gl.h>
 
-namespace renderer
+namespace rdr
 {
   const int MAXPARTICLES = 10500;
   const int NUMPARTCUTOFF = 20;
@@ -82,8 +82,8 @@ namespace renderer
       // perf varray?
       glTexCoord2f(0.f, 1.f); glVertex3d(p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz);
       glTexCoord2f(1.f, 1.f); glVertex3d(p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz);
-      glTexCoord2f(1.f, 0.f); glVertex3d(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
       glTexCoord2f(0.f, 0.f); glVertex3d(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
+      glTexCoord2f(1.f, 0.f); glVertex3d(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
       glEnd();
       xtraverts += 4;
 
@@ -136,4 +136,5 @@ namespace renderer
       newparticle(p, d, rnd(fade)+fade, type);
     }
   }
-} /* namespace renderer */
+} /* namespace rdr */
+

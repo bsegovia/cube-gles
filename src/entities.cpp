@@ -17,7 +17,7 @@ namespace entities
 
   void renderent(entity &e, const char *mdlname, float z, float yaw, int frame = 0, int numf = 1, int basetime = 0, float speed = 10.0f)
   {
-    renderer::rendermodel(mdlname, frame, numf, 0, 1.1f, e.x, z+S(e.x, e.y)->floor, e.y, yaw, 0, false, 1.0f, speed, 0, basetime);
+    rdr::rendermodel(mdlname, frame, numf, 0, 1.1f, e.x, z+S(e.x, e.y)->floor, e.y, yaw, 0, false, 1.0f, speed, 0, basetime);
   };
 
   void renderentities()
@@ -28,9 +28,9 @@ namespace entities
       entity &e = ents[i];
       if (e.type==MAPMODEL)
       {
-        mapmodelinfo &mmi = renderer::getmminfo(e.attr2);
+        mapmodelinfo &mmi = rdr::getmminfo(e.attr2);
         if (!&mmi) continue;
-        renderer::rendermodel(mmi.name, 0, 1, e.attr4, (float)mmi.rad, e.x, (float)S(e.x, e.y)->floor+mmi.zoff+e.attr3, e.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f, mmi.snap);
+        rdr::rendermodel(mmi.name, 0, 1, e.attr4, (float)mmi.rad, e.x, (float)S(e.x, e.y)->floor+mmi.zoff+e.attr3, e.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f, mmi.snap);
       }
       else
       {
@@ -245,4 +245,5 @@ namespace entities
   void setspawn(uint i, bool on) { if (i<(uint)ents.length()) ents[i].spawned = on; };
 
 } /* namespace entities */
+
 

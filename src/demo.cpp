@@ -300,8 +300,8 @@ namespace demo
         loopi(NUMGUNS) target->ammo[i] = gzget();
         target->state = gzget();
         target->lastmove = playbacktime;
-        if ((bdamage = gzgeti()) != 0) renderer::damageblend(bdamage);
-        if ((ddamage = gzgeti()) != 0) { gzgetv(dorig); renderer::particle_splash(3, ddamage, 1000, dorig); };
+        if ((bdamage = gzgeti()) != 0) rdr::damageblend(bdamage);
+        if ((ddamage = gzgeti()) != 0) { gzgetv(dorig); rdr::particle_splash(3, ddamage, 1000, dorig); };
         // FIXME: set more client state here
       };
 
@@ -364,4 +364,5 @@ namespace demo
   COMMAND(savegame, ARG_1STR);
   COMMAND(loadgame, ARG_1STR);
 } /* namespace demo */
+
 

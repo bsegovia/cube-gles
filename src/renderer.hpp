@@ -4,7 +4,7 @@
 /*! XXX move that to namespace */
 extern int xtraverts;
 
-namespace renderer
+namespace rdr
 {
   /*! virtual screen width for text & HUD */
   static const int VIRTW = 2400;
@@ -64,7 +64,8 @@ namespace renderer
   // rendermd2
   void rendermodel(const char *mdl, int frame, int range, int tex, float rad, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int snap = 0, int basetime = 0);
   mapmodelinfo &getmminfo(int i);
-} /* namespace renderer */
+} /* namespace rdr */
 
 #endif /* __QBE_RENDERER_HPP__ */
+
 

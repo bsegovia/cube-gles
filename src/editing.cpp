@@ -153,38 +153,38 @@ namespace edit
       float h3 = sheight(s, SWS(s,1,1,ssize), z)+dh;
       float h4 = sheight(s, SWS(s,0,1,ssize), z)+dh;
       if (s->tag)
-        renderer::linestyle(GRIDW, 0xFF, 0x40, 0x40);
+        rdr::linestyle(GRIDW, 0xFF, 0x40, 0x40);
       else if (s->type==FHF || s->type==CHF)
-        renderer::linestyle(GRIDW, 0x80, 0xFF, 0x80);
+        rdr::linestyle(GRIDW, 0x80, 0xFF, 0x80);
       else
-        renderer::linestyle(GRIDW, 0x80, 0x80, 0x80);
+        rdr::linestyle(GRIDW, 0x80, 0x80, 0x80);
       block b = {ix, iy, 1, 1};
-      renderer::box(b, h1, h2, h3, h4);
-      renderer::linestyle(GRID8, 0x40, 0x40, 0xFF);
-      if (!(ix&GRIDM)) renderer::line(ix,iy,h1,ix,  iy+1,h4);
-      if (!(iy&GRIDM)) renderer::line(ix,iy,h1,ix+1,iy,  h2);
-      if (!((ix+1)&GRIDM)) renderer::line(ix+1,iy,  h2,ix+1,iy+1,h3);
-      if (!((iy+1)&GRIDM)) renderer::line(ix,  iy+1,h4,ix+1,iy+1,h3);
+      rdr::box(b, h1, h2, h3, h4);
+      rdr::linestyle(GRID8, 0x40, 0x40, 0xFF);
+      if (!(ix&GRIDM)) rdr::line(ix,iy,h1,ix,  iy+1,h4);
+      if (!(iy&GRIDM)) rdr::line(ix,iy,h1,ix+1,iy,  h2);
+      if (!((ix+1)&GRIDM)) rdr::line(ix+1,iy,  h2,ix+1,iy+1,h3);
+      if (!((iy+1)&GRIDM)) rdr::line(ix,  iy+1,h4,ix+1,iy+1,h3);
     }
 
     if (!SOLID(s)) {
       const float dh = flrceil?-.02f:+.02f;
       const float ih = sheight(s, s, z);
       const block b = { cx, cy, 1, 1 };
-      renderer::linestyle(GRIDS, 0xFF, 0xFF, 0xFF);
-      renderer::box(b, ih+dh,
+      rdr::linestyle(GRIDS, 0xFF, 0xFF, 0xFF);
+      rdr::box(b, ih+dh,
                     sheight(s, SWS(s,1,0,ssize), z)+dh,
                     sheight(s, SWS(s,1,1,ssize), z)+dh,
                     sheight(s, SWS(s,0,1,ssize), z)+dh);
-      renderer::linestyle(GRIDS, 0xFF, 0x00, 0x00);
-      renderer::dot(cx, cy, ih);
+      rdr::linestyle(GRIDS, 0xFF, 0x00, 0x00);
+      rdr::dot(cx, cy, ih);
       ch = (int)ih;
     }
 
     if (selset) {
       const float h = float(selh) + (flrceil?-0.03f:+0.03f);
-      renderer::linestyle(GRIDS, 0xFF, 0x40, 0x40);
-      renderer::box(sel, h, h, h, h);
+      rdr::linestyle(GRIDS, 0xFF, 0x40, 0x40);
+      rdr::box(sel, h, h, h, h);
     }
   }
 
@@ -484,4 +484,5 @@ namespace edit
   COMMAND(perlin, ARG_3INT);
 
 } /* namespace edit */
+
 

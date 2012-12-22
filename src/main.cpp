@@ -9,7 +9,7 @@ void cleanup(char *msg)         // single program exit point;
   demo::stop();
   client::disconnect(true);
   cmd::writecfg();
-  renderer::cleangl();
+  rdr::cleangl();
   sound::clean();
   server::cleanup();
   SDL_ShowCursor(1);
@@ -148,20 +148,20 @@ int main(int argc, char **argv)
   SDL_ShowCursor(0);
 
   log("gl");
-  renderer::gl_init(scr_w, scr_h);
+  rdr::gl_init(scr_w, scr_h);
   SDL_WM_GrabInput(grabmouse ? SDL_GRAB_ON : SDL_GRAB_OFF);
 
   log("basetex");
   int xs, ys;
-  if (!renderer::installtex(2,  path(newstring("data/newchars.png")), xs, ys) ||
-      !renderer::installtex(3,  path(newstring("data/martin/base.png")), xs, ys) ||
-      !renderer::installtex(6,  path(newstring("data/martin/ball1.png")), xs, ys) ||
-      !renderer::installtex(7,  path(newstring("data/martin/smoke.png")), xs, ys) ||
-      !renderer::installtex(8,  path(newstring("data/martin/ball2.png")), xs, ys) ||
-      !renderer::installtex(9,  path(newstring("data/martin/ball3.png")), xs, ys) ||
-      !renderer::installtex(4,  path(newstring("data/explosion.jpg")), xs, ys) ||
-      !renderer::installtex(5,  path(newstring("data/items.png")), xs, ys) ||
-      !renderer::installtex(1,  path(newstring("data/crosshair.png")), xs, ys))
+  if (!rdr::installtex(2,  path(newstring("data/newchars.png")), xs, ys) ||
+      !rdr::installtex(3,  path(newstring("data/martin/base.png")), xs, ys) ||
+      !rdr::installtex(6,  path(newstring("data/martin/ball1.png")), xs, ys) ||
+      !rdr::installtex(7,  path(newstring("data/martin/smoke.png")), xs, ys) ||
+      !rdr::installtex(8,  path(newstring("data/martin/ball2.png")), xs, ys) ||
+      !rdr::installtex(9,  path(newstring("data/martin/ball3.png")), xs, ys) ||
+      !rdr::installtex(4,  path(newstring("data/explosion.jpg")), xs, ys) ||
+      !rdr::installtex(5,  path(newstring("data/items.png")), xs, ys) ||
+      !rdr::installtex(1,  path(newstring("data/crosshair.png")), xs, ys))
     fatal("could not find core textures (hint: run cube from the parent of the bin directory)");
 
   log("sound");
@@ -198,16 +198,16 @@ int main(int argc, char **argv)
     static float fps = 30.0f;
     fps = (1000.0f/curtime+fps*50)/51;
     world::computeraytable(player1->o.x, player1->o.y);
-    renderer::readdepth(scr_w, scr_h);
+    rdr::readdepth(scr_w, scr_h);
     SDL_GL_SwapBuffers();
     sound::updatevol();
     if (framesinmap++<5)    // cheap hack to get rid of initial sparklies, even when triple buffering etc.
     {
       player1->yaw += 5;
-      renderer::gl_drawframe(scr_w, scr_h, fps);
+      rdr::gl_drawframe(scr_w, scr_h, fps);
       player1->yaw -= 5;
     }
-    renderer::gl_drawframe(scr_w, scr_h, fps);
+    rdr::gl_drawframe(scr_w, scr_h, fps);
     SDL_Event event;
     int lasttype = 0, lastbut = 0;
     while (SDL_PollEvent(&event)) {
@@ -236,4 +236,5 @@ int main(int argc, char **argv)
   quit();
   return 1;
 }
+
 

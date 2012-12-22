@@ -349,7 +349,7 @@ namespace game
   {
     if (player1->state!=CS_ALIVE || editmode || intermission)
       return;
-    renderer::damageblend(damage);
+    rdr::damageblend(damage);
     demo::blend(damage);
     // let armour absorb when possible
     int ad = damage*(player1->armourtype+1)*20/100;
@@ -506,7 +506,7 @@ namespace game
       scale *= 32;
       mz -= 1.9f;
     }
-    renderer::rendermodel(mdlname, frame[n], range[n], 0, 1.5f, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, 0, basetime);
+    rdr::rendermodel(mdlname, frame[n], range[n], 0, 1.5f, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, 0, basetime);
   }
 
   void renderclients(void)
@@ -632,4 +632,5 @@ namespace game
   COMMAND(getmap, ARG_NONE);
 
 } /* namespace game */
+
 

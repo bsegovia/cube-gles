@@ -1,7 +1,7 @@
 #include "cube.h"
 #include <GL/gl.h>
 
-namespace renderer
+namespace rdr
 {
   static const short char_coords[96][4] = 
   {
@@ -213,5 +213,6 @@ namespace renderer
                     1.0f, 1.0f, +w, -w, -w, t+5);
     glDepthMask(GL_TRUE);
   }
-} /* namespace renderer */
+} /* namespace rdr */
+
 

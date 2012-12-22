@@ -1,7 +1,7 @@
 #include "cube.h"
 #include <GL/gl.h>
 
-namespace renderer
+namespace rdr
 {
   vertex *verts = NULL;
   int curvert;
@@ -357,5 +357,6 @@ namespace renderer
       sbright.r = sbright.g = sbright.b = 255;
       sdark.r = sdark.g = sdark.b = 0;
   };
-} /* namespace renderer */
+} /* namespace rdr */
+
 
