@@ -1,4 +1,5 @@
 CXX=g++
+#CXX=clang++
 CXXOPTFLAGS=-Wall -DGL_GLEXT_PROTOTYPES -g -fsigned-char -fomit-frame-pointer -std=c++0x
 CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include `sdl-config --cflags`
 
