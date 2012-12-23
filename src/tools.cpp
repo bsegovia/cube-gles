@@ -73,10 +73,12 @@ char *pool::string(const char *s, size_t l)
   char *b = (char *)alloc(l+1);
   strncpy(b,s,l);
   b[l] = 0;
-  return b;  
+  return b;
 }
 
-// useful for global buffers that need to be initialisation order independant
+/* useful for global buffers that need to be initialisation
+ * order independant
+ */
 pool *gp(void)
 {
   static pool *p = NULL;
@@ -109,7 +111,7 @@ char *loadfile(char *fn, int *size)
   return buf;
 }
 
-// little indians as storage format
+/* little indians as storage format */
 void endianswap(void *memory, int stride, int length)
 {
   if (*((char *)&stride)) return;

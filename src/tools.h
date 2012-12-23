@@ -98,8 +98,19 @@ extern void endianswap(void *, int, int);
 #define PI  (3.1415927f)
 #define PI2 (2*PI)
 
-// memory pool that uses buckets and linear allocation for small objects
-// VERY fast, and reasonably good memory reuse
+class noncopyable
+{
+  protected:
+    inline noncopyable(void) {}
+    inline ~noncopyable(void) {}
+  private:
+    inline noncopyable(const noncopyable&) {}
+    inline noncopyable& operator= (const noncopyable&) {return *this;}
+};
+
+/* memory pool that uses buckets and linear allocation for small objects
+ * VERY fast, and reasonably good memory reuse
+ */
 struct pool
 {
   enum { POOLSIZE = 4096 };   // can be absolutely anything
@@ -132,7 +143,7 @@ struct pool
 
 pool *gp();
 
-template <class T> struct vector
+template <class T> struct vector : noncopyable
 {
   T *buf;
   int alen;
@@ -147,10 +158,14 @@ template <class T> struct vector
     ulen = 0;
   }
 
-  ~vector(void) { setsize(0); p->dealloc(buf, alen*sizeof(T)); }
+  vector(vector &&other) {
+    this->buf = other.buf;
+    this->alen = other.alen;
+    this->ulen = other.ulen;
+    this->p = other.p;
+  }
 
-  vector(vector<T> &v);
-  void operator=(vector<T> &v);
+  ~vector(void) { setsize(0); p->dealloc(buf, alen*sizeof(T)); }
 
   T &add(const T &x)
   {

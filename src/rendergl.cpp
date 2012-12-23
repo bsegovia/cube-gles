@@ -24,10 +24,10 @@ namespace ogl {
       const float zHigh = radius * cosf(angle1);
       const float sin1 = radius * sinf(angle0);
       const float sin2 = radius * sinf(angle1);
-      //const float sin3 = -sinf(angle0);
-      //const float cos3 = -cosf(angle0);
-      //const float sin4 = -sinf(angle1);
-      //const float cos4 = -cosf(angle1);
+      // const float sin3 = -sinf(angle0);
+      // const float cos3 = -cosf(angle0);
+      // const float sin4 = -sinf(angle1);
+      // const float cos4 = -cosf(angle1);
 
       loopi(slices+1) {
         const float angle = 2.f * M_PI * float(i) / float(slices);
