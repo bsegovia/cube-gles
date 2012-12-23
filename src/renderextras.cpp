@@ -132,9 +132,9 @@ namespace rdr
       glTranslatef(p->o.x, p->o.z, p->o.y);
       glRotatef(lastmillis/5.0f, 1, 1, 1);
       glScalef(p->size, p->size, p->size);
-      glCallList(1);
+      ogl::drawsphere();
       glScalef(0.8f, 0.8f, 0.8f);
-      glCallList(1);
+      ogl::drawsphere();
       glPopMatrix();
       xtraverts += 12*6*2;
 

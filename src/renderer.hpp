@@ -26,6 +26,7 @@ namespace rdr
     void addstrip(int tex, int start, int n);
     int lookuptex(int tex, int &xs, int &ys);
     void drawarray(int mode, size_t pos, size_t tex, size_t n, const float *data);
+    void drawsphere(void);
   } /* namespace ogl */
 
   /* rendercubes */
