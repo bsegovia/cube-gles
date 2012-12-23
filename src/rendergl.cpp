@@ -14,9 +14,11 @@ namespace ogl {
 
   static const GLuint spherevbo = 1; /* contains the sphere data */
   static int spherevertn = 0;
+  typedef vector<vvec<5>> spherevec;
 
-  void sphere(float radius, int slices, int stacks, vector<vvec<5>> &v)
+  spherevec sphere(float radius, int slices, int stacks)
   {
+    spherevec v;
     loopj(stacks) {
       const float angle0 = M_PI * float(j) / float(stacks);
       const float angle1 = M_PI * float(j+1) / float(stacks);
@@ -51,6 +53,7 @@ namespace ogl {
         spherevertn += start+end;
       }
     }
+    return v;
   }
 
   /* management of texture slots each texture slot can have multople texture
@@ -131,8 +134,7 @@ namespace ogl {
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glmaxtexsize);
 
     purgetextures();
-    vector<vvec<5>> v;
-    sphere(1, 12, 6, v);
+    const spherevec v = sphere(1, 12, 6);
     const size_t sz = sizeof(vvec<5>) * v.length();
     OGL(BindBuffer, GL_ARRAY_BUFFER, spherevbo);
     OGL(BufferData, GL_ARRAY_BUFFER, sz, &v[0][0], GL_STATIC_DRAW);

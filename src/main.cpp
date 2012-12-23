@@ -136,6 +136,7 @@ int main(int argc, char **argv)
 
   log("video: sdl");
   if (SDL_InitSubSystem(SDL_INIT_VIDEO)<0) fatal("Unable to initialize SDL Video");
+  SDL_WM_GrabInput(grabmouse ? SDL_GRAB_ON : SDL_GRAB_OFF);
 
   log("video: mode");
   SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
@@ -143,13 +144,11 @@ int main(int argc, char **argv)
 
   log("video: misc");
   SDL_WM_SetCaption("cube engine", NULL);
-  SDL_WM_GrabInput(SDL_GRAB_ON);
   keyrepeat(true);
   SDL_ShowCursor(0);
 
   log("gl");
   rdr::ogl::init(scr_w, scr_h);
-  SDL_WM_GrabInput(grabmouse ? SDL_GRAB_ON : SDL_GRAB_OFF);
 
   log("basetex");
   int xs, ys;

@@ -185,7 +185,8 @@ template <class T> struct vector : noncopyable
   T &last(void) { return buf[ulen-1]; }
   bool empty(void) { return ulen==0; }
 
-  int length(void) { return ulen; }
+  int length(void) const { return ulen; }
+  const T &operator[](int i) const { assert(i>=0 && i<ulen); return buf[i]; }
   T &operator[](int i) { assert(i>=0 && i<ulen); return buf[i]; }
   void setsize(int i) { for(; ulen>i; ulen--) buf[ulen-1].~T(); }
   T *getbuf(void) { return buf; }
