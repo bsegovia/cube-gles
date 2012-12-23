@@ -22,10 +22,10 @@ namespace rdr
     setarraypointers();
   }
 
-  /* generating the actual vertices is done dynamically every frame and sits at
-   * the leaves of all these functions, and are part of the cpu bottleneck on
-   * really slow machines, hence the macros
-   */
+/* generating the actual vertices is done dynamically every frame and sits at
+ * the leaves of all these functions, and are part of the cpu bottleneck on
+ * really slow machines, hence the macros
+ */
 #define vertcheck() { if (curvert>=curmaxverts) reallocv(); }
 
 #define vertf(v1, v2, v3, ls, t1, t2) { vertex &v = verts[curvert++]; \

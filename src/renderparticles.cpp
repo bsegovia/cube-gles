@@ -3,27 +3,24 @@
 
 namespace rdr
 {
-  const int MAXPARTICLES = 10500;
-  const int NUMPARTCUTOFF = 20;
+  static const int MAXPARTICLES = 10500;
+  static const int NUMPARTCUTOFF = 20;
   struct particle { vec o, d; int fade, type; int millis; particle *next; };
-  particle particles[MAXPARTICLES], *parlist = NULL, *parempty = NULL;
-  bool parinit = false;
+  static particle particles[MAXPARTICLES], *parlist = NULL, *parempty = NULL;
+  static bool parinit = false;
 
   VARP(maxparticles, 100, 2000, MAXPARTICLES-500);
 
-  void newparticle(vec &o, vec &d, int fade, int type)
+  void newparticle(const vec &o, const vec &d, int fade, int type)
   {
-    if (!parinit)
-    {
-      loopi(MAXPARTICLES)
-      {
+    if (!parinit) {
+      loopi(MAXPARTICLES) {
         particles[i].next = parempty;
         parempty = &particles[i];
       }
       parinit = true;
     }
-    if (parempty)
-    {
+    if (parempty) {
       particle *p = parempty;
       parempty = p->next;
       p->o = o;
@@ -39,14 +36,13 @@ namespace rdr
   VAR(demotracking, 0, 0, 1);
   VARP(particlesize, 20, 100, 500);
 
-  vec right, up;
+  static vec right, up;
 
   void setorient(vec &r, vec &u) { right = r; up = u; }
 
   void render_particles(int time)
   {
-    if (demoplayback && demotracking)
-    {
+    if (demoplayback && demotracking) {
       vec nom = { 0, 0, 0 };
       newparticle(player1->o, nom, 100000000, 8);
     }
@@ -71,20 +67,20 @@ namespace rdr
 
     int numrender = 0;
 
-    for (particle *p, **pp = &parlist; (p = *pp);)
-    {
+    for (particle *p, **pp = &parlist; (p = *pp);) {
       const parttype *pt = &parttypes[p->type];
+      const float sz = pt->sz*particlesize/100.0f;
 
       glBindTexture(GL_TEXTURE_2D, pt->tex);
-      glBegin(GL_TRIANGLE_STRIP);
-      glColor3d(pt->r, pt->g, pt->b);
-      float sz = pt->sz*particlesize/100.0f;
-      // perf varray?
-      glTexCoord2f(0.f, 1.f); glVertex3d(p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz);
-      glTexCoord2f(1.f, 1.f); glVertex3d(p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz);
-      glTexCoord2f(0.f, 0.f); glVertex3d(p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz);
-      glTexCoord2f(1.f, 0.f); glVertex3d(p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz);
-      glEnd();
+      glColor3f(pt->r, pt->g, pt->b);
+
+      const vvec<5> verts[] = {
+        vvec<5>(0.f, 1.f, p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz),
+        vvec<5>(1.f, 1.f, p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz),
+        vvec<5>(0.f, 0.f, p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz),
+        vvec<5>(1.f, 0.f, p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz)
+      };
+      ogl::drawarray(GL_TRIANGLE_STRIP, 3, 2, 4, &verts[0][0]);
       xtraverts += 4;
 
       if (numrender++>maxparticles || (p->fade -= time)<0) {
@@ -108,17 +104,14 @@ namespace rdr
 
   void particle_splash(int type, int num, int fade, vec &p)
   {
-    loopi(num)
-    {
+    loopi(num) {
       const int radius = type==5 ? 50 : 150;
       int x, y, z;
-      do
-      {
+      do {
         x = rnd(radius*2)-radius;
         y = rnd(radius*2)-radius;
         z = rnd(radius*2)-radius;
-      }
-      while (x*x+y*y+z*z>radius*radius);
+      } while (x*x+y*y+z*z>radius*radius);
       vec d = { (float)x, (float)y, (float)z };
       newparticle(p, d, rnd(fade*3), type);
     }
@@ -129,10 +122,9 @@ namespace rdr
     vdist(d, v, s, e);
     vdiv(v, d*2+0.1f);
     vec p = s;
-    loopi((int)d*2)
-    {
+    loopi(int(d)*2) {
       vadd(p, v);
-      vec d = { float(rnd(11)-5), float(rnd(11)-5), float(rnd(11)-5) };
+      const vec d = { float(rnd(12)-5), float(rnd(11)-5), float(rnd(11)-5) };
       newparticle(p, d, rnd(fade)+fade, type);
     }
   }

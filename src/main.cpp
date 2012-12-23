@@ -184,8 +184,7 @@ int main(int argc, char **argv)
 
   log("mainloop");
   int ignore = 5;
-  for (;;)
-  {
+  for (;;) {
     int millis = SDL_GetTicks()*gamespeed/100;
     if (millis-lastmillis>200) lastmillis = millis-200;
     else if (millis-lastmillis<1) lastmillis = millis-1;
@@ -201,8 +200,8 @@ int main(int argc, char **argv)
     rdr::readdepth(scr_w, scr_h);
     SDL_GL_SwapBuffers();
     sound::updatevol();
-    if (framesinmap++<5)    // cheap hack to get rid of initial sparklies, even when triple buffering etc.
-    {
+    /* cheap hack to get rid of initial sparklies when triple buffering */
+    if (framesinmap++<5) {
       player1->yaw += 5;
       rdr::ogl::drawframe(scr_w, scr_h, fps);
       player1->yaw -= 5;
@@ -236,5 +235,4 @@ int main(int argc, char **argv)
   quit();
   return 1;
 }
-
 

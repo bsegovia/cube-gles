@@ -1,5 +1,5 @@
-#ifndef __QBE_RENDERER_HPP__
-#define __QBE_RENDERER_HPP__
+#ifndef __CUBE_RENDERER_HPP__
+#define __CUBE_RENDERER_HPP__
 
 /*! XXX move that to namespace */
 extern int xtraverts;
@@ -25,6 +25,7 @@ namespace rdr
     void vertf(float v1, float v2, float v3, sqr *ls, float t1, float t2);
     void addstrip(int tex, int start, int n);
     int lookuptex(int tex, int &xs, int &ys);
+    void drawarray(int mode, size_t pos, size_t tex, size_t n, const float *data);
   } /* namespace ogl */
 
   /* rendercubes */
@@ -69,6 +70,5 @@ namespace rdr
   mapmodelinfo &getmminfo(int i);
 } /* namespace rdr */
 
-#endif /* __QBE_RENDERER_HPP__ */
-
+#endif /* __CUBE_RENDERER_HPP__ */
 

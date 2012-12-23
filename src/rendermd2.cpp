@@ -22,9 +22,9 @@ namespace rdr
 
   struct md2_frame
   {
-    float      scale[3];
-    float      translate[3];
-    char       name[16];
+    float scale[3];
+    float translate[3];
+    char name[16];
     md2_vertex vertices[1];
   };
 
@@ -50,10 +50,11 @@ namespace rdr
     void render(vec &light, int numFrame, int range, float x, float y, float z, float yaw, float pitch, float scale, float speed, int snap, int basetime);
     void scale(int frame, float scale, int sn);
 
-    md2() : numGlCommands(0), frameSize(0), numFrames(0), displaylist(0), loaded(false) {};
+    md2(void) :
+      numGlCommands(0), frameSize(0), numFrames(0), displaylist(0), loaded(false)
+    {}
 
-    ~md2()
-    {
+    ~md2(void) {
       if (glCommands) delete [] glCommands;
       if (frames) delete [] frames;
     }
@@ -79,9 +80,7 @@ namespace rdr
     fread(frames, header.frameSize*header.numFrames, 1, file);
 
     for (int i = 0; i < header.numFrames; ++i)
-    {
       endianswap(frames + i * header.frameSize, sizeof(float), 6);
-    }
 
     glCommands = new int[header.numGlCommands];
     if (glCommands==NULL) return false;
@@ -105,15 +104,17 @@ namespace rdr
     return true;
   }
 
-  float snap(int sn, float f) { return sn ? (float)(((int)(f+sn*0.5f))&(~(sn-1))) : f; }
+  static float snap(int sn, float f)
+  {
+    return sn ? (float)(((int)(f+sn*0.5f))&(~(sn-1))) : f;
+  }
 
   void md2::scale(int frame, float scale, int sn)
   {
     mverts[frame] = new vec[numVerts];
     md2_frame *cf = (md2_frame *) ((char*)frames+frameSize*frame);
     float sc = 16.0f/scale;
-    loop(vi, numVerts)
-    {
+    loop(vi, numVerts) {
       uchar *cv = (uchar *)&cf->vertices[vi].vertex;
       vec *v = &(mverts[frame])[vi];
       v->x =  (snap(sn, cv[0]*cf->scale[0])+cf->translate[0])/sc;
@@ -133,15 +134,11 @@ namespace rdr
 
     glColor3fv((float *)&light);
 
-    if (displaylist && frame==0 && range==1)
-    {
+    if (displaylist && frame==0 && range==1) {
       glCallList(displaylist);
       xtraverts += displaylistverts;
-    }
-    else
-    {
-      if (frame==0 && range==1)
-      {
+    } else {
+      if (frame==0 && range==1) {
         static int displaylistn = 10;
         glNewList(displaylist = displaylistn++, GL_COMPILE);
         displaylistverts = xtraverts;
@@ -157,14 +154,16 @@ namespace rdr
       vec *verts1 = mverts[fr1];
       vec *verts2 = mverts[fr2];
 
-      for (int *command = glCommands; (*command)!=0;)
-      {
+      for (int *command = glCommands; (*command)!=0;) {
         int numVertex = *command++;
-        if (numVertex>0) { glBegin(GL_TRIANGLE_STRIP); }
-        else            { glBegin(GL_TRIANGLE_FAN); numVertex = -numVertex; }
+        if (numVertex>0)
+          glBegin(GL_TRIANGLE_STRIP);
+        else {
+          glBegin(GL_TRIANGLE_FAN);
+          numVertex = -numVertex;
+        }
 
-        loopi(numVertex)
-        {
+        loopi(numVertex) {
           float tu = *((float*)command++);
           float tv = *((float*)command++);
           glTexCoord2f(tu, tv);
@@ -173,6 +172,7 @@ namespace rdr
           vec &v2 = verts2[vn];
 #define ip(c) v1.c*frac2+v2.c*frac1
           glVertex3f(ip(x), ip(z), ip(y));
+#undef ip
         }
 
         xtraverts += numVertex;
@@ -180,8 +180,7 @@ namespace rdr
         glEnd();
       }
 
-      if (displaylist)
-      {
+      if (displaylist) {
         glEndList();
         displaylistverts = xtraverts-displaylistverts;
       }
@@ -190,14 +189,13 @@ namespace rdr
     glPopMatrix();
   }
 
-  hashtable<md2 *> *mdllookup = NULL;
-  vector<md2 *> mapmodels;
+  static hashtable<md2 *> *mdllookup = NULL;
+  static vector<md2 *> mapmodels;
   const int FIRSTMDL = 20;
 
   void delayedload(md2 *m)
   {
-    if (!m->loaded)
-    {
+    if (!m->loaded) {
       sprintf_sd(name1)("packages/models/%s/tris.md2", m->loadname);
       if (!m->load(path(name1))) fatal("loadmodel: ", name1);
       sprintf_sd(name2)("packages/models/%s/skin.jpg", m->loadname);
@@ -231,9 +229,11 @@ namespace rdr
     mapmodels.add(m);
   }
 
-  void mapmodelreset() { mapmodels.setsize(0); }
+  void mapmodelreset(void) { mapmodels.setsize(0); }
 
-  mapmodelinfo &getmminfo(int i) { return i<mapmodels.length() ? mapmodels[i]->mmi : *(mapmodelinfo *)0; }
+  mapmodelinfo &getmminfo(int i) {
+    return i<mapmodels.length() ? mapmodels[i]->mmi : *(mapmodelinfo *)0;
+  }
 
   COMMAND(mapmodel, ARG_5STR);
   COMMAND(mapmodelreset, ARG_NONE);
@@ -253,8 +253,7 @@ namespace rdr
     int iy = (int)z;
     vec light = { 1.0f, 1.0f, 1.0f };
 
-    if (!OUTBORD(ix, iy))
-    {
+    if (!OUTBORD(ix, iy)) {
       sqr *s = S(ix,iy);
       float ll = 256.0f; // 0.96f;
       float of = 0.0f; // 0.1f;
@@ -263,8 +262,7 @@ namespace rdr
       light.z = s->b/ll+of;
     }
 
-    if (teammate)
-    {
+    if (teammate) {
       light.x *= 0.6f;
       light.y *= 0.7f;
       light.z *= 1.2f;
@@ -273,5 +271,4 @@ namespace rdr
     m->render(light, frame, range, x, y, z, yaw, pitch, scale, speed, snap, basetime);
   }
 } /* namespace rdr */
-
 

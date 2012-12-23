@@ -100,6 +100,7 @@ namespace rdr
     {270,448,310,512},  //}
     {310,448,363,512}   //~
   };
+  static const int twotriangles[] = {0,1,2,0,2,3};
 
   int text_width(const char *str)
   {
@@ -127,18 +128,26 @@ namespace rdr
 
   void draw_text(const char *str, int left, int top, int gl_num)
   {
-    glBlendFunc(GL_ONE, GL_ONE);
-    glBindTexture(GL_TEXTURE_2D, gl_num);
-    glColor3ub(255,255,255);
+    OGL(BlendFunc, GL_ONE, GL_ONE);
+    OGL(BindTexture, GL_TEXTURE_2D, gl_num);
+    OGL(Color3ub, 255, 255, 255);
 
     int x = left;
     int y = top;
 
-    int i;
     float in_left, in_top, in_right, in_bottom;
     int in_width, in_height;
 
-    for (i = 0; str[i] != 0; i++) {
+    /* use a triangle mesh to display the text */
+    OGL(EnableClientState, GL_INDEX_ARRAY);
+    OGL(DisableClientState, GL_COLOR_ARRAY);
+    const size_t len = strlen(str);
+    int *indices = (int*) alloca(6*len*sizeof(int));
+    vvec<4> *verts = (vvec<4>*) alloca(4*len*sizeof(vvec<4>));
+
+    /* traverse the string and build the mesh */
+    int index = 0;
+    for (int i = 0, vert = 0; str[i] != 0; ++i) {
       int c = str[i];
       if (c=='\t') { x = (x-left+PIXELTAB)/PIXELTAB*PIXELTAB+left; continue; }; 
       if (c=='\f') { glColor3ub(64,255,128); continue; };
@@ -146,47 +155,56 @@ namespace rdr
       c -= 33;
       if (c<0 || c>=95) continue;
 
-      in_left    = ((float) char_coords[c][0])   / 512.0f;
-      in_top     = ((float) char_coords[c][1]+2) / 512.0f;
-      in_right   = ((float) char_coords[c][2])   / 512.0f;
-      in_bottom  = ((float) char_coords[c][3]-2) / 512.0f;
-
+      in_left    = float(char_coords[c][0])   / 512.0f;
+      in_top     = float(char_coords[c][1]+2) / 512.0f;
+      in_right   = float(char_coords[c][2])   / 512.0f;
+      in_bottom  = float(char_coords[c][3]-2) / 512.0f;
       in_width   = char_coords[c][2] - char_coords[c][0];
       in_height  = char_coords[c][3] - char_coords[c][1];
 
-      glBegin(GL_TRIANGLE_STRIP);
-      glTexCoord2f(in_left,  in_top   ); glVertex2i(x,            y);
-      glTexCoord2f(in_right, in_top   ); glVertex2i(x + in_width, y);
-      glTexCoord2f(in_left,  in_bottom); glVertex2i(x,            y + in_height);
-      glTexCoord2f(in_right, in_bottom); glVertex2i(x + in_width, y + in_height);
-      glEnd();
+      loopj(6) indices[index+j] = vert+twotriangles[j];
+      verts[vert+0] = vvec<4>(in_left, in_top,   float(x),         float(y));
+      verts[vert+1] = vvec<4>(in_right,in_top,   float(x+in_width),float(y));
+      verts[vert+2] = vvec<4>(in_right,in_bottom,float(x+in_width),float(y+in_height));
+      verts[vert+3] = vvec<4>(in_left, in_bottom,float(x),         float(y+in_height));
 
       xtraverts += 4;
-      x += in_width  + 1;
+      x += in_width + 1;
+      index += 6;
+      vert += 4;
     }
+
+    OGL(VertexPointer, 2, GL_FLOAT, sizeof(vvec<4>), &verts[0][2]);
+    OGL(TexCoordPointer, 2, GL_FLOAT, sizeof(vvec<4>), &verts[0][0]);
+    OGL(DrawElements, GL_TRIANGLES, index, GL_UNSIGNED_INT, indices);
+    OGL(DisableClientState, GL_INDEX_ARRAY);
+    OGL(EnableClientState, GL_COLOR_ARRAY);
   }
 
-  // also Don's code, so goes in here too :)
-
-  void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
-                       float s1, float t1, int x1, int y1, int z1,
-                       float s2, float t2, int x2, int y2, int z2,
-                       float s3, float t3, int x3, int y3, int z3,
-                       int texture)
+  static void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
+                              float s1, float t1, int x1, int y1, int z1,
+                              float s2, float t2, int x2, int y2, int z2,
+                              float s3, float t3, int x3, int y3, int z3,
+                              int texture)
   {
-    glBindTexture(GL_TEXTURE_2D, texture);
-    glBegin(GL_TRIANGLE_STRIP);
-    glTexCoord2f(s3, t3); glVertex3d(x3, y3, z3);
-    glTexCoord2f(s2, t2); glVertex3d(x2, y2, z2);
-    glTexCoord2f(s0, t0); glVertex3d(x0, y0, z0);
-    glTexCoord2f(s1, t1); glVertex3d(x1, y1, z1);
-    glEnd();
+    vvec<5> verts[4];
+    verts[0] = vvec<5>(s3, t3, float(x3), float(y3), float(z3));
+    verts[1] = vvec<5>(s2, t2, float(x2), float(y2), float(z2));
+    verts[2] = vvec<5>(s1, t1, float(x1), float(y1), float(z1));
+    verts[3] = vvec<5>(s0, t0, float(x0), float(y0), float(z0));
+
+    OGL(BindTexture, GL_TEXTURE_2D, texture);
+    OGL(VertexPointer, 3, GL_FLOAT, sizeof(vvec<5>), &verts[0][2]);
+    OGL(TexCoordPointer, 2, GL_FLOAT, sizeof(vvec<5>), &verts[0][0]);
+    OGL(DrawElements, GL_TRIANGLES, 6, GL_UNSIGNED_INT, twotriangles);
     xtraverts += 4;
   }
 
   void draw_envbox(int t, int w)
   {
-    glDepthMask(GL_FALSE);
+    OGL(DepthMask, GL_FALSE);
+    OGL(EnableClientState, GL_INDEX_ARRAY);
+    OGL(DisableClientState, GL_COLOR_ARRAY);
     draw_envbox_aux(1.0f, 1.0f, -w, -w,  w,
                     0.0f, 1.0f,  w, -w,  w,
                     0.0f, 0.0f,  w, -w, -w,
@@ -211,7 +229,9 @@ namespace rdr
                     0.0f, 0.0f, -w,  w, -w,
                     1.0f, 0.0f, -w, -w, -w,
                     1.0f, 1.0f, +w, -w, -w, t+5);
-    glDepthMask(GL_TRUE);
+    OGL(DisableClientState, GL_INDEX_ARRAY);
+    OGL(EnableClientState, GL_COLOR_ARRAY);
+    OGL(DepthMask, GL_TRUE);
   }
 } /* namespace rdr */
 

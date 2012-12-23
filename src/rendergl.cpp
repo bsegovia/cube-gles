@@ -149,8 +149,10 @@ namespace ogl {
 
     const char *exts = (const char *)glGetString(GL_EXTENSIONS);
 
-    if (strstr(exts, "GL_EXT_texture_env_combine")) hasoverbright = true;
-    else console::out("WARNING: cannot use overbright lighting, using old lighting model!");
+    if (strstr(exts, "GL_EXT_texture_env_combine"))
+      hasoverbright = true;
+    else
+      console::out("WARNING: cannot use overbright lighting");
 
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glmaxtexsize);
 
@@ -313,7 +315,9 @@ namespace ogl {
     glMatrixMode(GL_MODELVIEW);
 
     const int rtime = weapon::reloadtime(player1->gunselect);
-    if (player1->lastaction && player1->lastattackgun==player1->gunselect && lastmillis-player1->lastaction<rtime)
+    if (player1->lastaction &&
+        player1->lastattackgun==player1->gunselect &&
+        lastmillis-player1->lastaction<rtime)
       drawhudmodel(7, 18, rtime/18.0f, player1->lastaction);
     else
       drawhudmodel(6, 1, 100, 0);
@@ -327,6 +331,17 @@ namespace ogl {
     glDisable(GL_CULL_FACE);
   }
 
+  void drawarray(int mode, size_t pos, size_t tex, size_t n, const float *data)
+  {
+    OGL(DisableClientState, GL_COLOR_ARRAY);
+    if (!tex) OGL(DisableClientState, GL_TEXTURE_COORD_ARRAY);
+    OGL(VertexPointer, pos, GL_FLOAT, (pos+tex)*sizeof(float), data+tex);
+    if (tex) OGL(TexCoordPointer, tex, GL_FLOAT, (pos+tex)*sizeof(float), data);
+    OGL(DrawArrays, mode, 0, n);
+    if (!tex) OGL(EnableClientState, GL_TEXTURE_COORD_ARRAY);
+    OGL(EnableClientState, GL_COLOR_ARRAY);
+  }
+
   void drawframe(int w, int h, float curfps)
   {
     float hf = hdr.waterlevel-0.3f;
@@ -337,7 +352,12 @@ namespace ogl {
 
     glFogi(GL_FOG_START, (fog+64)/8);
     glFogi(GL_FOG_END, fog);
-    float fogc[4] = { (fogcolour>>16)/256.0f, ((fogcolour>>8)&255)/256.0f, (fogcolour&255)/256.0f, 1.0f };
+    const float fogc[4] = {
+      (fogcolour>>16)/256.0f,
+      ((fogcolour>>8)&255)/256.0f,
+      (fogcolour&255)/256.0f,
+      1.0f
+    };
     glFogfv(GL_FOG_COLOR, fogc);
     glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
 
@@ -388,6 +408,7 @@ namespace ogl {
     glDepthFunc(GL_LESS);
     glEnable(GL_FOG);
 
+    setupworld();
     transplayer();
 
     overbright(2);
