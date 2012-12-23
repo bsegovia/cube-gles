@@ -85,7 +85,7 @@ namespace rdr
     glCommands = new int[header.numGlCommands];
     if (glCommands==NULL) return false;
 
-    fseek(file,       header.offsetGlCommands, SEEK_SET);
+    fseek(file, header.offsetGlCommands, SEEK_SET);
     fread(glCommands, header.numGlCommands*sizeof(int), 1, file);
 
     endianswap(glCommands, sizeof(int), header.numGlCommands);
@@ -144,10 +144,10 @@ namespace rdr
         displaylistverts = xtraverts;
       }
 
-      int time = lastmillis-basetime;
+      const int time = lastmillis-basetime;
       int fr1 = (int)(time/speed);
-      float frac1 = (time-fr1*speed)/speed;
-      float frac2 = 1-frac1;
+      const float frac1 = (time-fr1*speed)/speed;
+      const float frac2 = 1-frac1;
       fr1 = fr1%range+frame;
       int fr2 = fr1+1;
       if (fr2>=frame+range) fr2 = frame;
@@ -189,8 +189,8 @@ namespace rdr
     glPopMatrix();
   }
 
-  static hashtable<md2 *> *mdllookup = NULL;
-  static vector<md2 *> mapmodels;
+  static hashtable<md2*> *mdllookup = NULL;
+  static vector<md2*> mapmodels;
   const int FIRSTMDL = 20;
 
   void delayedload(md2 *m)
@@ -205,7 +205,7 @@ namespace rdr
     }
   }
 
-  int modelnum = 0;
+  static int modelnum = 0;
 
   md2 *loadmodel(const char *name)
   {
@@ -238,25 +238,29 @@ namespace rdr
   COMMAND(mapmodel, ARG_5STR);
   COMMAND(mapmodelreset, ARG_NONE);
 
-  void rendermodel(const char *mdl, int frame, int range, int tex, float rad, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int snap, int basetime)
+  void rendermodel(const char *mdl, int frame, int range, int tex,
+                   float rad, float x, float y, float z,
+                   float yaw, float pitch, bool teammate,
+                   float scale, float speed, int snap, int basetime)
   {
     md2 *m = loadmodel(mdl);
 
-    if (world::isoccluded(player1->o.x, player1->o.y, x-rad, z-rad, rad*2)) return;
+    if (world::isoccluded(player1->o.x, player1->o.y, x-rad, z-rad, rad*2))
+      return;
 
     delayedload(m);
 
     int xs, ys;
     glBindTexture(GL_TEXTURE_2D, tex ? ogl::lookuptex(tex, xs, ys) : FIRSTMDL+m->mdlnum);
 
-    int ix = (int)x;
-    int iy = (int)z;
+    const int ix = (int)x;
+    const int iy = (int)z;
     vec light = { 1.0f, 1.0f, 1.0f };
 
     if (!OUTBORD(ix, iy)) {
       sqr *s = S(ix,iy);
-      float ll = 256.0f; // 0.96f;
-      float of = 0.0f; // 0.1f;
+      const float ll = 256.0f; // 0.96f;
+      const float of = 0.0f; // 0.1f;
       light.x = s->r/ll+of;
       light.y = s->g/ll+of;
       light.z = s->b/ll+of;

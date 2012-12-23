@@ -11,69 +11,35 @@ namespace rdr { extern int curvert; }
 
 namespace rdr {
 namespace ogl {
+ 
+  static GLuint spherevbo; /* contains the sphere data */
+
   void sphere(GLdouble radius, int slices, int stacks)
   {
-    const int CACHE_SIZE = 240;
-    float sinCache1a[CACHE_SIZE];
-    float cosCache1a[CACHE_SIZE];
-    float sinCache2a[CACHE_SIZE];
-    float cosCache2a[CACHE_SIZE];
-    float sinCache1b[CACHE_SIZE];
-    float cosCache1b[CACHE_SIZE];
-    float sinCache2b[CACHE_SIZE];
-    float cosCache2b[CACHE_SIZE];
-    float angle;
-    float zLow, zHigh;
-    float sintemp1 = 0.f, sintemp2 = 0.f, sintemp3 = 0.f, sintemp4 = 0.f;
-    float costemp3 = 0.f, costemp4 = 0.f;
-    int start, finish;
-    if (slices >= CACHE_SIZE) slices = CACHE_SIZE-1;
-    if (stacks >= CACHE_SIZE) stacks = CACHE_SIZE-1;
-    if (slices < 2 || stacks < 1 || radius < 0.0) return;
-
-    for (int i = 0; i < slices; i++) {
-      angle = 2.f * M_PI * i / slices;
-      sinCache1a[i] = sinf(angle);
-      cosCache1a[i] = cosf(angle);
-      sinCache2a[i] = sinCache1a[i];
-      cosCache2a[i] = cosCache1a[i];
-    }
-
-    for (int j = 0; j <= stacks; j++) {
-      angle = M_PI * j / stacks;
-      sinCache2b[j] = -sinf(angle);
-      cosCache2b[j] = -cosf(angle);
-      sinCache1b[j] = radius * sinf(angle);
-      cosCache1b[j] = radius * cosf(angle);
-    }
-
-    sinCache1b[0] = 0;
-    sinCache1b[stacks] = 0;
-    sinCache1a[slices] = sinCache1a[0];
-    cosCache1a[slices] = cosCache1a[0];
-    sinCache2a[slices] = sinCache2a[0];
-    cosCache2a[slices] = cosCache2a[0];
-
-    start = 0;
-    finish = stacks;
-    for (int j = start; j < finish; j++) {
-      zLow = cosCache1b[j];
-      zHigh = cosCache1b[j+1];
-      sintemp1 = sinCache1b[j];
-      sintemp2 = sinCache1b[j+1];
-      sintemp3 = sinCache2b[j];
-      costemp3 = cosCache2b[j];
-      sintemp4 = sinCache2b[j+1];
-      costemp4 = cosCache2b[j+1];
+    for (int j = 0; j < stacks; j++) {
+      const float angle0 = M_PI * float(j) / float(stacks);
+      const float angle1 = M_PI * float(j+1) / float(stacks);
+      const float zLow = radius * cosf(angle0);
+      const float zHigh = radius * cosf(angle1);
+      const float sin1 = radius * sinf(angle0);
+      const float sin2 = radius * sinf(angle1);
+      const float sin3 = -sinf(angle0);
+      const float cos3 = -cosf(angle0);
+      const float sin4 = -sinf(angle1);
+      const float cos4 = -cosf(angle1);
 
       glBegin(GL_TRIANGLE_STRIP);
       for (int i = 0; i <= slices; i++) {
-        glNormal3f(sinCache2a[i]*sintemp3, cosCache2a[i]*sintemp3, costemp3);
+        const float angle = 2.f * M_PI * float(i) / float(slices);
+        const float sin0 = i==slices ? 0.f : sinf(angle);
+        const float cos0 = i==slices ? 1.f : cosf(angle);
+        glNormal3f(sin0*sin3, cos0*sin3, cos3);
         glTexCoord2f(1 - (float) i / slices, 1 - (float) j / stacks);
-        glVertex3f(sintemp1*sinCache1a[i], sintemp1*cosCache1a[i], zLow);
-        glNormal3f(sinCache2a[i]*sintemp4, cosCache2a[i]*sintemp4, costemp4);
+        glVertex3f(sin1*sin0, sin1*cos0, zLow);
+
+        glNormal3f(sin0*sin4, cos0*sin4, cos4);
         glTexCoord2f(1 - (float) i / slices, 1 - (float) (j+1) / stacks);
-        glVertex3f(sintemp2*sinCache1a[i], sintemp2*cosCache1a[i], zHigh);
+        glVertex3f(sin2*sin0, sin2*cos0, zHigh);
       }
       glEnd();
     }
