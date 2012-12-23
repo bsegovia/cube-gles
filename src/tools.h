@@ -159,7 +159,7 @@ template <class T> struct vector
     return buf[ulen++];
   }
 
-  T &add()
+  T &add(void)
   {
     if(ulen==alen) realloc();
     new (&buf[ulen]) T;

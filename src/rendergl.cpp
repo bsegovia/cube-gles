@@ -11,12 +11,14 @@ namespace rdr { extern int curvert; }
 
 namespace rdr {
 namespace ogl {
- 
-  static GLuint spherevbo; /* contains the sphere data */
 
-  void sphere(GLdouble radius, int slices, int stacks)
+  static const GLuint spherevbo = 1; /* contains the sphere data */
+
+#if 1
+  void sphere(float radius, int slices, int stacks)
   {
-    for (int j = 0; j < stacks; j++) {
+    OGL(Begin, GL_TRIANGLE_STRIP);
+    loopj(stacks) {
       const float angle0 = M_PI * float(j) / float(stacks);
       const float angle1 = M_PI * float(j+1) / float(stacks);
       const float zLow = radius * cosf(angle0);
@@ -28,22 +30,65 @@ namespace ogl {
       const float sin4 = -sinf(angle1);
       const float cos4 = -cosf(angle1);
 
-      glBegin(GL_TRIANGLE_STRIP);
-      for (int i = 0; i <= slices; i++) {
+      loopi(slices+1) {
         const float angle = 2.f * M_PI * float(i) / float(slices);
-        const float sin0 = i==slices ? 0.f : sinf(angle);
-        const float cos0 = i==slices ? 1.f : cosf(angle);
-        glNormal3f(sin0*sin3, cos0*sin3, cos3);
-        glTexCoord2f(1 - (float) i / slices, 1 - (float) j / stacks);
-        glVertex3f(sin1*sin0, sin1*cos0, zLow);
+        const float sin0 = sinf(angle);
+        const float cos0 = cosf(angle);
+        const int start = (i==0&&j!=0)?2:1;
+        const int end = (i==slices&&j!=stacks-1)?2:1;
+        loopk(start) { /* stick the strips together */
+          glNormal3f(sin0*sin3, cos0*sin3, cos3);
+          glTexCoord2f(1.f-float(i)/slices, 1.f-float(j)/stacks);
+          glVertex3f(sin1*sin0, sin1*cos0, zLow);
+        }
 
-        glNormal3f(sin0*sin4, cos0*sin4, cos4);
-        glTexCoord2f(1 - (float) i / slices, 1 - (float) (j+1) / stacks);
-        glVertex3f(sin2*sin0, sin2*cos0, zHigh);
+        loopk(end) { /* idem */
+          glNormal3f(sin0*sin4, cos0*sin4, cos4);
+          glTexCoord2f(1.f-float(i)/slices, 1.f-float(j+1)/stacks);
+          glVertex3f(sin2*sin0, sin2*cos0, zHigh);
+        }
       }
-      glEnd();
     }
+    OGL(End);
   }
+#else
+  void sphere(float radius, int slices, int stacks)
+  {
+    OGL(Begin, GL_TRIANGLE_STRIP);
+    loopj(stacks) {
+      const float angle0 = M_PI * float(j) / float(stacks);
+      const float angle1 = M_PI * float(j+1) / float(stacks);
+      const float zLow = radius * cosf(angle0);
+      const float zHigh = radius * cosf(angle1);
+      const float sin1 = radius * sinf(angle0);
+      const float sin2 = radius * sinf(angle1);
+      const float sin3 = -sinf(angle0);
+      const float cos3 = -cosf(angle0);
+      const float sin4 = -sinf(angle1);
+      const float cos4 = -cosf(angle1);
+
+      loopi(slices+1) {
+        const float angle = 2.f * M_PI * float(i) / float(slices);
+        const float sin0 = sinf(angle);
+        const float cos0 = cosf(angle);
+        const int start = (i==0&&j!=0)?2:1;
+        const int end = (i==slices&&j!=stacks-1)?2:1;
+        loopk(start) { /* stick the strips together */
+          glNormal3f(sin0*sin3, cos0*sin3, cos3);
+          glTexCoord2f(1.f-float(i)/slices, 1.f-float(j)/stacks);
+          glVertex3f(sin1*sin0, sin1*cos0, zLow);
+        }
+
+        loopk(end) { /* idem */
+          glNormal3f(sin0*sin4, cos0*sin4, cos4);
+          glTexCoord2f(1.f-float(i)/slices, 1.f-float(j+1)/stacks);
+          glVertex3f(sin2*sin0, sin2*cos0, zHigh);
+        }
+      }
+    }
+    OGL(End);
+  }
+#endif
 
   /* management of texture slots each texture slot can have multople texture
    * frames, of which currently only the first is used additional frames can be
