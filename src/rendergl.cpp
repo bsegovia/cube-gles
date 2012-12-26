@@ -175,8 +175,12 @@ namespace ogl {
     "in vec2 out_t;\n"
     "out vec4 c;\n"
     "void main() {\n"
+#if 0
     "  const float fogfactor = (fogstartend.x + gl_FragDepth) / (fogstartend.y-fogstartend.x);\n"
     "  c = fogfactor*texture(diffuse, out_t)+(1.-fogfactor)*fogcolor;\n"
+#else
+    "  c = texture(diffuse, out_t);\n"
+#endif
     "}\n"
   };
   static struct {
