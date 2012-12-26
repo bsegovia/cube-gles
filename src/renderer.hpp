@@ -18,6 +18,7 @@ namespace rdr
   /* rendergl */
   namespace ogl
   {
+    enum {POS0=0,POS1=1,TEX=2,NOR=3}; /* attributes */
     void init(int w, int h);
     void clean(void);
     void drawframe(int w, int h, float curfps);
@@ -26,7 +27,7 @@ namespace rdr
     void addstrip(int tex, int start, int n);
     int lookuptex(int tex, int &xs, int &ys);
     void drawarray(int mode, size_t pos, size_t tex, size_t n, const float *data);
-    void drawsphere(void);
+    void rendermd2(const float *pos0, const float *pos1, float lerp, int n);
   } /* namespace ogl */
 
   /* rendercubes */

@@ -1,5 +1,5 @@
-#ifndef __QBE_WORLD_HPP__
-#define __QBE_WORLD_HPP__
+#ifndef __CUBE_WORLD_HPP__
+#define __CUBE_WORLD_HPP__
 
 struct vec;
 struct dynent;
@@ -124,6 +124,5 @@ namespace world
 
 } /* namespace world */
 
-#endif /* __QBE_WORLD_HPP__ */
-
+#endif /* __CUBE_WORLD_HPP__ */
 

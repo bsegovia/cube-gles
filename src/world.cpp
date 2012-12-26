@@ -217,7 +217,6 @@ namespace world
       calclight();
   }
 
-  /*! Return the entity type of the given object */
   static int findtype(const char *what)
   {
     loopi(MAXENTTYPES)
@@ -339,6 +338,7 @@ namespace world
       s->ctex = DEFAULT_CEIL;
       s->wtex = s->utex = DEFAULT_WALL;
       s->type = SOLID;
+      //s->type = SPACE;
       s->floor = 0;
       s->ceil = 127;
       s->vdelta = 0;
@@ -387,12 +387,11 @@ namespace world
   static float odist = 256;
   static void toggleocull() { ocull = !ocull; };
 
-  ///////////////////////////////////////////////////////////////////////////
-  // World occlusions
-  ///////////////////////////////////////////////////////////////////////////
+  /* world occlusions */
 
-  // constructs occlusion map: cast rays in all directions on the 2d plane and
-  // record distance.  done exactly once per frame.
+  /* constructs occlusion map: cast rays in all directions on the 2d plane and
+   * record distance. done exactly once per frame
+   */
   void computeraytable(float vx, float vy)
   {
     if (!ocull) return;
@@ -406,15 +405,15 @@ namespace world
 
     loopi(NUMRAYS) {
       float angle = i*PI2/NUMRAYS;
-      if ((apitch>45 // must be bigger if fov>120
-            || (angle<byaw && angle>syaw)
-            || (angle<byaw-PI2 && angle>syaw-PI2)
-            || (angle<byaw+PI2 && angle>syaw+PI2))
+      if ((apitch>45 /* must be bigger if fov>120 */
+       || (angle<byaw && angle>syaw)
+       || (angle<byaw-PI2 && angle>syaw-PI2)
+       || (angle<byaw+PI2 && angle>syaw+PI2))
           && !OUTBORD(vx, vy)
-          // try to avoid tracing ray if outside of frustrum
+          /* try to avoid tracing ray if outside of frustrum */
           && !SOLID(S(fast_f2nat(vx), fast_f2nat(vy))))
       {
-        float ray = i*8/(float)NUMRAYS;
+        float ray = float(i)*8.f/float(NUMRAYS);
         float dx, dy;
         if (ray>1 && ray<3) {
           dx = -(ray-2);
@@ -434,13 +433,19 @@ namespace world
         for (;;) {
           sx += dx;
           sy += dy;
+#if 0
+          if (sx<0.f || sy<0.f || sx>=float(ssize) || sy>=float(ssize)) {
+            rdist[i] = 1e6f;
+            break;
+          }
+#endif
           if (SOLID(S(fast_f2nat(sx), fast_f2nat(sy)))) {
             rdist[i] = (float)(fabs(sx-vx)+fabs(sy-vy));
             break;
           }
         }
       } else
-        rdist[i] = 2;
+        rdist[i] = 2.f;
     }
   }
 
@@ -493,8 +498,7 @@ namespace world
           h = ca(cy+csize-vy, -(cx+csize-vx))+2;
           l = ca(cy-vy, -(cx-vx))+2;
         } // F
-      }
-      else { // BG
+      } else { // BG
         if (cy<=vy) {
           if (cy+csize<vy) {
             h = ma(-(cy+csize-vy), cx-vx)+6;

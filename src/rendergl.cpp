@@ -12,49 +12,6 @@ namespace rdr { extern int curvert; }
 namespace rdr {
 namespace ogl {
 
-  static const GLuint spherevbo = 1; /* contains the sphere data */
-  static int spherevertn = 0;
-  typedef vector<vvec<5>> spherevec;
-
-  spherevec sphere(float radius, int slices, int stacks)
-  {
-    spherevec v;
-    loopj(stacks) {
-      const float angle0 = M_PI * float(j) / float(stacks);
-      const float angle1 = M_PI * float(j+1) / float(stacks);
-      const float zLow = radius * cosf(angle0);
-      const float zHigh = radius * cosf(angle1);
-      const float sin1 = radius * sinf(angle0);
-      const float sin2 = radius * sinf(angle1);
-      // const float sin3 = -sinf(angle0);
-      // const float cos3 = -cosf(angle0);
-      // const float sin4 = -sinf(angle1);
-      // const float cos4 = -cosf(angle1);
-
-      loopi(slices+1) {
-        const float angle = 2.f * M_PI * float(i) / float(slices);
-        const float sin0 = sinf(angle);
-        const float cos0 = cosf(angle);
-        const int start = (i==0&&j!=0)?2:1;
-        const int end = (i==slices&&j!=stacks-1)?2:1;
-        loopk(start) { /* stick the strips together */
-          const float s = 1.f-float(i)/slices, t = 1.f-float(j)/stacks;
-          const float x = sin1*sin0, y = sin1*cos0, z = zLow;
-          // glNormal3f(sin0*sin3, cos0*sin3, cos3);
-          v.add(vvec<5>(s, t, x, y, z));
-        }
-
-        loopk(end) { /* idem */
-          const float s = 1.f-float(i)/slices, t = 1.f-float(j+1)/stacks;
-          const float x = sin2*sin0, y = sin2*cos0, z = zHigh;
-          // glNormal3f(sin0*sin4, cos0*sin4, cos4);
-          v.add(vvec<5>(s, t, x, y, z));
-        }
-        spherevertn += start+end;
-      }
-    }
-    return v;
-  }
 
   /* management of texture slots each texture slot can have multople texture
    * frames, of which currently only the first is used additional frames can be
@@ -74,6 +31,55 @@ namespace ogl {
   static int mapping[256][MAXFRAMES]; /* (texture, frame) -> (oglid, name) */
   static string mapname[256][MAXFRAMES];
 
+  /* sphere management */
+  static GLuint spherevbo = 0;
+  static int spherevertn = 0;
+
+  static void buildsphere(float radius, int slices, int stacks)
+  {
+    vector<vvec<5>> v;
+    loopj(stacks) {
+      const float angle0 = M_PI * float(j) / float(stacks);
+      const float angle1 = M_PI * float(j+1) / float(stacks);
+      const float zLow = radius * cosf(angle0);
+      const float zHigh = radius * cosf(angle1);
+      const float sin1 = radius * sinf(angle0);
+      const float sin2 = radius * sinf(angle1);
+      /* const float sin3 = -sinf(angle0); */
+      /* const float cos3 = -cosf(angle0); */
+      /* const float sin4 = -sinf(angle1); */
+      /* const float cos4 = -cosf(angle1); */
+
+      loopi(slices+1) {
+        const float angle = 2.f * M_PI * float(i) / float(slices);
+        const float sin0 = sinf(angle);
+        const float cos0 = cosf(angle);
+        const int start = (i==0&&j!=0)?2:1;
+        const int end = (i==slices&&j!=stacks-1)?2:1;
+        loopk(start) { /* stick the strips together */
+          const float s = 1.f-float(i)/slices, t = 1.f-float(j)/stacks;
+          const float x = sin1*sin0, y = sin1*cos0, z = zLow;
+          /* glNormal3f(sin0*sin3, cos0*sin3, cos3); */
+          v.add(vvec<5>(s, t, x, y, z));
+        }
+
+        loopk(end) { /* idem */
+          const float s = 1.f-float(i)/slices, t = 1.f-float(j+1)/stacks;
+          const float x = sin2*sin0, y = sin2*cos0, z = zHigh;
+          /* glNormal3f(sin0*sin4, cos0*sin4, cos4); */
+          v.add(vvec<5>(s, t, x, y, z));
+        }
+        spherevertn += start+end;
+      }
+    }
+
+    const size_t sz = sizeof(vvec<5>) * v.length();
+    OGL(GenBuffers, 1, &spherevbo);
+    OGL(BindBuffer, GL_ARRAY_BUFFER, spherevbo);
+    OGL(BufferData, GL_ARRAY_BUFFER, sz, &v[0][0], GL_STATIC_DRAW);
+    OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
+  }
+
   static void purgetextures(void) {
     loopi(256) loop(j,MAXFRAMES) mapping[i][j] = 0;
   }
@@ -92,7 +98,7 @@ namespace ogl {
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     xs = s->w;
@@ -103,6 +109,109 @@ namespace ogl {
     glGenerateMipmap(GL_TEXTURE_2D);
     SDL_FreeSurface(s);
     return true;
+  }
+
+  static bool checkshader(GLuint shaderName, const char *source)
+  {
+    GLint result = GL_FALSE;
+    int infoLogLength;
+
+    if (!shaderName) return false;
+    glGetShaderiv(shaderName, GL_COMPILE_STATUS, &result);
+    glGetShaderiv(shaderName, GL_INFO_LOG_LENGTH, &infoLogLength);
+    if (infoLogLength) {
+      char *buffer = new char[infoLogLength + 1];
+      buffer[infoLogLength] = 0;
+      glGetShaderInfoLog(shaderName, infoLogLength, NULL, buffer);
+      printf(buffer);
+      delete [] buffer;
+    }
+    if (result == GL_FALSE) fatal("OGL: failed to compile shader");
+    return result == GL_TRUE;
+  }
+
+  static GLuint loadshader(GLenum type, const char *source)
+  {
+    const GLuint name = glCreateShader(type);
+    glShaderSource(name, 1, &source, NULL);
+    glCompileShader(name);
+    if (!checkshader(name, source)) fatal("OGL: shader not valid");
+    return name;
+  }
+
+  static GLuint loadprogram(const char *vertstr, const char *fragstr)
+  {
+    GLuint program = 0;
+    const GLuint vert = loadshader(GL_VERTEX_SHADER, vertstr);
+    const GLuint frag = loadshader(GL_FRAGMENT_SHADER, fragstr);
+    OGLR(program, CreateProgram);
+    OGL(AttachShader, program, vert);
+    OGL(AttachShader, program, frag);
+    OGL(DeleteShader, vert);
+    OGL(DeleteShader, frag);
+    return program;
+  }
+
+  /* diffuse shader -> just display geometries with a diffuse texture */
+  static const char diffusevert[] = {
+    "#version 130\n"
+    "uniform mat4 MVP;\n"
+    "uniform float delta;\n"
+    "in vec3 p0;\n"
+    "in vec3 p1;\n"
+    "in vec2 t;\n"
+    "out vec2 out_t;\n"
+    "void main() {\n"
+    "  out_t = t;\n"
+    "  const vec3 p = delta*p1+(1.-delta)*p0;\n"
+    "  gl_Position = MVP * vec4(p.x, p.y, p.z, 1.f);\n"
+    "}\n"
+  };
+  static const char diffusefrag[] = {
+    "#version 130\n"
+    "uniform sampler2D diffuse;\n"
+    "uniform vec4 fogcolor;\n"
+    "uniform vec2 fogstartend;\n"
+    "in vec2 out_t;\n"
+    "out vec4 c;\n"
+    "void main() {\n"
+    "  const float fogfactor = (fogstartend.x + gl_FragDepth) / (fogstartend.y-fogstartend.x);\n"
+    "  c = fogfactor*texture(diffuse, out_t)+(1.-fogfactor)*fogcolor;\n"
+    "}\n"
+  };
+  static struct {
+    GLuint program;
+    GLuint udiffuse, udelta, umvp;
+  } diffuse;
+
+  void rendermd2(const float *pos0, const float *pos1, float lerp, int n)
+  {
+    double view[16], proj[16], viewproj[16];
+    float viewprojf[16];
+    OGL(GetDoublev, GL_PROJECTION_MATRIX, proj);
+    OGL(GetDoublev, GL_MODELVIEW_MATRIX, view);
+    mul(view, proj, viewproj);
+    loopi(16) viewprojf[i] = float(viewproj[i]);
+    OGL(DisableClientState, GL_VERTEX_ARRAY);
+    OGL(DisableClientState, GL_TEXTURE_COORD_ARRAY);
+    OGL(VertexAttribPointer, TEX, 2, GL_FLOAT, 0, sizeof(float[5]), pos0);
+    OGL(VertexAttribPointer, POS0, 3, GL_FLOAT, 0, sizeof(float[5]), pos0+2);
+    OGL(VertexAttribPointer, POS1, 3, GL_FLOAT, 0, sizeof(float[5]), pos1+2);
+    OGL(EnableVertexAttribArray, POS0);
+    OGL(EnableVertexAttribArray, POS1);
+    OGL(EnableVertexAttribArray, TEX);
+    OGL(UseProgram, diffuse.program);
+    OGL(UniformMatrix4fv, diffuse.umvp, 1, GL_FALSE, viewprojf);
+    OGL(Uniform1f, diffuse.udelta, lerp);
+    OGL(DisableClientState, GL_COLOR_ARRAY);
+    OGL(DrawArrays, GL_TRIANGLES, 0, n);
+    OGL(UseProgram, 0);
+    OGL(DisableVertexAttribArray, POS0);
+    OGL(DisableVertexAttribArray, POS1);
+    OGL(DisableVertexAttribArray, TEX);
+    OGL(EnableClientState, GL_COLOR_ARRAY);
+    OGL(EnableClientState, GL_VERTEX_ARRAY);
+    OGL(EnableClientState, GL_TEXTURE_COORD_ARRAY);
   }
 
   void init(int w, int h)
@@ -134,11 +243,24 @@ namespace ogl {
     glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glmaxtexsize);
 
     purgetextures();
-    const spherevec v = sphere(1, 12, 6);
-    const size_t sz = sizeof(vvec<5>) * v.length();
-    OGL(BindBuffer, GL_ARRAY_BUFFER, spherevbo);
-    OGL(BufferData, GL_ARRAY_BUFFER, sz, &v[0][0], GL_STATIC_DRAW);
-    OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
+    buildsphere(1, 12, 6);
+    diffuse.program = loadprogram(diffusevert, diffusefrag);
+    OGL(BindAttribLocation, diffuse.program, POS0, "p0");
+    OGL(BindAttribLocation, diffuse.program, POS1, "p1");
+    OGL(BindAttribLocation, diffuse.program, TEX, "t");
+    OGL(BindFragDataLocation, diffuse.program, 0, "c");
+    OGL(LinkProgram, diffuse.program);
+    OGL(ValidateProgram, diffuse.program);
+    OGL(UseProgram, diffuse.program);
+    OGLR(diffuse.umvp, GetUniformLocation, diffuse.program, "MVP");
+    OGLR(diffuse.udelta, GetUniformLocation, diffuse.program, "delta");
+    OGLR(diffuse.udiffuse, GetUniformLocation, diffuse.program, "diffuse");
+    OGL(Uniform1i, diffuse.udiffuse, 0);
+    OGL(UseProgram, 0);
+  }
+
+  void clean(void) {
+    OGL(DeleteBuffers, 1, &spherevbo);
   }
 
   void drawsphere(void)
@@ -147,8 +269,6 @@ namespace ogl {
     drawarray(GL_TRIANGLE_STRIP, 3, 2, spherevertn, NULL);
     OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
   }
-
-  void clean(void) {}
 
   static void texturereset(void) { curtexnum = 0; }
 

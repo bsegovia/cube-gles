@@ -30,8 +30,11 @@ namespace rdr
 
   struct md2
   {
+    enum {floatn = 5}; /* s,t,x,y,z */
     int numGlCommands;
-    int* glCommands;
+    int* glcommands;
+    GLuint vbo;
+    int framesz;
     int numTriangles;
     int frameSize;
     int numFrames;
@@ -40,22 +43,22 @@ namespace rdr
     vec **mverts;
     int displaylist;
     int displaylistverts;
-
     mapmodelinfo mmi;
     char *loadname;
     int mdlnum;
     bool loaded;
-
     bool load(char* filename);
     void render(vec &light, int numFrame, int range, float x, float y, float z, float yaw, float pitch, float scale, float speed, int snap, int basetime);
     void scale(int frame, float scale, int sn);
 
     md2(void) :
-      numGlCommands(0), frameSize(0), numFrames(0), displaylist(0), loaded(false)
+      numGlCommands(0), vbo(0), framesz(0),
+      frameSize(0), numFrames(0), displaylist(0), loaded(false)
     {}
 
     ~md2(void) {
-      if (glCommands) delete [] glCommands;
+      if (vbo) OGL(DeleteBuffers, 1, &vbo);
+      if (glcommands) delete [] glcommands;
       if (frames) delete [] frames;
     }
   };
@@ -82,13 +85,13 @@ namespace rdr
     for (int i = 0; i < header.numFrames; ++i)
       endianswap(frames + i * header.frameSize, sizeof(float), 6);
 
-    glCommands = new int[header.numGlCommands];
-    if (glCommands==NULL) return false;
+    glcommands = new int[header.numGlCommands];
+    if (glcommands==NULL) return false;
 
     fseek(file, header.offsetGlCommands, SEEK_SET);
-    fread(glCommands, header.numGlCommands*sizeof(int), 1, file);
+    fread(glcommands, header.numGlCommands*sizeof(int), 1, file);
 
-    endianswap(glCommands, sizeof(int), header.numGlCommands);
+    endianswap(glcommands, sizeof(int), header.numGlCommands);
 
     numFrames    = header.numFrames;
     numGlCommands= header.numGlCommands;
@@ -98,9 +101,20 @@ namespace rdr
 
     fclose(file);
 
+    /* XXX remove that as soon as we use vbo and shaders for animation */
     mverts = new vec*[numFrames];
     loopj(numFrames) mverts[j] = NULL;
 
+    /* allocate the complete vbo for all key frames */
+    for (int *command=glcommands, i=0; (*command)!=0; ++i) {
+      const int n = abs(*command++);
+      framesz += 3*(n-2)*sizeof(float)*floatn;
+      command += 3*n; /* +1 for index, +2 for u,v */
+    }
+    OGL(GenBuffers, 1, &vbo);
+    OGL(BindBuffer, GL_ARRAY_BUFFER, vbo);
+    OGL(BufferData, GL_ARRAY_BUFFER, numFrames*framesz, NULL, GL_STATIC_DRAW);
+    OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
     return true;
   }
 
@@ -121,21 +135,46 @@ namespace rdr
       v->y = -(snap(sn, cv[1]*cf->scale[1])+cf->translate[1])/sc;
       v->z =  (snap(sn, cv[2]*cf->scale[2])+cf->translate[2])/sc;
     }
+
+    vector<vvec<floatn>> tris;
+    for (int *command = glcommands, i=0; (*command)!=0; ++i) {
+      const int moden = *command++;
+      const int n = abs(moden);
+      vector<vvec<floatn>> trisv;
+      loopi(n) {
+        const float s = *((const float*)command++);
+        const float t = *((const float*)command++);
+        const int vn = *command++;
+        const vec &v = mverts[frame][vn];
+        trisv.add(vvec<floatn>(s,t,v.x,v.z,v.y));
+      }
+      loopi(n-2) {
+        if (moden <= 0) { /* fan */
+          tris.add(trisv[0]);
+          tris.add(trisv[i+1]);
+          tris.add(trisv[i+2]);
+        } else /* strip */
+          loopk(3) tris.add(trisv[i&1 && k ? i+(1-(k-1))+1 : i+k]);
+      }
+    }
+    OGL(BufferSubData, GL_ARRAY_BUFFER, framesz*frame, framesz, &tris[0][0]);
   }
 
   void md2::render(vec &light, int frame, int range, float x, float y, float z, float yaw, float pitch, float sc, float speed, int snap, int basetime)
   {
+    OGL(BindBuffer, GL_ARRAY_BUFFER, vbo);
     loopi(range) if (!mverts[frame+i]) scale(frame+i, sc, snap);
 
     glPushMatrix ();
     glTranslatef(x, y, z);
-    glRotatef(yaw+180, 0, -1, 0);
-    glRotatef(pitch, 0, 0, 1);
+    glRotatef(yaw+180.f, 0.f, -1.f, 0.f);
+    glRotatef(pitch, 0.f, 0.f, 1.f);
 
     glColor3fv((float *)&light);
-
+#if 0
+    OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
     if (displaylist && frame==0 && range==1) {
-      glCallList(displaylist);
+      OGL(CallList,displaylist);
       xtraverts += displaylistverts;
     } else {
       if (frame==0 && range==1) {
@@ -147,14 +186,14 @@ namespace rdr
       const int time = lastmillis-basetime;
       int fr1 = (int)(time/speed);
       const float frac1 = (time-fr1*speed)/speed;
-      const float frac2 = 1-frac1;
+      const float frac2 = 1.f-frac1;
       fr1 = fr1%range+frame;
       int fr2 = fr1+1;
       if (fr2>=frame+range) fr2 = frame;
       vec *verts1 = mverts[fr1];
       vec *verts2 = mverts[fr2];
 
-      for (int *command = glCommands; (*command)!=0;) {
+      for (int *command = glcommands; (*command)!=0;) {
         int numVertex = *command++;
         if (numVertex>0)
           glBegin(GL_TRIANGLE_STRIP);
@@ -185,13 +224,46 @@ namespace rdr
         displaylistverts = xtraverts-displaylistverts;
       }
     }
+#else
+    const int n = framesz / sizeof(float[floatn]);
+    const int time = lastmillis-basetime;
+    intptr_t fr1 = (intptr_t)(time/speed);
+    const float frac = (time-fr1*speed)/speed;
+    fr1 = fr1%range+frame;
+    intptr_t fr2 = fr1+1u;
+    if (fr2>=frame+range) fr2 = frame;
+    const float *pos0 = (const float*)(fr1*framesz);
+    const float *pos1 = (const float*)(fr2*framesz);
+#if 0
+    double view[16], proj[16], viewproj[16];
+    float viewprojf[16];
+    OGL(GetDoublev, GL_PROJECTION_MATRIX, proj);
+    OGL(GetDoublev, GL_MODELVIEW_MATRIX, view);
+    mul(view, proj, viewproj);
+    loopi(16) viewprojf[i] = float(viewproj[i]);
+    glMatrixMode(GL_MODELVIEW);
+    glPushMatrix();
+    glLoadIdentity();
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    glLoadMatrixf(viewprojf);
+    ogl::drawarray(GL_TRIANGLES, 3, 2, n, (const float*)offset);
+    glPopMatrix();
+    glMatrixMode(GL_MODELVIEW);
+    glPopMatrix();
+#else
+    ogl::drawarray(GL_TRIANGLES, 3, 2, n, pos0);
+    //ogl::rendermd2(pos0, pos1, frac, n);
+#endif
+    OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
+#endif
 
     glPopMatrix();
   }
 
   static hashtable<md2*> *mdllookup = NULL;
   static vector<md2*> mapmodels;
-  const int FIRSTMDL = 20;
+  static const int FIRSTMDL = 20;
 
   void delayedload(md2 *m)
   {
