@@ -262,7 +262,7 @@ namespace rdr
   int dblend = 0;
   void damageblend(int n) { dblend += n; }
 
-  VAR(hidestats, 1, 0, 1);
+  VAR(hidestats, 0, 0, 1);
   VARP(crosshairfx, 0, 1, 1);
 
   void drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)

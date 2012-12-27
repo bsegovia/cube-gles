@@ -59,28 +59,27 @@ typedef unsigned int uint;
 #define _MAXDEFSTR 260
 typedef char string[_MAXDEFSTR];
 
-inline void strn0cpy(char *d, const char *s, size_t m) { strncpy(d,s,m); d[(m)-1] = 0; };
-inline void strcpy_s(char *d, const char *s) { strn0cpy(d,s,_MAXDEFSTR); };
-inline void strcat_s(char *d, const char *s) { size_t n = strlen(d); strn0cpy(d+n,s,_MAXDEFSTR-n); };
-
+inline void strn0cpy(char *d, const char *s, size_t m) { strncpy(d,s,m); d[(m)-1] = 0; }
+inline void strcpy_s(char *d, const char *s) { strn0cpy(d,s,_MAXDEFSTR); }
+inline void strcat_s(char *d, const char *s) { size_t n = strlen(d); strn0cpy(d+n,s,_MAXDEFSTR-n); }
 inline void formatstring(char *d, const char *fmt, va_list v)
 {
-    _vsnprintf(d, _MAXDEFSTR, fmt, v);
-    d[_MAXDEFSTR-1] = 0;
+  _vsnprintf(d, _MAXDEFSTR, fmt, v);
+  d[_MAXDEFSTR-1] = 0;
 }
 
 struct sprintf_s_f
 {
-    char *d;
-    sprintf_s_f(char *str): d(str) {};
-    void operator()(const char* fmt, ...)
-    {
-        va_list v;
-        va_start(v, fmt);
-        _vsnprintf(d, _MAXDEFSTR, fmt, v);
-        va_end(v);
-        d[_MAXDEFSTR-1] = 0;
-    };
+  char *d;
+  sprintf_s_f(char *str): d(str) {};
+  void operator()(const char* fmt, ...)
+  {
+    va_list v;
+    va_start(v, fmt);
+    _vsnprintf(d, _MAXDEFSTR, fmt, v);
+    va_end(v);
+    d[_MAXDEFSTR-1] = 0;
+  }
 };
 
 #define sprintf_s(d) sprintf_s_f((char *)d)
@@ -287,7 +286,11 @@ inline char *newstringbuf(const char *s)        { return gp()->stringbuf(s); }
 #define vreject(v,u,max) ((v).x>(u).x+(max) || (v).x<(u).x-(max) || (v).y>(u).y+(max) || (v).y<(u).y-(max))
 #define vlinterp(v,f,u,g) { (v).x = (v).x*f+(u).x*g; (v).y = (v).y*f+(u).y*g; (v).z = (v).z*f+(u).z*g; }
 
-struct vec { float x, y, z; };
+struct vec {
+  inline vec(void) {}
+  inline vec(float x, float y, float z) : x(x),y(y),z(z) {}
+  float x, y, z;
+};
 
 /* convenient variable size float vector */
 template <int n> struct vvec {

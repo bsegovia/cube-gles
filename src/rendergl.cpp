@@ -94,19 +94,18 @@ namespace ogl {
       console::out("texture must be 24bpp: %s", texname);
       return false;
     }
-    glBindTexture(GL_TEXTURE_2D, tnum);
-    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    OGL(BindTexture, GL_TEXTURE_2D, tnum);
+    OGL(PixelStorei, GL_UNPACK_ALIGNMENT, 1);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    OGL(TexEnvi, GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     xs = s->w;
     ys = s->h;
-    if (xs>glmaxtexsize || ys>glmaxtexsize)
-      fatal("texture dimensions are too large");
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, xs, ys, 0, GL_RGB, GL_UNSIGNED_BYTE, s->pixels);
-    glGenerateMipmap(GL_TEXTURE_2D);
+    if (xs>glmaxtexsize || ys>glmaxtexsize) fatal("texture dimensions are too large");
+    OGL(TexImage2D, GL_TEXTURE_2D, 0, GL_RGB, xs, ys, 0, GL_RGB, GL_UNSIGNED_BYTE, s->pixels);
+    OGL(GenerateMipmap, GL_TEXTURE_2D);
     SDL_FreeSurface(s);
     return true;
   }
@@ -117,12 +116,12 @@ namespace ogl {
     int infoLogLength;
 
     if (!shaderName) return false;
-    glGetShaderiv(shaderName, GL_COMPILE_STATUS, &result);
-    glGetShaderiv(shaderName, GL_INFO_LOG_LENGTH, &infoLogLength);
+    OGL(GetShaderiv, shaderName, GL_COMPILE_STATUS, &result);
+    OGL(GetShaderiv, shaderName, GL_INFO_LOG_LENGTH, &infoLogLength);
     if (infoLogLength) {
       char *buffer = new char[infoLogLength + 1];
       buffer[infoLogLength] = 0;
-      glGetShaderInfoLog(shaderName, infoLogLength, NULL, buffer);
+      OGL(GetShaderInfoLog, shaderName, infoLogLength, NULL, buffer);
       printf(buffer);
       delete [] buffer;
     }
@@ -133,8 +132,8 @@ namespace ogl {
   static GLuint loadshader(GLenum type, const char *source)
   {
     const GLuint name = glCreateShader(type);
-    glShaderSource(name, 1, &source, NULL);
-    glCompileShader(name);
+    OGL(ShaderSource, name, 1, &source, NULL);
+    OGL(CompileShader, name);
     if (!checkshader(name, source)) fatal("OGL: shader not valid");
     return name;
   }
@@ -155,16 +154,17 @@ namespace ogl {
   /* diffuse shader -> just display geometries with a diffuse texture */
   static const char diffusevert[] = {
     "#version 130\n"
-    "uniform mat4 MVP;\n"
+    "uniform mat4 MVP, MV;\n"
     "uniform float delta;\n"
-    "in vec3 p0;\n"
-    "in vec3 p1;\n"
+    "in vec3 p0,p1;\n"
     "in vec2 t;\n"
-    "out vec2 out_t;\n"
+    "out vec2 texcoord;\n"
+    "out float fogz;\n"
     "void main() {\n"
-    "  out_t = t;\n"
-    "  const vec3 p = delta*p1+(1.-delta)*p0;\n"
-    "  gl_Position = MVP * vec4(p.x, p.y, p.z, 1.f);\n"
+    "  texcoord = t;\n"
+    "  const vec4 p = vec4(mix(p0,p1,delta),1.0);\n"
+    "  fogz = (MV * p).z;\n"
+    "  gl_Position = MVP * p;\n"
     "}\n"
   };
   static const char diffusefrag[] = {
@@ -172,30 +172,31 @@ namespace ogl {
     "uniform sampler2D diffuse;\n"
     "uniform vec4 fogcolor;\n"
     "uniform vec2 fogstartend;\n"
-    "in vec2 out_t;\n"
+    "in vec2 texcoord;\n"
+    "in float fogz;\n"
     "out vec4 c;\n"
     "void main() {\n"
-#if 0
-    "  const float fogfactor = (fogstartend.x + gl_FragDepth) / (fogstartend.y-fogstartend.x);\n"
-    "  c = fogfactor*texture(diffuse, out_t)+(1.-fogfactor)*fogcolor;\n"
-#else
-    "  c = texture(diffuse, out_t);\n"
-#endif
+    "  const float factor = clamp((-fogz-fogstartend.x)*fogstartend.y.x,0.0,1.0)\n;"
+    "  c = mix(texture(diffuse, texcoord),fogcolor,factor);\n"
     "}\n"
   };
   static struct {
     GLuint program;
-    GLuint udiffuse, udelta, umvp;
+    GLuint udiffuse, udelta, umvp, umv, ufogstartend, ufogcolor;
   } diffuse;
+
+  static float fogcolor[4];
+  static float fogstartend[2];
 
   void rendermd2(const float *pos0, const float *pos1, float lerp, int n)
   {
     double view[16], proj[16], viewproj[16];
-    float viewprojf[16];
+    float viewprojf[16], viewf[16];
     OGL(GetDoublev, GL_PROJECTION_MATRIX, proj);
     OGL(GetDoublev, GL_MODELVIEW_MATRIX, view);
     mul(view, proj, viewproj);
     loopi(16) viewprojf[i] = float(viewproj[i]);
+    loopi(16) viewf[i] = float(view[i]);
     OGL(DisableClientState, GL_VERTEX_ARRAY);
     OGL(DisableClientState, GL_TEXTURE_COORD_ARRAY);
     OGL(VertexAttribPointer, TEX, 2, GL_FLOAT, 0, sizeof(float[5]), pos0);
@@ -205,7 +206,10 @@ namespace ogl {
     OGL(EnableVertexAttribArray, POS1);
     OGL(EnableVertexAttribArray, TEX);
     OGL(UseProgram, diffuse.program);
+    OGL(Uniform2fv, diffuse.ufogstartend, 1, fogstartend);
+    OGL(Uniform4fv, diffuse.ufogcolor, 1, fogcolor);
     OGL(UniformMatrix4fv, diffuse.umvp, 1, GL_FALSE, viewprojf);
+    OGL(UniformMatrix4fv, diffuse.umv, 1, GL_FALSE, viewf);
     OGL(Uniform1f, diffuse.udelta, lerp);
     OGL(DisableClientState, GL_COLOR_ARRAY);
     OGL(DrawArrays, GL_TRIANGLES, 0, n);
@@ -244,7 +248,7 @@ namespace ogl {
     else
       console::out("WARNING: cannot use overbright lighting");
 
-    glGetIntegerv(GL_MAX_TEXTURE_SIZE, &glmaxtexsize);
+    OGL(GetIntegerv, GL_MAX_TEXTURE_SIZE, &glmaxtexsize);
 
     purgetextures();
     buildsphere(1, 12, 6);
@@ -257,8 +261,11 @@ namespace ogl {
     OGL(ValidateProgram, diffuse.program);
     OGL(UseProgram, diffuse.program);
     OGLR(diffuse.umvp, GetUniformLocation, diffuse.program, "MVP");
+    OGLR(diffuse.umv, GetUniformLocation, diffuse.program, "MV");
     OGLR(diffuse.udelta, GetUniformLocation, diffuse.program, "delta");
     OGLR(diffuse.udiffuse, GetUniformLocation, diffuse.program, "diffuse");
+    OGLR(diffuse.ufogcolor, GetUniformLocation, diffuse.program, "fogcolor");
+    OGLR(diffuse.ufogstartend, GetUniformLocation, diffuse.program, "fogstartend");
     OGL(Uniform1i, diffuse.udiffuse, 0);
     OGL(UseProgram, 0);
   }
@@ -460,12 +467,20 @@ namespace ogl {
 
     glFogi(GL_FOG_START, (fog+64)/8);
     glFogi(GL_FOG_END, fog);
+    fogstartend[0] = float((fog+64)/8);
+    fogstartend[1] = 1.f/(float(fog)-fogstartend[0]);
+
     const float fogc[4] = {
       (fogcolour>>16)/256.0f,
       ((fogcolour>>8)&255)/256.0f,
       (fogcolour&255)/256.0f,
       1.0f
     };
+    fogcolor[0] = float(fogcolour>>16)/256.0f;
+    fogcolor[1] = float((fogcolour>>8)&255)/256.0f;
+    fogcolor[2] = float(fogcolour&255)/256.0f;
+    fogcolor[3] = 1.f;
+
     glFogfv(GL_FOG_COLOR, fogc);
     glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
 
@@ -474,6 +489,8 @@ namespace ogl {
       aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
       glFogi(GL_FOG_START, 0);
       glFogi(GL_FOG_END, (fog+96)/8);
+      fogstartend[0] = 0.f;
+      fogstartend[1] = 1.f/float((fog+96)/8);
     }
 
     glClear((player1->outsidemap ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
@@ -555,5 +572,4 @@ namespace ogl {
   }
 } /* namespace ogl */
 } /* namespace rdr */
-
 

@@ -11,7 +11,7 @@ namespace rdr
 
   VARP(maxparticles, 100, 2000, MAXPARTICLES-500);
 
-  void newparticle(const vec &o, const vec &d, int fade, int type)
+  static void newparticle(const vec &o, const vec &d, int fade, int type)
   {
     if (!parinit) {
       loopi(MAXPARTICLES) {
@@ -52,7 +52,7 @@ namespace rdr
     glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
     glDisable(GL_FOG);
 
-    const struct parttype { float r, g, b; int gr, tex; float sz; } parttypes[] =
+    static const struct parttype { float r, g, b; int gr, tex; float sz; } parttypes[] =
     {
       { 0.7f, 0.6f, 0.3f, 2,  3, 0.06f }, // yellow: sparks
       { 0.5f, 0.5f, 0.5f, 20, 7, 0.15f }, // grey:   small smoke

@@ -28,6 +28,7 @@ namespace rdr
     int lookuptex(int tex, int &xs, int &ys);
     void drawarray(int mode, size_t pos, size_t tex, size_t n, const float *data);
     void rendermd2(const float *pos0, const float *pos1, float lerp, int n);
+    void drawsphere(void);
   } /* namespace ogl */
 
   /* rendercubes */
