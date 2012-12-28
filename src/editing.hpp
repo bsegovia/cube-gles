@@ -21,3 +21,4 @@ namespace edit
 #endif /* __QBE_EDITING_HPP__ */
 
 
+

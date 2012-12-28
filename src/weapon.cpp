@@ -180,7 +180,7 @@ namespace weapon
     }
   }
 
-  inline void projdamage(dynent *o, projectile *p, vec &v, int i, int im, int qdam)
+  INLINE void projdamage(dynent *o, projectile *p, vec &v, int i, int im, int qdam)
   {
     if (o->state!=CS_ALIVE) return;
     if (intersect(o, p->o, v)) {
@@ -336,5 +336,6 @@ namespace weapon
     if (d->monsterstate) raydamage(player1, from, to, d, -1);
   }
 } /* namespace weapon */
+
 
 

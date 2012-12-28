@@ -452,8 +452,8 @@ namespace world
   // test occlusion for a cube... one of the most computationally expensive
   // functions in the engine as its done for every cube and entity, but its
   // effect is more than worth it!
-  inline float ca(float x, float y) { return x>y ? y/x : 2-x/y; };
-  inline float ma(float x, float y) { return x==0 ? (y>0 ? 2 : -2) : y/x; };
+  INLINE float ca(float x, float y) { return x>y ? y/x : 2-x/y; };
+  INLINE float ma(float x, float y) { return x==0 ? (y>0 ? 2 : -2) : y/x; };
 
   int isoccluded(float vx, float vy, float cx, float cy, float csize)
   {
@@ -1085,7 +1085,7 @@ namespace world
   // the mipmapper to generate more efficient mips.  the reason it is done on
   // save is to reduce the amount spend in the mipmapper (as that is done in
   // realtime).
-  inline bool nhf(sqr *s) { return s->type!=FHF && s->type!=CHF; }
+  INLINE bool nhf(sqr *s) { return s->type!=FHF && s->type!=CHF; }
 
   // reset vdeltas on non-hf cubes
   void voptimize(void)
@@ -1403,5 +1403,6 @@ namespace world
   COMMAND(toggleocull, ARG_NONE);
 
 } /* namespace world */
+
 
 
