@@ -151,52 +151,95 @@ namespace ogl {
     return program;
   }
 
-  /* diffuse shader -> just display geometries with a diffuse texture */
+  /* for diffuse models */
   static const char diffusevert[] = {
     "#version 130\n"
-    "uniform mat4 MVP, MV;\n"
-    "uniform float delta;\n"
-    "in vec3 p0,p1;\n"
+    "uniform mat4 MVP;\n"
+    "uniform vec3 zaxis;\n"
+    "in vec3 p,incol;\n"
     "in vec2 t;\n"
     "out vec2 texcoord;\n"
+    "out vec4 outcol;\n"
     "out float fogz;\n"
     "void main() {\n"
     "  texcoord = t;\n"
-    "  const vec4 p = vec4(mix(p0,p1,delta),1.0);\n"
-    "  fogz = (MV * p).z;\n"
-    "  gl_Position = MVP * p;\n"
+    "  fogz = dot(zaxis,p);\n"
+    "  outcol = vec4(incol,1.0);\n"
+    "  gl_Position = MVP * vec4(p,1.0);\n"
     "}\n"
   };
+  /* mix(texture, fog) * color */
   static const char diffusefrag[] = {
     "#version 130\n"
     "uniform sampler2D diffuse;\n"
     "uniform vec4 fogcolor;\n"
     "uniform vec2 fogstartend;\n"
     "in vec2 texcoord;\n"
+    "in vec4 outcol;\n"
     "in float fogz;\n"
     "out vec4 c;\n"
     "void main() {\n"
     "  const float factor = clamp((-fogz-fogstartend.x)*fogstartend.y.x,0.0,1.0)\n;"
-    "  c = mix(texture(diffuse, texcoord),fogcolor,factor);\n"
+    "  c = outcol*mix(texture(diffuse, texcoord),fogcolor,factor);\n"
     "}\n"
   };
-  static struct {
+  /* for particles */
+  static const char particlevert[] = {
+    "#version 130\n"
+    "uniform mat4 MVP;\n"
+    "in vec3 p,incol;\n"
+    "in vec2 t;\n"
+    "out vec2 texcoord;\n"
+    "out vec4 outcol;\n"
+    "void main() {\n"
+    "  texcoord = t;\n"
+    "  outcol = vec4(incol,1.0);\n"
+    "  gl_Position = MVP * vec4(p,1.0);\n"
+    "}\n"
+  };
+  /* texture * color (for particles) */
+  static const char particlefrag[] = {
+    "#version 130\n"
+    "uniform sampler2D diffuse;\n"
+    "in vec2 texcoord;\n"
+    "in vec4 outcol;\n"
+    "out vec4 c;\n"
+    "void main() {c = outcol*texture(diffuse, texcoord);}\n"
+  };
+  /* for md2 models with key frame interpolation */
+  static const char md2vert[] = {
+    "#version 130\n"
+    "uniform mat4 MVP;\n"
+    "uniform float delta;\n"
+    "uniform vec3 zaxis;\n"
+    "in vec3 p0,p1,incol;\n"
+    "in vec2 t;\n"
+    "out vec2 texcoord;\n"
+    "out vec4 outcol;\n"
+    "out float fogz;\n"
+    "void main() {\n"
+    "  texcoord = t;\n"
+    "  const vec4 p = vec4(mix(p0,p1,delta),1.0);\n"
+    "  fogz = dot(zaxis,p);\n"
+    "  outcol = vec4(incol,1.0);\n"
+    "  gl_Position = MVP * p;\n"
+    "}\n"
+  };
+  static struct diffuseshader {
     GLuint program;
-    GLuint udiffuse, udelta, umvp, umv, ufogstartend, ufogcolor;
-  } diffuse;
+    GLuint udiffuse, udelta, umvp, uzaxis, ufogstartend, ufogcolor;
+  } md2, diffuse;
 
   static float fogcolor[4];
   static float fogstartend[2];
 
   void rendermd2(const float *pos0, const float *pos1, float lerp, int n)
   {
-    double view[16], proj[16], viewproj[16];
-    float viewprojf[16], viewf[16];
-    OGL(GetDoublev, GL_PROJECTION_MATRIX, proj);
-    OGL(GetDoublev, GL_MODELVIEW_MATRIX, view);
-    mul(view, proj, viewproj);
-    loopi(16) viewprojf[i] = float(viewproj[i]);
-    loopi(16) viewf[i] = float(view[i]);
+    mat4x4f view, proj, viewproj;
+    OGL(GetFloatv, GL_PROJECTION_MATRIX, &proj.vx.x);
+    OGL(GetFloatv, GL_MODELVIEW_MATRIX, &view.vx.x);
+    viewproj = proj*view;
+    const vec3f zaxis(view.vx.z,view.vy.z,view.vz.z);
     OGL(DisableClientState, GL_VERTEX_ARRAY);
     OGL(DisableClientState, GL_TEXTURE_COORD_ARRAY);
     OGL(VertexAttribPointer, TEX, 2, GL_FLOAT, 0, sizeof(float[5]), pos0);
@@ -205,12 +248,12 @@ namespace ogl {
     OGL(EnableVertexAttribArray, POS0);
     OGL(EnableVertexAttribArray, POS1);
     OGL(EnableVertexAttribArray, TEX);
-    OGL(UseProgram, diffuse.program);
-    OGL(Uniform2fv, diffuse.ufogstartend, 1, fogstartend);
-    OGL(Uniform4fv, diffuse.ufogcolor, 1, fogcolor);
-    OGL(UniformMatrix4fv, diffuse.umvp, 1, GL_FALSE, viewprojf);
-    OGL(UniformMatrix4fv, diffuse.umv, 1, GL_FALSE, viewf);
-    OGL(Uniform1f, diffuse.udelta, lerp);
+    OGL(UseProgram, md2.program);
+    OGL(Uniform2fv, md2.ufogstartend, 1, fogstartend);
+    OGL(Uniform4fv, md2.ufogcolor, 1, fogcolor);
+    OGL(UniformMatrix4fv, md2.umvp, 1, GL_FALSE, &viewproj.vx.x);
+    OGL(Uniform3fv, md2.uzaxis, 1, &zaxis.x);
+    OGL(Uniform1f, md2.udelta, lerp);
     OGL(DisableClientState, GL_COLOR_ARRAY);
     OGL(DrawArrays, GL_TRIANGLES, 0, n);
     OGL(UseProgram, 0);
@@ -220,6 +263,34 @@ namespace ogl {
     OGL(EnableClientState, GL_COLOR_ARRAY);
     OGL(EnableClientState, GL_VERTEX_ARRAY);
     OGL(EnableClientState, GL_TEXTURE_COORD_ARRAY);
+  }
+
+  static void buildshader(diffuseshader &shader, bool keyframe, bool fog)
+  {
+    if (keyframe) {
+      OGL(BindAttribLocation, md2.program, POS0, "p0");
+      OGL(BindAttribLocation, md2.program, POS1, "p1");
+    } else
+      OGL(BindAttribLocation, md2.program, POS0, "p");
+    OGL(BindAttribLocation, shader.program, TEX, "t");
+    OGL(BindAttribLocation, shader.program, COL, "incol");
+    OGL(BindFragDataLocation, shader.program, 0, "c");
+    OGL(LinkProgram, shader.program);
+    OGL(ValidateProgram, shader.program);
+    OGL(UseProgram, shader.program);
+    OGLR(shader.umvp, GetUniformLocation, shader.program, "MVP");
+    if (keyframe)
+      OGLR(shader.udelta, GetUniformLocation, shader.program, "delta");
+    else
+      shader.udelta = 0;
+    OGLR(shader.udiffuse, GetUniformLocation, shader.program, "diffuse");
+    if (fog) {
+      OGLR(shader.uzaxis, GetUniformLocation, shader.program, "zaxis");
+      OGLR(shader.ufogcolor, GetUniformLocation, shader.program, "fogcolor");
+      OGLR(shader.ufogstartend, GetUniformLocation, shader.program, "fogstartend");
+    }
+    OGL(Uniform1i, shader.udiffuse, 0);
+    OGL(UseProgram, 0);
   }
 
   void init(int w, int h)
@@ -252,22 +323,11 @@ namespace ogl {
 
     purgetextures();
     buildsphere(1, 12, 6);
+    md2.program = loadprogram(md2vert, diffusefrag);
+    buildshader(md2, true, true);
+
     diffuse.program = loadprogram(diffusevert, diffusefrag);
-    OGL(BindAttribLocation, diffuse.program, POS0, "p0");
-    OGL(BindAttribLocation, diffuse.program, POS1, "p1");
-    OGL(BindAttribLocation, diffuse.program, TEX, "t");
-    OGL(BindFragDataLocation, diffuse.program, 0, "c");
-    OGL(LinkProgram, diffuse.program);
-    OGL(ValidateProgram, diffuse.program);
-    OGL(UseProgram, diffuse.program);
-    OGLR(diffuse.umvp, GetUniformLocation, diffuse.program, "MVP");
-    OGLR(diffuse.umv, GetUniformLocation, diffuse.program, "MV");
-    OGLR(diffuse.udelta, GetUniformLocation, diffuse.program, "delta");
-    OGLR(diffuse.udiffuse, GetUniformLocation, diffuse.program, "diffuse");
-    OGLR(diffuse.ufogcolor, GetUniformLocation, diffuse.program, "fogcolor");
-    OGLR(diffuse.ufogstartend, GetUniformLocation, diffuse.program, "fogstartend");
-    OGL(Uniform1i, diffuse.udiffuse, 0);
-    OGL(UseProgram, 0);
+    buildshader(diffuse, false, true);
   }
 
   void clean(void) {

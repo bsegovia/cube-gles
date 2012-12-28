@@ -299,14 +299,15 @@ namespace monster
 
   void monsterthink()
   {
-    if (m_dmsp && spawnremain && lastmillis>nextmonster)
-    {
-      if (spawnremain--==monstertotal) console::out("The invasion has begun!");
+    if (m_dmsp && spawnremain && lastmillis>nextmonster) {
+      if (spawnremain--==monstertotal)
+        console::out("The invasion has begun!");
       nextmonster = lastmillis+1000;
       spawnmonster();
-    };
+    }
 
-    if (monstertotal && !spawnremain && numkilled==monstertotal) endsp(true);
+    if (monstertotal && !spawnremain && numkilled==monstertotal)
+      endsp(true);
 
     loopv(ents)             // equivalent of player entity touch, but only teleports are used
     {
@@ -314,25 +315,22 @@ namespace monster
       if (e.type!=TELEPORT) continue;
       if (OUTBORD(e.x, e.y)) continue;
       vec v = { float(e.x), float(e.y), float(S(e.x, e.y)->floor) };
-      loopv(monsters) if (monsters[i]->state==CS_DEAD)
-      {
-        if (lastmillis-monsters[i]->lastaction<2000)
-        {
+      loopv(monsters) if (monsters[i]->state==CS_DEAD) {
+        if (lastmillis-monsters[i]->lastaction<2000) {
           monsters[i]->move = 0;
           physics::moveplayer(monsters[i], 1, false);
-        };
-      }
-      else
-      {
+        }
+      } else {
         v.z += monsters[i]->eyeheight;
         vdist(dist, t, monsters[i]->o, v);
         v.z -= monsters[i]->eyeheight;
         if (dist<4) entities::teleport((int)(&e-&ents[0]), monsters[i]);
-      };
-    };
+      }
+    }
 
-    loopv(monsters) if (monsters[i]->state==CS_ALIVE) monsteraction(monsters[i]);
-  };
+    loopv(monsters) if (monsters[i]->state==CS_ALIVE)
+      monsteraction(monsters[i]);
+  }
 
   void monsterrender()
   {

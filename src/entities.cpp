@@ -6,43 +6,35 @@ vector<entity> ents;
 
 namespace entities
 {
-
   const char *entmdlnames[] =
   {
     "shells", "bullets", "rockets", "rrounds", "health", "boost",
     "g_armour", "y_armour", "quad",	"teleporter",
   };
 
-  int triggertime = 0;
+  static int triggertime = 0;
 
   void renderent(entity &e, const char *mdlname, float z, float yaw, int frame = 0, int numf = 1, int basetime = 0, float speed = 10.0f)
   {
     rdr::rendermodel(mdlname, frame, numf, 0, 1.1f, e.x, z+S(e.x, e.y)->floor, e.y, yaw, 0, false, 1.0f, speed, 0, basetime);
-  };
+  }
 
   void renderentities()
   {
     if (lastmillis>triggertime+1000) triggertime = 0;
-    loopv(ents)
-    {
+    loopv(ents) {
       entity &e = ents[i];
-      if (e.type==MAPMODEL)
-      {
+      if (e.type==MAPMODEL) {
         mapmodelinfo &mmi = rdr::getmminfo(e.attr2);
         if (!&mmi) continue;
         rdr::rendermodel(mmi.name, 0, 1, e.attr4, (float)mmi.rad, e.x, (float)S(e.x, e.y)->floor+mmi.zoff+e.attr3, e.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f, mmi.snap);
-      }
-      else
-      {
+      } else {
         if (OUTBORD(e.x, e.y)) continue;
-        if (e.type!=CARROT)
-        {
+        if (e.type!=CARROT) {
           if (!e.spawned && e.type!=TELEPORT) continue;
           if (e.type<I_SHELLS || e.type>TELEPORT) continue;
           renderent(e, entmdlnames[e.type-I_SHELLS], (float)(1+sin(lastmillis/100.0+e.x+e.y)/20), lastmillis/10.0f);
-        }
-        else switch (e.attr2)
-        {
+        } else switch (e.attr2) {
           case 1:
           case 3:
             continue;
@@ -55,9 +47,9 @@ namespace entities
 
           case 4: renderent(e, "switch2", 3,      (float)e.attr3*90, (!e.spawned && !triggertime) ? 1  : 0, (e.spawned || !triggertime) ? 1 : 2,  triggertime, 1050.0f);  break;
           case 5: renderent(e, "switch1", -0.15f, (float)e.attr3*90, (!e.spawned && !triggertime) ? 30 : 0, (e.spawned || !triggertime) ? 1 : 30, triggertime, 35.0f); break;
-        };
-      };
-    };
+        }
+      }
+    }
   };
 
   static const struct itemstat { int add, max, sound; } itemstats[] = {
@@ -88,8 +80,7 @@ namespace entities
 
   void realpickup(int n, dynent *d)
   {
-    switch (ents[n].type)
-    {
+    switch (ents[n].type) {
       case I_SHELLS:  radditem(n, d->ammo[1]); break;
       case I_BULLETS: radditem(n, d->ammo[2]); break;
       case I_ROCKETS: radditem(n, d->ammo[3]); break;
@@ -108,8 +99,8 @@ namespace entities
         radditem(n, d->quadmillis);
         console::out("you got the quad!");
       break;
-    };
-  };
+    }
+  }
 
   // these functions are called when the client touches the item
 
@@ -119,19 +110,17 @@ namespace entities
     {
       client::addmsg(1, 3, SV_ITEMPICKUP, i, m_classicsp ? 100000 : spawnsec);    // first ask the server for an ack
       ents[i].spawned = false;                                            // even if someone else gets it first
-    };
-  };
+    }
+  }
 
   void teleport(int n, dynent *d)     // also used by monsters
   {
     int e = -1, tag = ents[n].attr1, beenhere = -1;
-    for (;;)
-    {
+    for (;;) {
       e = world::findentity(TELEDEST, e+1);
       if (e==beenhere || e<0) { console::out("no teleport destination for tag %d", tag); return; };
       if (beenhere<0) beenhere = e;
-      if (ents[e].attr2==tag)
-      {
+      if (ents[e].attr2==tag) {
         d->o.x = ents[e].x;
         d->o.y = ents[e].y;
         d->o.z = ents[e].z;
@@ -141,9 +130,9 @@ namespace entities
         game::entinmap(d);
         sound::playc(S_TELEPORT);
         break;
-      };
-    };
-  };
+      }
+    }
+  }
 
   void pickup(int n, dynent *d)
   {

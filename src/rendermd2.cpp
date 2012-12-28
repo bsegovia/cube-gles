@@ -158,7 +158,7 @@ namespace rdr
     OGL(BindBuffer, GL_ARRAY_BUFFER, vbo);
     loopi(range) if (!builtframes[frame+i]) scale(frame+i, sc, snap);
 
-    glColor3fv(&light.x);
+    glVertexAttrib3fv(ogl::COL, &light.x);
     glPushMatrix();
     glTranslatef(x, y, z);
     glRotatef(yaw+180.f, 0.f, -1.f, 0.f);
@@ -173,8 +173,7 @@ namespace rdr
     if (fr2>=frame+range) fr2 = frame;
     const float *pos0 = (const float*)(fr1*framesz);
     const float *pos1 = (const float*)(fr2*framesz);
-    /* ogl::drawarray(GL_TRIANGLES, 3, 2, n, pos0); */
-    ogl::rendermd2(pos0, pos1, frac, n); /* XXX handle light! */
+    ogl::rendermd2(pos0, pos1, frac, n);
     OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
     xtraverts += n;
 

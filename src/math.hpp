@@ -465,19 +465,19 @@ template<typename T> struct mat4x4
     inv /= det;
     return inv;
   }
-  INLINE v4& op[] (int i) {return this->c[i];}
-  INLINE const v4& op[] (int i) const {return this->c[i];}
+  INLINE v4& op[] (int i) {return (&vx)[i];}
+  INLINE const v4& op[] (int i) const {return (&vx)[i];}
 };
 
 TINLINE m44 op- (m44arg a) {return m44(-a.vx,-a.vy,-a.vz,-a.vw);}
 TINLINE m44 op+ (m44arg a) {return m44(+a.vx,+a.vy,+a.vz,+a.vw);}
-TINLINE m44 op+ (m44arg m, T s)  {return m44(m.vx+s, m.vy+s, m.vz+s, m.vw+s);}
-TINLINE m44 op- (m44arg  m, T s) {return m44(m.vx-s, m.vy-s, m.vz-s, m.vw-s);}
-TINLINE m44 op* (m44arg  m, T s) {return m44(m.vx*s, m.vy*s, m.vz*s, m.vw*s);}
-TINLINE m44 op/ (m44arg  m, T s) {return m44(m.vx/s, m.vy/s, m.vz/s, m.vw/s);}
-TINLINE m44 op+ (T s, m44arg  m) {return m44(m.vx+s, m.vy+s, m.vz+s, m.vw+s);}
-TINLINE m44 op- (T s, m44arg  m) {return m44(m.vx-s, m.vy-s, m.vz-s, m.vw-s);}
-TINLINE m44 op* (T s, m44arg  m) {return m44(m.vx*s, m.vy*s, m.vz*s, m.vw*s);}
+TINLINE m44 op+ (m44arg m, T s) {return m44(m.vx+s, m.vy+s, m.vz+s, m.vw+s);}
+TINLINE m44 op- (m44arg m, T s) {return m44(m.vx-s, m.vy-s, m.vz-s, m.vw-s);}
+TINLINE m44 op* (m44arg m, T s) {return m44(m.vx*s, m.vy*s, m.vz*s, m.vw*s);}
+TINLINE m44 op/ (m44arg m, T s) {return m44(m.vx/s, m.vy/s, m.vz/s, m.vw/s);}
+TINLINE m44 op+ (T s, m44arg m) {return m44(m.vx+s, m.vy+s, m.vz+s, m.vw+s);}
+TINLINE m44 op- (T s, m44arg m) {return m44(m.vx-s, m.vy-s, m.vz-s, m.vw-s);}
+TINLINE m44 op* (T s, m44arg m) {return m44(m.vx*s, m.vy*s, m.vz*s, m.vw*s);}
 TINLINE m44 op+ (m44arg m, m44arg n) {return m44(m.vx+n.vx, m.vy+n.vy, m.vz+n.vz, m.vw+n.vw);}
 TINLINE m44 op- (m44arg m, m44arg n) {return m44(m.vx-n.vx, m.vy-n.vy, m.vz-n.vz, m.vw-n.vw);}
 TINLINE v4  op* (m44arg m, v4arg v) {
@@ -559,6 +559,21 @@ TINLINE m44 rotate(m44arg m, T angle, v3arg v) {
   dst[3] = m.vw;
   return dst;
 }
+
+/* convenient variable size float vector */
+template <int n> struct vvec
+{
+  template <typename... T> INLINE vvec(T... args) { this->set(0,args...); }
+  template <typename First, typename... Rest>
+  INLINE void set(int index, First first, Rest... rest) {
+    this->v[index] = first;
+    set(index+1,rest...);
+  }
+  INLINE void set(int index) {}
+  float &operator[] (int index) { return v[index]; }
+  const float &operator[] (int index) const { return v[index]; }
+  float v[n];
+};
 
 /* commonly used types */
 typedef mat3x3<float> mat3x3f;

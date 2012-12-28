@@ -6,19 +6,15 @@ extern int xtraverts;
 
 namespace rdr
 {
-  /* virtual screen width for text & HUD */
-  static const int VIRTW = 2400;
-  /* virtual screen height for text & HUD */
-  static const int VIRTH = 1800;
-  /* font height */
-  static const int FONTH = 64;
-  /* tabulation size in pixels */
-  static const int PIXELTAB = VIRTW / 12;
+  static const int VIRTW = 2400; /* screen width for text & HUD */
+  static const int VIRTH = 1800; /* screen height for text & HUD */
+  static const int FONTH = 64; /* font height */
+  static const int PIXELTAB = VIRTW / 12; /* tabulation size in pixels */
 
   /* rendergl */
   namespace ogl
   {
-    enum {POS0=0,POS1=1,TEX=2,NOR=3}; /* attributes */
+    enum {POS0=0,POS1=1,TEX=2,NOR=3,COL=4}; /* attributes */
     void init(int w, int h);
     void clean(void);
     void drawframe(int w, int h, float curfps);

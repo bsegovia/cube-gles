@@ -40,6 +40,20 @@ namespace rdr
 
   void setorient(vec &r, vec &u) { right = r; up = u; }
 
+  static const struct parttype { float r, g, b; int gr, tex; float sz; } parttypes[] =
+  {
+    { 0.7f, 0.6f, 0.3f, 2,  3, 0.06f }, // yellow: sparks
+    { 0.5f, 0.5f, 0.5f, 20, 7, 0.15f }, // grey:   small smoke
+    { 0.2f, 0.2f, 1.0f, 20, 3, 0.08f }, // blue:   edit mode entities
+    { 1.0f, 0.1f, 0.1f, 1,  7, 0.06f }, // red:    blood spats
+    { 1.0f, 0.8f, 0.8f, 20, 6, 1.2f  }, // yellow: fireball1
+    { 0.5f, 0.5f, 0.5f, 20, 7, 0.6f  }, // grey:   big smoke
+    { 1.0f, 1.0f, 1.0f, 20, 8, 1.2f  }, // blue:   fireball2
+    { 1.0f, 1.0f, 1.0f, 20, 9, 1.2f  }, // green:  fireball3
+    { 1.0f, 0.1f, 0.1f, 0,  7, 0.2f  }, // red:    demotrack
+  };
+
+
   void render_particles(int time)
   {
     if (demoplayback && demotracking) {
@@ -51,19 +65,6 @@ namespace rdr
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
     glDisable(GL_FOG);
-
-    static const struct parttype { float r, g, b; int gr, tex; float sz; } parttypes[] =
-    {
-      { 0.7f, 0.6f, 0.3f, 2,  3, 0.06f }, // yellow: sparks
-      { 0.5f, 0.5f, 0.5f, 20, 7, 0.15f }, // grey:   small smoke
-      { 0.2f, 0.2f, 1.0f, 20, 3, 0.08f }, // blue:   edit mode entities
-      { 1.0f, 0.1f, 0.1f, 1,  7, 0.06f }, // red:    blood spats
-      { 1.0f, 0.8f, 0.8f, 20, 6, 1.2f  }, // yellow: fireball1
-      { 0.5f, 0.5f, 0.5f, 20, 7, 0.6f  }, // grey:   big smoke
-      { 1.0f, 1.0f, 1.0f, 20, 8, 1.2f  }, // blue:   fireball2
-      { 1.0f, 1.0f, 1.0f, 20, 9, 1.2f  }, // green:  fireball3
-      { 1.0f, 0.1f, 0.1f, 0,  7, 0.2f  }, // red:    demotrack
-    };
 
     int numrender = 0;
 

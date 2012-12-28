@@ -35,7 +35,7 @@ namespace rdr
 
 #define vert(v1, v2, v3, ls, t1, t2) { vertf((float)(v1), (float)(v2), (float)(v3), ls, t1, t2); }
 
-  const float TEXTURESCALE = 32.0f;
+  static const float TEXTURESCALE = 32.0f;
   static int nquads;
   static bool floorstrip = false, deltastrip = false;
   static int oh, oy, ox, ogltex; /* the o* vars are used by the stripification */
@@ -69,15 +69,14 @@ namespace rdr
     if (showm) { l3 = l1 = &sbright; l4 = l2 = &sdark; }
 
     int sx, sy;
-    int gltex = ogl::lookuptex(wtex, sx, sy);
-    float xf = TEXTURESCALE/sx;
-    float yf = TEXTURESCALE/sy;
-    float xs = size*xf;
-    float ys = size*yf;
-    float xo = xf*x;
-    float yo = yf*y;
-
-    bool first = !floorstrip || y!=oy+size || ogltex!=gltex || h!=oh || x!=ox;
+    const int gltex = ogl::lookuptex(wtex, sx, sy);
+    const float xf = TEXTURESCALE/sx;
+    const float yf = TEXTURESCALE/sy;
+    const float xs = size*xf;
+    const float ys = size*yf;
+    const float xo = xf*x;
+    const float yo = yf*y;
+    const bool first = !floorstrip || y!=oy+size || ogltex!=gltex || h!=oh || x!=ox;
 
     if (first) { /* start strip here */
       stripend();
@@ -137,15 +136,14 @@ namespace rdr
     if (showm) { l3 = l1 = &sbright; l4 = l2 = &sdark; }
 
     int sx, sy;
-    int gltex = ogl::lookuptex(wtex, sx, sy);
-    float xf = TEXTURESCALE/sx;
-    float yf = TEXTURESCALE/sy;
-    float xs = size*xf;
-    float ys = size*yf;
-    float xo = xf*x;
-    float yo = yf*y;
-
-    bool first = !deltastrip || y!=oy+size || ogltex!=gltex || x!=ox;
+    const int gltex = ogl::lookuptex(wtex, sx, sy);
+    const float xf = TEXTURESCALE/sx;
+    const float yf = TEXTURESCALE/sy;
+    const float xs = size*xf;
+    const float ys = size*yf;
+    const float xo = xf*x;
+    const float yo = yf*y;
+    const bool first = !deltastrip || y!=oy+size || ogltex!=gltex || x!=ox;
 
     if (first)
     {
@@ -226,11 +224,11 @@ namespace rdr
     if (showm) { l1 = &sbright; l2 = &sdark; }
 
     int sx, sy;
-    int gltex = ogl::lookuptex(wtex, sx, sy);
-    float xf = TEXTURESCALE/sx;
-    float yf = TEXTURESCALE/sy;
-    float xs = size*xf;
-    float xo = xf*(x1==x2 ? min(y1,y2) : min(x1,x2));
+    const int gltex = ogl::lookuptex(wtex, sx, sy);
+    const float xf = TEXTURESCALE/sx;
+    const float yf = TEXTURESCALE/sy;
+    const float xs = size*xf;
+    const float xo = xf*(x1==x2 ? min(y1,y2) : min(x1,x2));
 
     if (!flip) {
       vertf((float)x2, ceil2,  (float)y2, l2, xo+xs, -yf*ceil2);
@@ -253,14 +251,14 @@ namespace rdr
   VAR(watersubdiv, 1, 4, 64);
   VARF(waterlevel, -128, -128, 127, if (!edit::noteditmode()) hdr.waterlevel = waterlevel);
 
-  inline void vertw(int v1, float v2, int v3, sqr *c, float t1, float t2, float t)
+  INLINE void vertw(int v1, float v2, int v3, sqr *c, float t1, float t2, float t)
   {
-      vertcheck();
-      vertf((float)v1, v2-(float)sin(v1*v3*0.1+t)*0.2f, (float)v3, c, t1, t2);
+    vertcheck();
+    vertf((float)v1, v2-(float)sin(v1*v3*0.1+t)*0.2f, (float)v3, c, t1, t2);
   }
 
-  inline float dx(float x) { return x+(float)sin(x*2+lastmillis/1000.0f)*0.04f; }
-  inline float dy(float x) { return x+(float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f; }
+  INLINE float dx(float x) { return x+(float)sin(x*2+lastmillis/1000.0f)*0.04f; }
+  INLINE float dy(float x) { return x+(float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f; }
 
   /* renders water for bounding rect area that contains water... simple but very
    * inefficient

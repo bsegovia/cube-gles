@@ -13,8 +13,7 @@ void cleanup(char *msg)         // single program exit point;
   sound::clean();
   server::cleanup();
   SDL_ShowCursor(1);
-  if (msg)
-  {
+  if (msg) {
 #ifdef WIN32
     MessageBox(NULL, msg, "cube fatal error", MB_OK|MB_SYSTEMMODAL);
 #else
@@ -23,26 +22,26 @@ void cleanup(char *msg)         // single program exit point;
   };
   SDL_Quit();
   exit(1);
-};
+}
 
 void quit() // normal exit
 {
   browser::writeservercfg();
   cleanup(NULL);
-};
+}
 
 void fatal(const char *s, const char *o)    // failure exit
 {
   sprintf_sd(msg)("%s%s (%s)\n", s, o, SDL_GetError());
   cleanup(msg);
-};
+}
 
 void *alloc(int s) // for some big chunks... most other allocs use the memory pool
 {
   void *b = calloc(1,s);
   if (!b) fatal("out of memory!");
   return b;
-};
+}
 
 int scr_w = 1920;
 int scr_h = 1080;
@@ -52,33 +51,29 @@ void screenshot()
   SDL_Surface *image;
   SDL_Surface *temp;
   int idx;
-  if ((image = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)) != NULL)
-  {
-    if ((temp = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)) != NULL)
-    {
+  if ((image = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)) != NULL) {
+    if ((temp = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)) != NULL) {
       glReadPixels(0, 0, scr_w, scr_h, GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
-      for (idx = 0; idx<scr_h; idx++)
-      {
+      for (idx = 0; idx<scr_h; idx++) {
         char *dest = (char *)temp->pixels+3*scr_w*idx;
         memcpy(dest, (char *)image->pixels+3*scr_w*(scr_h-1-idx), 3*scr_w);
         endianswap(dest, 3, scr_w);
-      };
+      }
       sprintf_sd(buf)("screenshots/screenshot_%d.bmp", lastmillis);
       SDL_SaveBMP(temp, path(buf));
       SDL_FreeSurface(temp);
-    };
+    }
     SDL_FreeSurface(image);
-  };
-};
+  }
+}
 
 COMMAND(screenshot, ARG_NONE);
 COMMAND(quit, ARG_NONE);
 
 void keyrepeat(bool on)
 {
-  SDL_EnableKeyRepeat(on ? SDL_DEFAULT_REPEAT_DELAY : 0,
-      SDL_DEFAULT_REPEAT_INTERVAL);
-};
+  SDL_EnableKeyRepeat(on ? SDL_DEFAULT_REPEAT_DELAY : 0, SDL_DEFAULT_REPEAT_INTERVAL);
+}
 
 VARF(gamespeed, 10, 100, 1000, if (client::multiplayer()) gamespeed = 100);
 VARP(minmillis, 0, 5, 1000);
@@ -88,7 +83,7 @@ int islittleendian = 1;
 int framesinmap = 0;
 
 int main(int argc, char **argv)
-{    
+{
   bool dedicated = false;
   int fs = SDL_FULLSCREEN, par = 0, uprate = 0, maxcl = 4;
   const char *sdesc = "", *ip = "", *passwd = "";
@@ -98,11 +93,9 @@ int main(int argc, char **argv)
 #define log(s) console::out("init: %s", s)
   log("sdl");
 
-  for (int i = 1; i<argc; i++)
-  {
+  for (int i = 1; i<argc; i++) {
     const char *a = &argv[i][2];
-    if (argv[i][0]=='-') switch (argv[i][1])
-    {
+    if (argv[i][0]=='-') switch (argv[i][1]) {
       case 'd': dedicated = true; break;
       case 't': fs     = 0; break;
       case 'w': scr_w  = atoi(a); break;
@@ -114,9 +107,9 @@ int main(int argc, char **argv)
       case 'p': passwd = a; break;
       case 'c': maxcl  = atoi(a); break;
       default:  console::out("unknown commandline option");
-    }
-    else console::out("unknown commandline argument");
-  };
+    } else
+      console::out("unknown commandline argument");
+  }
 
 #ifdef _DEBUG
   par = SDL_INIT_NOPARACHUTE;

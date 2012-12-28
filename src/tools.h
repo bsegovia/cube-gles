@@ -201,67 +201,52 @@ template <class T> struct vector : noncopyable
   int ulen;
   pool *p;
 
-  vector(void)
-  {
+  INLINE vector(void) {
     this->p = gp();
     alen = 8;
     buf = (T *)p->alloc(alen*sizeof(T));
     ulen = 0;
   }
-
-  vector(vector &&other) {
+  INLINE vector(vector &&other) {
     this->buf = other.buf;
     this->alen = other.alen;
     this->ulen = other.ulen;
     this->p = other.p;
   }
-
   ~vector(void) { setsize(0); p->dealloc(buf, alen*sizeof(T)); }
 
-  T &add(const T &x)
-  {
+  INLINE T &add(const T &x) {
     if(ulen==alen) realloc();
     new (&buf[ulen]) T(x);
     return buf[ulen++];
   }
-
-  T &add(void)
-  {
+  INLINE T &add(void) {
     if(ulen==alen) realloc();
     new (&buf[ulen]) T;
     return buf[ulen++];
   }
-
-  T &pop(void) { return buf[--ulen]; }
-  T &last(void) { return buf[ulen-1]; }
-  bool empty(void) { return ulen==0; }
-
-  int length(void) const { return ulen; }
-  const T &operator[](int i) const { assert(i>=0 && i<ulen); return buf[i]; }
-  T &operator[](int i) { assert(i>=0 && i<ulen); return buf[i]; }
+  INLINE T &pop(void) { return buf[--ulen]; }
+  INLINE T &last(void) { return buf[ulen-1]; }
+  INLINE bool empty(void) { return ulen==0; }
+  INLINE int length(void) const { return ulen; }
+  INLINE const T &operator[](int i) const { assert(i>=0 && i<ulen); return buf[i]; }
+  INLINE T &operator[](int i) { assert(i>=0 && i<ulen); return buf[i]; }
+  INLINE T *getbuf(void) { return buf; }
   void setsize(int i) { for(; ulen>i; ulen--) buf[ulen-1].~T(); }
-  T *getbuf(void) { return buf; }
-
   void sort(void *cf) {
     qsort(buf, ulen, sizeof(T), (int (__cdecl *)(const void *,const void *))cf);
   }
-
-  void realloc(void)
-  {
+  void realloc(void) {
     const int olen = alen;
     buf = (T *)p->realloc(buf, olen*sizeof(T), (alen *= 2)*sizeof(T));
   }
-
-  T remove(int i)
-  {
+  T remove(int i) {
     T e = buf[i];
     for(int p = i+1; p<ulen; p++) buf[p-1] = buf[p];
     ulen--;
     return e;
   }
-
-  T &insert(int i, const T &e)
-  {
+  T &insert(int i, const T &e) {
     add(T());
     for(int p = ulen-1; p>i; p--) buf[p] = buf[p-1];
     buf[i] = e;
@@ -343,22 +328,6 @@ struct vec {
   INLINE vec(float x, float y, float z) : x(x),y(y),z(z) {}
   float x, y, z;
 };
-
-/* convenient variable size float vector */
-template <int n> struct vvec {
-  template <typename... T> INLINE vvec(T... args) { this->set(0,args...); }
-  template <typename First, typename... Rest>
-  INLINE void set(int index, First first, Rest... rest) {
-    this->v[index] = first;
-    set(index+1,rest...);
-  }
-  INLINE void set(int index) {}
-  float &operator[] (int index) { return v[index]; }
-  const float &operator[] (int index) const { return v[index]; }
-  float v[n];
-};
-//#define max(a,b) (((a) > (b)) ? (a) : (b))
-//#define min(a,b) (((a) < (b)) ? (a) : (b))
 
 /* simplistic matrix ops */
 void perspective(double m[16], double fovy, double aspect, double zNear, double zFar);
