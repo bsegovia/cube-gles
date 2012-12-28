@@ -3,6 +3,32 @@
 #ifndef __CUBE_TOOLS_HPP__
 #define __CUBE_TOOLS_HPP__
 
+/* Visual C compiler */
+#ifdef _MSC_VER
+#define __MSVC__
+#endif
+
+#ifdef __MSVC__
+#undef NOINLINE
+#define NOINLINE        __declspec(noinline)
+#define INLINE          __forceinline
+#define RESTRICT        __restrict
+#define THREAD          __declspec(thread)
+#define ALIGNED(...)    __declspec(align(__VA_ARGS__))
+//#define __FUNCTION__  __FUNCTION__
+#define DEBUGBREAK()    __debugbreak()
+#else
+#undef NOINLINE
+#undef INLINE
+#define NOINLINE        __attribute__((noinline))
+#define INLINE          inline __attribute__((always_inline))
+#define RESTRICT        __restrict
+#define THREAD          __thread
+#define ALIGNED(...)    __attribute__((aligned(__VA_ARGS__)))
+#define __FUNCTION__    __PRETTY_FUNCTION__
+#define DEBUGBREAK()    asm ("int $3")
+#endif
+
 #ifdef __GNUC__
 #define gamma __gamma
 #endif
@@ -34,8 +60,14 @@ typedef unsigned char uchar;
 typedef unsigned short ushort;
 typedef unsigned int uint;
 
-#define max(a,b) (((a) > (b)) ? (a) : (b))
-#define min(a,b) (((a) < (b)) ? (a) : (b))
+#if defined(WIN32)
+  #undef min
+  #undef max
+#if defined(__MSVC__)
+  INLINE bool finite (float x) {return _finite(x) != 0;}
+#endif
+#endif
+
 #define rnd(max) (rand()%(max))
 #define rndreset() (srand(1))
 #define rndtime() { loopi(lastmillis&0xF) rnd(i+1); }
@@ -44,6 +76,27 @@ typedef unsigned int uint;
 #define loopj(m) loop(j,m)
 #define loopk(m) loop(k,m)
 #define loopl(m) loop(l,m)
+
+/* integer types */
+#if defined(__MSVC__)
+typedef          __int64  int64;
+typedef unsigned __int64 uint64;
+typedef          __int32  int32;
+typedef unsigned __int32 uint32;
+typedef          __int16  int16;
+typedef unsigned __int16 uint16;
+typedef          __int8    int8;
+typedef unsigned __int8   uint8;
+#else
+typedef          long long  int64;
+typedef unsigned long long uint64;
+typedef                int  int32;
+typedef unsigned       int uint32;
+typedef              short  int16;
+typedef unsigned     short uint16;
+typedef               char   int8;
+typedef unsigned      char  uint8;
+#endif
 
 #ifdef WIN32
 #pragma warning( 3 : 4189 )
@@ -54,15 +107,14 @@ typedef unsigned int uint;
 #define PATHDIV '/'
 #endif
 
-// easy safe strings
-
+/* easy safe strings */
 #define _MAXDEFSTR 260
 typedef char string[_MAXDEFSTR];
 
-inline void strn0cpy(char *d, const char *s, size_t m) { strncpy(d,s,m); d[(m)-1] = 0; }
-inline void strcpy_s(char *d, const char *s) { strn0cpy(d,s,_MAXDEFSTR); }
-inline void strcat_s(char *d, const char *s) { size_t n = strlen(d); strn0cpy(d+n,s,_MAXDEFSTR-n); }
-inline void formatstring(char *d, const char *fmt, va_list v)
+INLINE void strn0cpy(char *d, const char *s, size_t m) { strncpy(d,s,m); d[(m)-1] = 0; }
+INLINE void strcpy_s(char *d, const char *s) { strn0cpy(d,s,_MAXDEFSTR); }
+INLINE void strcat_s(char *d, const char *s) { size_t n = strlen(d); strn0cpy(d+n,s,_MAXDEFSTR-n); }
+INLINE void formatstring(char *d, const char *fmt, va_list v)
 {
   _vsnprintf(d, _MAXDEFSTR, fmt, v);
   d[_MAXDEFSTR-1] = 0;
@@ -100,11 +152,11 @@ extern void endianswap(void *, int, int);
 class noncopyable
 {
   protected:
-    inline noncopyable(void) {}
-    inline ~noncopyable(void) {}
+    INLINE noncopyable(void) {}
+    INLINE ~noncopyable(void) {}
   private:
-    inline noncopyable(const noncopyable&) {}
-    inline noncopyable& operator= (const noncopyable&) {return *this;}
+    INLINE noncopyable(const noncopyable&) {}
+    INLINE noncopyable& operator= (const noncopyable&) {return *this;}
 };
 
 /* memory pool that uses buckets and linear allocation for small objects
@@ -116,7 +168,7 @@ struct pool
   enum { PTRSIZE = sizeof(char *) };
   enum { MAXBUCKETS = 65 };   // meaning up to size 256 on 32bit pointer systems
   enum { MAXREUSESIZE = MAXBUCKETS*PTRSIZE-PTRSIZE };
-  inline size_t bucket(size_t s) { return (s+PTRSIZE-1)>>PTRBITS; };
+  INLINE size_t bucket(size_t s) { return (s+PTRSIZE-1)>>PTRBITS; };
   enum { PTRBITS = PTRSIZE==2 ? 1 : PTRSIZE==4 ? 2 : 3 };
 
   char *p;
@@ -272,9 +324,9 @@ template <class T> struct hashtable
     t e = &ht->enumc->data; b;\
   }
 
-inline char *newstring(const char *s)           { return gp()->string(s); }
-inline char *newstring(const char *s, size_t l) { return gp()->string(s, l); }
-inline char *newstringbuf(const char *s)        { return gp()->stringbuf(s); }
+INLINE char *newstring(const char *s)           { return gp()->string(s); }
+INLINE char *newstring(const char *s, size_t l) { return gp()->string(s, l); }
+INLINE char *newstringbuf(const char *s)        { return gp()->stringbuf(s); }
 
 /* simplistic vector ops */
 #define dotprod(u,v) ((u).x * (v).x + (u).y * (v).y + (u).z * (v).z)
@@ -287,24 +339,26 @@ inline char *newstringbuf(const char *s)        { return gp()->stringbuf(s); }
 #define vlinterp(v,f,u,g) { (v).x = (v).x*f+(u).x*g; (v).y = (v).y*f+(u).y*g; (v).z = (v).z*f+(u).z*g; }
 
 struct vec {
-  inline vec(void) {}
-  inline vec(float x, float y, float z) : x(x),y(y),z(z) {}
+  INLINE vec(void) {}
+  INLINE vec(float x, float y, float z) : x(x),y(y),z(z) {}
   float x, y, z;
 };
 
 /* convenient variable size float vector */
 template <int n> struct vvec {
-  template <typename... T> inline vvec(T... args) { this->set(0,args...); }
+  template <typename... T> INLINE vvec(T... args) { this->set(0,args...); }
   template <typename First, typename... Rest>
-  inline void set(int index, First first, Rest... rest) {
+  INLINE void set(int index, First first, Rest... rest) {
     this->v[index] = first;
     set(index+1,rest...);
   }
-  inline void set(int index) {}
+  INLINE void set(int index) {}
   float &operator[] (int index) { return v[index]; }
   const float &operator[] (int index) const { return v[index]; }
   float v[n];
 };
+//#define max(a,b) (((a) > (b)) ? (a) : (b))
+//#define min(a,b) (((a) < (b)) ? (a) : (b))
 
 /* simplistic matrix ops */
 void perspective(double m[16], double fovy, double aspect, double zNear, double zFar);
@@ -352,5 +406,6 @@ void fatal(const char *s, const char *o = "");
 void *alloc(int s);
 void keyrepeat(bool on);
 
+#include "math.hpp"
 #endif /* __CUBE_TOOLS_HPP__ */
 
