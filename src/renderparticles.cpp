@@ -38,7 +38,7 @@ namespace rdr
 
   static vec right, up;
 
-  void setorient(vec &r, vec &u) { right = r; up = u; }
+  void setorient(const vec &r, const vec &u) { right = r; up = u; }
 
   static const struct parttype { float r, g, b; int gr, tex; float sz; } parttypes[] =
   {
@@ -80,7 +80,7 @@ namespace rdr
       const parttype *pt = &parttypes[p->type];
       const float sz = pt->sz*particlesize/100.0f;
 
-      glBindTexture(GL_TEXTURE_2D, pt->tex);
+      OGL(BindTexture, GL_TEXTURE_2D, pt->tex);
       glColor3f(pt->r, pt->g, pt->b);
 
       const vvec<8> verts[] = {
@@ -119,8 +119,8 @@ namespace rdr
     OGL(EnableClientState, GL_TEXTURE_COORD_ARRAY);
     OGL(EnableClientState, GL_VERTEX_ARRAY);
 
-    glDisable(GL_BLEND);
-    glDepthMask(GL_TRUE);
+    OGL(Disable, GL_BLEND);
+    OGL(DepthMask, GL_TRUE);
   }
 
   void particle_splash(int type, int num, int fade, vec &p)

@@ -267,11 +267,11 @@ namespace rdr
   {
     if (wx1<0) return nquads;
 
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_ONE, GL_SRC_COLOR);
+    OGL(DepthMask, GL_FALSE);
+    OGL(Enable, GL_BLEND);
+    OGL(BlendFunc, GL_ONE, GL_SRC_COLOR);
     int sx, sy;
-    glBindTexture(GL_TEXTURE_2D, ogl::lookuptex(DEFAULT_LIQUID, sx, sy));
+    OGL(BindTexture, GL_TEXTURE_2D, ogl::lookuptex(DEFAULT_LIQUID, sx, sy));
 
     wx1 &= ~(watersubdiv-1);
     wy1 &= ~(watersubdiv-1);
@@ -303,8 +303,8 @@ namespace rdr
       glDrawArrays(GL_TRIANGLE_STRIP, curvert -= n, n);
     }
 
-    glDisable(GL_BLEND);
-    glDepthMask(GL_TRUE);
+    OGL(Disable, GL_BLEND);
+    OGL(DepthMask, GL_TRUE);
 
     return nquads;
   }
@@ -337,5 +337,4 @@ namespace rdr
     sdark.r = sdark.g = sdark.b = 0;
   }
 } /* namespace rdr */
-
 

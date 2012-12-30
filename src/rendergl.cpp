@@ -12,6 +12,76 @@ namespace rdr { extern int curvert; }
 namespace rdr {
 namespace ogl {
 
+  /* matrix handling. very inspired by opengl 1.0 :-) */
+  enum {MATRIX_STACK = 16};
+  static mat4x4f vp[MATRIX_MODE];
+  static mat4x4f vpstack[MATRIX_STACK][MATRIX_MODE];
+  static int vpdepth = 0;
+  static int vpmode = MODELVIEW;
+
+  static const int glmode[2]={GL_MODELVIEW,GL_PROJECTION}; /* XXX remove that */
+  static const int glmatrix[2]={GL_MODELVIEW_MATRIX,GL_PROJECTION_MATRIX};
+
+  void matrixmode(int mode)
+  {
+    glMatrixMode(glmode[mode]);
+    vpmode = mode;
+  }
+  void loadmatrix(const mat4x4f &m)
+  {
+    glLoadMatrixf(&m[0][0]);
+    vp[vpmode] = m;
+  }
+  const mat4x4f &matrix(int mode) { return vp[mode]; }
+  void identity(void)
+  {
+    glLoadIdentity();
+    vp[vpmode] = mat4x4f(one);
+  }
+  void translate(const vec3f &v)
+  {
+    glTranslatef(v.x,v.y,v.z);
+    vp[vpmode] = translate(vp[vpmode],v);
+  }
+  void mulmatrix(const mat4x4f &m)
+  {
+    glMultMatrixf(&m[0][0]);
+    vp[vpmode] = m*vp[vpmode];
+  }
+  void rotate(float angle, const vec3f &axis)
+  {
+    glRotatef(angle, axis.x, axis.y, axis.z);
+    vp[vpmode] = rotate(vp[vpmode],angle,axis);
+  }
+  void perspective(float fovy, float aspect, float znear, float zfar)
+  {
+    double p[16];
+    ::perspective(p, fovy, aspect, znear, zfar);
+    glMultMatrixd(p);
+    vp[vpmode] = ::perspective(fovy,aspect,znear,zfar)*vp[vpmode];
+  }
+
+  void ortho(float left, float right, float bottom, float top, float znear, float zfar) {
+    vp[vpmode] = ::ortho(left,right,bottom,top,znear,zfar);
+    glOrtho(left,right,bottom,top,znear,zfar);
+  }
+  void scale(const vec3f &s)
+  {
+    glScalef(s.x,s.y,s.z);
+    scale(vp[vpmode],s);
+  }
+
+  void pushmatrix(void) {
+    assert(vpdepth+1<MATRIX_STACK);
+    glPushMatrix();
+    vpstack[vpdepth++][vpmode] = vp[vpmode];
+  }
+  void popmatrix(void) {
+    assert(vpdepth>0);
+    glPopMatrix();
+    vp[vpmode] = vpstack[--vpdepth][vpmode];
+  }
+
   /* management of texture slots each texture slot can have multople texture
    * frames, of which currently only the first is used additional frames can be
    * used for various shaders
@@ -242,13 +312,19 @@ namespace ogl {
 
   static void bindshader(shader shader, bool keyframe, bool fog, float lerp)
   {
+#if 0
     mat4x4f view, proj, viewproj; /* XXX DO IT ELSEWHERE ONLY ONCE! */
     OGL(GetFloatv, GL_PROJECTION_MATRIX, &proj.vx.x);
     OGL(GetFloatv, GL_MODELVIEW_MATRIX, &view.vx.x);
     viewproj = proj*view;
+#else
+    //const mat4x4f viewproj = vp[PROJECTION]*vp[MODELVIEW];
+    const mat4x4f viewproj = vp[PROJECTION]*vp[MODELVIEW];
+#endif
     OGL(UseProgram, shader.program);
     if (fog) {
-      const vec3f zaxis(view.vx.z,view.vy.z,view.vz.z);
+      //const vec3f zaxis(view.vx.z,view.vy.z,view.vz.z);
+      const vec3f zaxis(vp[MODELVIEW].vx.z,vp[MODELVIEW].vy.z,vp[MODELVIEW].vz.z);
       OGL(Uniform2fv, shader.ufogstartend, 1, fogstartend);
       OGL(Uniform4fv, shader.ufogcolor, 1, fogcolor);
       OGL(Uniform3fv, shader.uzaxis, 1, &zaxis.x);
@@ -258,7 +334,7 @@ namespace ogl {
     OGL(Uniform1f, shader.uoverbright, overbrightf);
   }
 
-  static void unbindshader(void) { glUseProgram(0); }
+  static void unbindshader(void) { OGL(UseProgram, 0); }
 
   void rendermd2(const float *pos0, const float *pos1, float lerp, int n)
   {
@@ -313,10 +389,10 @@ namespace ogl {
 
   void init(int w, int h)
   {
-    glViewport(0, 0, w, h);
+    OGL(Viewport, 0, 0, w, h);
     glClearDepth(1.f);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_DEPTH_TEST);
+    OGL(DepthFunc, GL_LESS);
+    OGL(Enable, GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
 
     glEnable(GL_FOG);
@@ -327,8 +403,8 @@ namespace ogl {
     glEnable(GL_LINE_SMOOTH);
     glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
 
-    glCullFace(GL_FRONT);
-    glEnable(GL_CULL_FACE);
+    OGL(CullFace, GL_FRONT);
+    OGL(Enable, GL_CULL_FACE);
 
     const char *exts = (const char *)glGetString(GL_EXTENSIONS);
 
@@ -436,7 +512,7 @@ namespace ogl {
 
   static void renderstripssky(void)
   {
-    glBindTexture(GL_TEXTURE_2D, skyoglid);
+    OGL(BindTexture, GL_TEXTURE_2D, skyoglid);
     loopv(strips)
       if (strips[i].tex==skyoglid)
         glDrawArrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
@@ -447,7 +523,7 @@ namespace ogl {
     int lasttex = -1;
     loopv(strips) if (strips[i].tex!=skyoglid) {
       if (strips[i].tex!=lasttex) {
-        glBindTexture(GL_TEXTURE_2D, strips[i].tex);
+        OGL(BindTexture, GL_TEXTURE_2D, strips[i].tex);
         lasttex = strips[i].tex;
       }
       glDrawArrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
@@ -469,13 +545,16 @@ namespace ogl {
     s.num = n;
   }
 
+  static const vec3f roll(0.f,0.f,1.f);
+  static const vec3f pitch(-1.f,0.f,0.f);
+  static const vec3f yaw(0.f,1.f,0.f);
   static void transplayer(void)
   {
-    glLoadIdentity();
-    glRotated(player1->roll,0.0,0.0,1.0);
-    glRotated(player1->pitch,-1.0,0.0,0.0);
-    glRotated(player1->yaw,0.0,1.0,0.0);
-    glTranslated(-player1->o.x, (player1->state==CS_DEAD ? player1->eyeheight-0.2f : 0)-player1->o.z, -player1->o.y);
+    identity();
+    rotate(player1->roll,roll);
+    rotate(player1->pitch,pitch);
+    rotate(player1->yaw,yaw);
+    translate(vec3f(-player1->o.x, (player1->state==CS_DEAD ? player1->eyeheight-0.2f : 0)-player1->o.z, -player1->o.y));
   }
 
   VARP(fov, 10, 105, 120);
@@ -498,16 +577,14 @@ namespace ogl {
 
   static void drawhudgun(float fovy, float aspect, int farplane)
   {
-    double p[16];
     if (!hudgun) return;
 
-    glEnable(GL_CULL_FACE);
+    OGL(Enable, GL_CULL_FACE);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    ::perspective(p, fovy, aspect, 0.3f, farplane);
-    glMultMatrixd(p);
-    glMatrixMode(GL_MODELVIEW);
+    matrixmode(PROJECTION);
+    identity();
+    perspective(fovy, aspect, 0.3f, farplane);
+    matrixmode(MODELVIEW);
 
     const int rtime = weapon::reloadtime(player1->gunselect);
     if (player1->lastaction &&
@@ -517,13 +594,12 @@ namespace ogl {
     else
       drawhudmodel(6, 1, 100, 0);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    ::perspective(p, fovy, aspect, 0.15f, farplane);
-    glMultMatrixd(p);
-    glMatrixMode(GL_MODELVIEW);
+    matrixmode(PROJECTION);
+    identity();
+    perspective(fovy, aspect, 0.15f, farplane);
+    matrixmode(MODELVIEW);
 
-    glDisable(GL_CULL_FACE);
+    OGL(Disable, GL_CULL_FACE);
   }
 
   void drawarray(int mode, size_t pos, size_t tex, size_t n, const float *data)
@@ -543,7 +619,6 @@ namespace ogl {
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
     bool underwater = player1->o.z<hf;
-    double p[16];
 
     glFogi(GL_FOG_START, (fog+64)/8);
     glFogi(GL_FOG_END, fog);
@@ -562,7 +637,7 @@ namespace ogl {
     fogcolor[3] = 1.f;
 
     glFogfv(GL_FOG_COLOR, fogc);
-    glClearColor(fogc[0], fogc[1], fogc[2], 1.0f);
+    OGL(ClearColor, fogc[0], fogc[1], fogc[2], 1.0f);
 
     if (underwater) {
       fovy += (float)sin(lastmillis/1000.0)*2.0f;
@@ -573,18 +648,17 @@ namespace ogl {
       fogstartend[1] = 1.f/float((fog+96)/8);
     }
 
-    glClear((player1->outsidemap ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
+    OGL(Clear, (player1->outsidemap ? GL_COLOR_BUFFER_BIT : 0) | GL_DEPTH_BUFFER_BIT);
 
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    int farplane = fog*5/2;
-    ::perspective(p, fovy, aspect, 0.15f, farplane);
-    glMultMatrixd(p);
-    glMatrixMode(GL_MODELVIEW);
+    const int farplane = fog*5/2;
+    matrixmode(PROJECTION);
+    identity();
+    perspective(fovy, aspect, 0.15f, farplane);
+    matrixmode(MODELVIEW);
 
     transplayer();
 
-    glEnable(GL_TEXTURE_2D);
+    OGL(Enable, GL_TEXTURE_2D);
 
     int xs, ys;
     skyoglid = lookuptex(DEFAULT_SKY, xs, ys);
@@ -602,10 +676,10 @@ namespace ogl {
 
     renderstripssky();
 
-    glLoadIdentity();
-    glRotated(player1->pitch, -1.0, 0.0, 0.0);
-    glRotated(player1->yaw,   0.0, 1.0, 0.0);
-    glRotated(90.0, 1.0, 0.0, 0.0);
+    identity();
+    rotate(player1->pitch, pitch);
+    rotate(player1->yaw, yaw);
+    rotate(90.f, vec3f(1.f,0.f,0.f));
     glColor3f(1.0f, 1.0f, 1.0f);
     glDisable(GL_FOG);
     glDepthFunc(GL_GREATER);
@@ -630,7 +704,7 @@ namespace ogl {
     renderspheres(curtime);
     rdr::renderents();
 
-    glDisable(GL_CULL_FACE);
+    OGL(Disable, GL_CULL_FACE);
 
     drawhudgun(fovy, aspect, farplane);
 
@@ -638,7 +712,6 @@ namespace ogl {
     const int nquads = renderwater(hf);
 
     overbright(2);
-    //bindparticleshader();
     bindshader(particle,false,false,0.f);
     render_particles(curtime);
     unbindshader();
@@ -646,11 +719,11 @@ namespace ogl {
 
     glDisable(GL_FOG);
 
-    glDisable(GL_TEXTURE_2D);
+    OGL(Disable, GL_TEXTURE_2D);
 
     drawhud(w, h, (int)curfps, nquads, curvert, underwater);
 
-    glEnable(GL_CULL_FACE);
+    OGL(Enable, GL_CULL_FACE);
     glEnable(GL_FOG);
   }
 } /* namespace ogl */

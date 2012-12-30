@@ -512,7 +512,8 @@ TINLINE m44 translate(m44arg m, v3arg v) {
   dst[3] = m.vx*v[0] + m.vy*v[1] + m.vz*v[2] + m.vw;
   return dst;
 }
-TINLINE m44 lookat(v3arg eye, v3arg center, v3arg up) {
+TINLINE m44 lookat(v3arg eye, v3arg center, v3arg up)
+{
   const v3 f = normalize(center - eye);
   const v3 u = normalize(up);
   const v3 s = normalize(cross(f, u));
@@ -523,21 +524,23 @@ TINLINE m44 lookat(v3arg eye, v3arg center, v3arg up) {
   dst[0][2] =-f.x; dst[1][2] =-f.y; dst[2][2] =-f.z;
   return translate(dst, -eye);
 }
-TINLINE m44 perspective(T fovy, T aspect, T zNear, T zFar) {
-  const T range = tan(deg2rad(fovy / T(two))) * zNear;
+TINLINE m44 perspective(T fovy, T aspect, T znear, T zfar)
+{
+  const T range = tan(deg2rad(fovy / T(two))) * znear;
   const T left = -range * aspect;
   const T right = range * aspect;
   const T bottom = -range;
   const T top = range;
   m44 dst(zero);
-  dst[0][0] = (T(two) * zNear) / (right - left);
-  dst[1][1] = (T(two) * zNear) / (top - bottom);
-  dst[2][2] = -(zFar + zNear) / (zFar - zNear);
+  dst[0][0] = (T(two) * znear) / (right - left);
+  dst[1][1] = (T(two) * znear) / (top - bottom);
+  dst[2][2] = -(zfar + znear) / (zfar - znear);
   dst[2][3] = -T(one);
-  dst[3][2] = -(T(two) * zFar * zNear) / (zFar - zNear);
+  dst[3][2] = -(T(two) * zfar * znear) / (zfar - znear);
   return dst;
 }
-TINLINE m44 rotate(m44arg m, T angle, v3arg v) {
+TINLINE m44 rotate(m44arg m, T angle, v3arg v)
+{
   m44 rot(zero), dst(zero);
   const T a = deg2rad(angle);
   const T c = cos(a);
@@ -557,6 +560,26 @@ TINLINE m44 rotate(m44arg m, T angle, v3arg v) {
   dst[1] = m.vx*rot[1][0] + m.vy*rot[1][1] + m.vz*rot[1][2];
   dst[2] = m.vx*rot[2][0] + m.vy*rot[2][1] + m.vz*rot[2][2];
   dst[3] = m.vw;
+  return dst;
+}
+TINLINE m44 ortho(T left, T right, T bottom, T top, T znear, T zfar)
+{
+  m44 dst(one);
+  dst[0][0] = T(two) / (right - left);
+  dst[1][1] = T(two) / (top - bottom);
+  dst[2][2] = - T(two) / (zfar - znear);
+  dst[3][0] = - (right + left) / (right - left);
+  dst[3][1] = - (top + bottom) / (top - bottom);
+  dst[3][2] = - (zfar + znear) / (zfar - znear);
+  return dst;
+}
+TINLINE m44 scale(m44arg m, v3arg v)
+{
+  m44 dst;
+  dst[0] = m[0] * v[0];
+  dst[1] = m[1] * v[1];
+  dst[2] = m[2] * v[2];
+  dst[3] = m[3];
   return dst;
 }
 

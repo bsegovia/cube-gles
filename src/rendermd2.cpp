@@ -158,11 +158,11 @@ namespace rdr
     OGL(BindBuffer, GL_ARRAY_BUFFER, vbo);
     loopi(range) if (!builtframes[frame+i]) scale(frame+i, sc, snap);
 
-    glVertexAttrib3fv(ogl::COL, &light.x);
-    glPushMatrix();
-    glTranslatef(x, y, z);
-    glRotatef(yaw+180.f, 0.f, -1.f, 0.f);
-    glRotatef(pitch, 0.f, 0.f, 1.f);
+    OGL(VertexAttrib3fv, ogl::COL, &light.x);
+    ogl::pushmatrix();
+    ogl::translate(vec3f(x, y, z));
+    ogl::rotate(yaw+180.f, vec3f(0.f, -1.f, 0.f));
+    ogl::rotate(pitch, vec3f(0.f, 0.f, 1.f));
 
     const int n = framesz / sizeof(float[floatn]);
     const int time = lastmillis-basetime;
@@ -177,7 +177,7 @@ namespace rdr
     OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
     xtraverts += n;
 
-    glPopMatrix();
+    ogl::popmatrix();
   }
 
   static hashtable<md2*> *mdllookup = NULL;
@@ -242,7 +242,7 @@ namespace rdr
     delayedload(m);
 
     int xs, ys;
-    glBindTexture(GL_TEXTURE_2D, tex ? ogl::lookuptex(tex, xs, ys) : FIRSTMDL+m->mdlnum);
+    OGL(BindTexture, GL_TEXTURE_2D, tex ? ogl::lookuptex(tex, xs, ys) : FIRSTMDL+m->mdlnum);
 
     const int ix = (int)x;
     const int iy = (int)z;

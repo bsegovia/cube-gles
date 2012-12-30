@@ -16,7 +16,7 @@ namespace rdr
   namespace ogl
   {
     enum {POS0=0, POS1=1, TEX=2, NOR=3, COL=4}; /* vertex attributes */
-    enum {MODELVIEW=0, PROJECTION=1}; /* matrices */
+    enum {MODELVIEW=0, PROJECTION=1, MATRIX_MODE=2}; /* matrices */
     void init(int w, int h);
     void clean(void);
     void drawframe(int w, int h, float curfps);
@@ -35,6 +35,9 @@ namespace rdr
     void mulmatrix(const mat4x4f &m);
     void pushmatrix(void);
     void popmatrix(void);
+    void loadmatrix(const mat4x4f &m);
+    void ortho(float left, float right, float bottom, float top, float znear, float zfar);
+    void scale(const vec3f &s);
     const mat4x4f &matrix(int mode);
   } /* namespace ogl */
 
@@ -70,7 +73,7 @@ namespace rdr
   void renderents(void);
 
   /* renderparticles */
-  void setorient(vec &r, vec &u);
+  void setorient(const vec &r, const vec &u);
   void particle_splash(int type, int num, int fade, vec &p);
   void particle_trail(int type, int fade, vec &from, vec &to);
   void render_particles(int time);
