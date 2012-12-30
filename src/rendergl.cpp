@@ -12,7 +12,6 @@ namespace rdr { extern int curvert; }
 namespace rdr {
 namespace ogl {
 
-
   /* management of texture slots each texture slot can have multople texture
    * frames, of which currently only the first is used additional frames can be
    * used for various shaders
@@ -34,6 +33,8 @@ namespace ogl {
   /* sphere management */
   static GLuint spherevbo = 0;
   static int spherevertn = 0;
+
+  static float overbrightf = 1.f;
 
   static void buildsphere(float radius, int slices, int stacks)
   {
@@ -159,12 +160,12 @@ namespace ogl {
     "in vec3 p,incol;\n"
     "in vec2 t;\n"
     "out vec2 texcoord;\n"
-    "out vec4 outcol;\n"
+    "out vec3 outcol;\n"
     "out float fogz;\n"
     "void main() {\n"
     "  texcoord = t;\n"
     "  fogz = dot(zaxis,p);\n"
-    "  outcol = vec4(incol,1.0);\n"
+    "  outcol = incol;\n"
     "  gl_Position = MVP * vec4(p,1.0);\n"
     "}\n"
   };
@@ -174,15 +175,19 @@ namespace ogl {
     "uniform sampler2D diffuse;\n"
     "uniform vec4 fogcolor;\n"
     "uniform vec2 fogstartend;\n"
+    "uniform float overbright;\n"
     "in vec2 texcoord;\n"
-    "in vec4 outcol;\n"
+    "in vec3 outcol;\n"
     "in float fogz;\n"
     "out vec4 c;\n"
     "void main() {\n"
     "  const float factor = clamp((-fogz-fogstartend.x)*fogstartend.y.x,0.0,1.0)\n;"
-    "  c = outcol*mix(texture(diffuse, texcoord),fogcolor,factor);\n"
+    "  const vec4 tex = texture(diffuse, texcoord);\n"
+    "  const vec3 col = mix(tex.xyz,fogcolor.xyz,factor);\n"
+    "  c = vec4(col*overbright*outcol,tex.w);\n"
     "}\n"
   };
+
   /* for particles */
   static const char particlevert[] = {
     "#version 130\n"
@@ -201,11 +206,13 @@ namespace ogl {
   static const char particlefrag[] = {
     "#version 130\n"
     "uniform sampler2D diffuse;\n"
+    "uniform float overbright;\n"
     "in vec2 texcoord;\n"
     "in vec4 outcol;\n"
     "out vec4 c;\n"
-    "void main() {c = outcol*texture(diffuse, texcoord);}\n"
+    "void main() {c = overbright*outcol*texture(diffuse, texcoord);}\n"
   };
+
   /* for md2 models with key frame interpolation */
   static const char md2vert[] = {
     "#version 130\n"
@@ -215,31 +222,46 @@ namespace ogl {
     "in vec3 p0,p1,incol;\n"
     "in vec2 t;\n"
     "out vec2 texcoord;\n"
-    "out vec4 outcol;\n"
+    "out vec3 outcol;\n"
     "out float fogz;\n"
     "void main() {\n"
     "  texcoord = t;\n"
     "  const vec4 p = vec4(mix(p0,p1,delta),1.0);\n"
-    "  fogz = dot(zaxis,p);\n"
-    "  outcol = vec4(incol,1.0);\n"
+    "  fogz = dot(zaxis,p.xyz);\n"
+    "  outcol = incol;\n"
     "  gl_Position = MVP * p;\n"
     "}\n"
   };
-  static struct diffuseshader {
+  static struct shader {
     GLuint program;
-    GLuint udiffuse, udelta, umvp, uzaxis, ufogstartend, ufogcolor;
-  } md2, diffuse;
+    GLuint udiffuse, udelta, umvp, uzaxis, ufogstartend, ufogcolor, uoverbright;
+  } md2, diffuse, particle;
 
   static float fogcolor[4];
   static float fogstartend[2];
 
-  void rendermd2(const float *pos0, const float *pos1, float lerp, int n)
+  static void bindshader(shader shader, bool keyframe, bool fog, float lerp)
   {
-    mat4x4f view, proj, viewproj;
+    mat4x4f view, proj, viewproj; /* XXX DO IT ELSEWHERE ONLY ONCE! */
     OGL(GetFloatv, GL_PROJECTION_MATRIX, &proj.vx.x);
     OGL(GetFloatv, GL_MODELVIEW_MATRIX, &view.vx.x);
     viewproj = proj*view;
-    const vec3f zaxis(view.vx.z,view.vy.z,view.vz.z);
+    OGL(UseProgram, shader.program);
+    if (fog) {
+      const vec3f zaxis(view.vx.z,view.vy.z,view.vz.z);
+      OGL(Uniform2fv, shader.ufogstartend, 1, fogstartend);
+      OGL(Uniform4fv, shader.ufogcolor, 1, fogcolor);
+      OGL(Uniform3fv, shader.uzaxis, 1, &zaxis.x);
+    }
+    if (keyframe) OGL(Uniform1f, shader.udelta, lerp);
+    OGL(UniformMatrix4fv, shader.umvp, 1, GL_FALSE, &viewproj.vx.x);
+    OGL(Uniform1f, shader.uoverbright, overbrightf);
+  }
+
+  static void unbindshader(void) { glUseProgram(0); }
+
+  void rendermd2(const float *pos0, const float *pos1, float lerp, int n)
+  {
     OGL(DisableClientState, GL_VERTEX_ARRAY);
     OGL(DisableClientState, GL_TEXTURE_COORD_ARRAY);
     OGL(VertexAttribPointer, TEX, 2, GL_FLOAT, 0, sizeof(float[5]), pos0);
@@ -248,15 +270,10 @@ namespace ogl {
     OGL(EnableVertexAttribArray, POS0);
     OGL(EnableVertexAttribArray, POS1);
     OGL(EnableVertexAttribArray, TEX);
-    OGL(UseProgram, md2.program);
-    OGL(Uniform2fv, md2.ufogstartend, 1, fogstartend);
-    OGL(Uniform4fv, md2.ufogcolor, 1, fogcolor);
-    OGL(UniformMatrix4fv, md2.umvp, 1, GL_FALSE, &viewproj.vx.x);
-    OGL(Uniform3fv, md2.uzaxis, 1, &zaxis.x);
-    OGL(Uniform1f, md2.udelta, lerp);
+    bindshader(md2, true, true, lerp);
     OGL(DisableClientState, GL_COLOR_ARRAY);
     OGL(DrawArrays, GL_TRIANGLES, 0, n);
-    OGL(UseProgram, 0);
+    unbindshader();
     OGL(DisableVertexAttribArray, POS0);
     OGL(DisableVertexAttribArray, POS1);
     OGL(DisableVertexAttribArray, TEX);
@@ -265,19 +282,20 @@ namespace ogl {
     OGL(EnableClientState, GL_TEXTURE_COORD_ARRAY);
   }
 
-  static void buildshader(diffuseshader &shader, bool keyframe, bool fog)
+  static void buildshader(shader &shader, bool keyframe, bool fog)
   {
     if (keyframe) {
-      OGL(BindAttribLocation, md2.program, POS0, "p0");
-      OGL(BindAttribLocation, md2.program, POS1, "p1");
+      OGL(BindAttribLocation, shader.program, POS0, "p0");
+      OGL(BindAttribLocation, shader.program, POS1, "p1");
     } else
-      OGL(BindAttribLocation, md2.program, POS0, "p");
+      OGL(BindAttribLocation, shader.program, POS0, "p");
     OGL(BindAttribLocation, shader.program, TEX, "t");
     OGL(BindAttribLocation, shader.program, COL, "incol");
     OGL(BindFragDataLocation, shader.program, 0, "c");
     OGL(LinkProgram, shader.program);
     OGL(ValidateProgram, shader.program);
     OGL(UseProgram, shader.program);
+    OGLR(shader.uoverbright, GetUniformLocation, shader.program, "overbright");
     OGLR(shader.umvp, GetUniformLocation, shader.program, "MVP");
     if (keyframe)
       OGLR(shader.udelta, GetUniformLocation, shader.program, "delta");
@@ -328,11 +346,12 @@ namespace ogl {
 
     diffuse.program = loadprogram(diffusevert, diffusefrag);
     buildshader(diffuse, false, true);
+
+    particle.program = loadprogram(particlevert, particlefrag);
+    buildshader(particle, false, false);
   }
 
-  void clean(void) {
-    OGL(DeleteBuffers, 1, &spherevbo);
-  }
+  void clean(void) { OGL(DeleteBuffers, 1, &spherevbo); }
 
   void drawsphere(void)
   {
@@ -439,6 +458,7 @@ namespace ogl {
   {
     if (hasoverbright)
       glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, amount);
+    overbrightf = amount;
   }
 
   void addstrip(int tex, int start, int n)
@@ -485,7 +505,7 @@ namespace ogl {
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    perspective(p, fovy, aspect, 0.3f, farplane);
+    ::perspective(p, fovy, aspect, 0.3f, farplane);
     glMultMatrixd(p);
     glMatrixMode(GL_MODELVIEW);
 
@@ -499,7 +519,7 @@ namespace ogl {
 
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    perspective(p, fovy, aspect, 0.15f, farplane);
+    ::perspective(p, fovy, aspect, 0.15f, farplane);
     glMultMatrixd(p);
     glMatrixMode(GL_MODELVIEW);
 
@@ -558,7 +578,7 @@ namespace ogl {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     int farplane = fog*5/2;
-    perspective(p, fovy, aspect, 0.15f, farplane);
+    ::perspective(p, fovy, aspect, 0.15f, farplane);
     glMultMatrixd(p);
     glMatrixMode(GL_MODELVIEW);
 
@@ -618,7 +638,10 @@ namespace ogl {
     const int nquads = renderwater(hf);
 
     overbright(2);
+    //bindparticleshader();
+    bindshader(particle,false,false,0.f);
     render_particles(curtime);
+    unbindshader();
     overbright(1);
 
     glDisable(GL_FOG);
@@ -632,5 +655,4 @@ namespace ogl {
   }
 } /* namespace ogl */
 } /* namespace rdr */
-
 

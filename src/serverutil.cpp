@@ -103,11 +103,9 @@ int main(int argc, char* argv[])
   int uprate = 0, maxcl = 4;
   const char *sdesc = "", *ip = "", *master = NULL, *passwd = "";
 
-  for (int i = 1; i<argc; i++)
-  {
+  for (int i = 1; i<argc; i++) {
     char *a = &argv[i][2];
-    if (argv[i][0]=='-') switch (argv[i][1])
-    {
+    if (argv[i][0]=='-') switch (argv[i][1]) {
       case 'u': uprate = atoi(a); break;
       case 'n': sdesc  = a; break;
       case 'i': ip     = a; break;
@@ -122,6 +120,4 @@ int main(int argc, char* argv[])
   return 0;
 };
 #endif
-
-
 

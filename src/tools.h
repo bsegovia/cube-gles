@@ -3,12 +3,7 @@
 #ifndef __CUBE_TOOLS_HPP__
 #define __CUBE_TOOLS_HPP__
 
-/* Visual C compiler */
 #ifdef _MSC_VER
-#define __MSVC__
-#endif
-
-#ifdef __MSVC__
 #undef NOINLINE
 #define NOINLINE        __declspec(noinline)
 #define INLINE          __forceinline
@@ -63,19 +58,21 @@ typedef unsigned int uint;
 #if defined(WIN32)
   #undef min
   #undef max
-#if defined(__MSVC__)
+#if defined(_MSC_VER)
   INLINE bool finite (float x) {return _finite(x) != 0;}
 #endif
 #endif
 
 #define rnd(max) (rand()%(max))
 #define rndreset() (srand(1))
-#define rndtime() { loopi(lastmillis&0xF) rnd(i+1); }
+#define rndtime() {loopi(lastmillis&0xF) rnd(i+1);}
 #define loop(v,m) for(int v = 0; v<(m); v++)
 #define loopi(m) loop(i,m)
 #define loopj(m) loop(j,m)
 #define loopk(m) loop(k,m)
 #define loopl(m) loop(l,m)
+#define loopv(v)    for(int i = 0; i<(v).length(); ++i)
+#define loopvrev(v) for(int i = (v).length()-1; i>=0; --i)
 
 /* integer types */
 #if defined(__MSVC__)
@@ -114,8 +111,7 @@ typedef char string[_MAXDEFSTR];
 INLINE void strn0cpy(char *d, const char *s, size_t m) { strncpy(d,s,m); d[(m)-1] = 0; }
 INLINE void strcpy_s(char *d, const char *s) { strn0cpy(d,s,_MAXDEFSTR); }
 INLINE void strcat_s(char *d, const char *s) { size_t n = strlen(d); strn0cpy(d+n,s,_MAXDEFSTR-n); }
-INLINE void formatstring(char *d, const char *fmt, va_list v)
-{
+INLINE void formatstring(char *d, const char *fmt, va_list v) {
   _vsnprintf(d, _MAXDEFSTR, fmt, v);
   d[_MAXDEFSTR-1] = 0;
 }
@@ -201,13 +197,15 @@ template <class T> struct vector : noncopyable
   int ulen;
   pool *p;
 
-  INLINE vector(void) {
+  INLINE vector(void)
+  {
     this->p = gp();
     alen = 8;
     buf = (T *)p->alloc(alen*sizeof(T));
     ulen = 0;
   }
-  INLINE vector(vector &&other) {
+  INLINE vector(vector &&other)
+  {
     this->buf = other.buf;
     this->alen = other.alen;
     this->ulen = other.ulen;
@@ -215,12 +213,14 @@ template <class T> struct vector : noncopyable
   }
   ~vector(void) { setsize(0); p->dealloc(buf, alen*sizeof(T)); }
 
-  INLINE T &add(const T &x) {
+  INLINE T &add(const T &x)
+  {
     if(ulen==alen) realloc();
     new (&buf[ulen]) T(x);
     return buf[ulen++];
   }
-  INLINE T &add(void) {
+  INLINE T &add(void)
+  {
     if(ulen==alen) realloc();
     new (&buf[ulen]) T;
     return buf[ulen++];
@@ -233,29 +233,30 @@ template <class T> struct vector : noncopyable
   INLINE T &operator[](int i) { assert(i>=0 && i<ulen); return buf[i]; }
   INLINE T *getbuf(void) { return buf; }
   void setsize(int i) { for(; ulen>i; ulen--) buf[ulen-1].~T(); }
-  void sort(void *cf) {
+  void sort(void *cf)
+  {
     qsort(buf, ulen, sizeof(T), (int (__cdecl *)(const void *,const void *))cf);
   }
-  void realloc(void) {
+  void realloc(void)
+  {
     const int olen = alen;
     buf = (T *)p->realloc(buf, olen*sizeof(T), (alen *= 2)*sizeof(T));
   }
-  T remove(int i) {
+  T remove(int i)
+  {
     T e = buf[i];
     for(int p = i+1; p<ulen; p++) buf[p-1] = buf[p];
     ulen--;
     return e;
   }
-  T &insert(int i, const T &e) {
+  T &insert(int i, const T &e)
+  {
     add(T());
     for(int p = ulen-1; p>i; p--) buf[p] = buf[p-1];
     buf[i] = e;
     return buf[i];
   }
 };
-
-#define loopv(v)    if(false) {} else for(int i = 0; i<(v).length(); i++)
-#define loopvrev(v) if(false) {} else for(int i = (v).length()-1; i>=0; i--)
 
 template <class T> struct hashtable
 {
@@ -361,14 +362,8 @@ typedef vector<int> ivector;
     if (glGetError()) fatal("gl" #NAME " failed"); \
   } while (0)
 #else
-  #define OGL(NAME, ...) \
-  do { \
-    gl##NAME->NAME(__VA_ARGS__); \
-  } while (0)
-  #define OGLR(RET, NAME, ...) \
-  do { \
-    RET = gl##NAME->NAME(__VA_ARGS__); \
-  } while (0)
+  #define OGL(NAME, ...) do {gl##NAME->NAME(__VA_ARGS__);} while(0)
+  #define OGLR(RET, NAME, ...) do {RET=gl##NAME->NAME(__VA_ARGS__);} while(0)
 #endif /* NDEBUG */
 
 void fatal(const char *s, const char *o = "");

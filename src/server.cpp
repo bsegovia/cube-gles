@@ -468,5 +468,3 @@ namespace server
   };
 } /* namespace server */
 
-
-

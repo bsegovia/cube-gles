@@ -1,6 +1,7 @@
 #ifndef __CUBE_RENDERER_HPP__
 #define __CUBE_RENDERER_HPP__
 
+#include "math.hpp"
 /*! XXX move that to namespace */
 extern int xtraverts;
 
@@ -14,7 +15,8 @@ namespace rdr
   /* rendergl */
   namespace ogl
   {
-    enum {POS0=0,POS1=1,TEX=2,NOR=3,COL=4}; /* attributes */
+    enum {POS0=0, POS1=1, TEX=2, NOR=3, COL=4}; /* vertex attributes */
+    enum {MODELVIEW=0, PROJECTION=1}; /* matrices */
     void init(int w, int h);
     void clean(void);
     void drawframe(int w, int h, float curfps);
@@ -25,6 +27,15 @@ namespace rdr
     void drawarray(int mode, size_t pos, size_t tex, size_t n, const float *data);
     void rendermd2(const float *pos0, const float *pos1, float lerp, int n);
     void drawsphere(void);
+    void matrixmode(int mode);
+    void identity(void);
+    void rotate(float angle, const vec3f &axis);
+    void perspective(const mat4x4f &m, float fovy, float aspect, float znear, float zfar);
+    void translate(const vec3f &v);
+    void mulmatrix(const mat4x4f &m);
+    void pushmatrix(void);
+    void popmatrix(void);
+    const mat4x4f &matrix(int mode);
   } /* namespace ogl */
 
   /* rendercubes */

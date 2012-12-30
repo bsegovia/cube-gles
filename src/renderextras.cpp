@@ -259,7 +259,7 @@ namespace rdr
 
   VARP(crosshairsize, 0, 15, 50);
 
-  int dblend = 0;
+  static int dblend = 0;
   void damageblend(int n) { dblend += n; }
 
   VAR(hidestats, 0, 0, 1);

@@ -276,20 +276,20 @@ namespace rdr
     wx1 &= ~(watersubdiv-1);
     wy1 &= ~(watersubdiv-1);
 
-    float xf = TEXTURESCALE/sx;
-    float yf = TEXTURESCALE/sy;
-    float xs = watersubdiv*xf;
-    float ys = watersubdiv*yf;
-    float t1 = lastmillis/300.0f;
-    float t2 = lastmillis/4000.0f;
+    const float xf = TEXTURESCALE/sx;
+    const float yf = TEXTURESCALE/sy;
+    const float xs = watersubdiv*xf;
+    const float ys = watersubdiv*yf;
+    const float t1 = lastmillis/300.0f;
+    const float t2 = lastmillis/4000.0f;
 
     sqr dl;
     dl.r = dl.g = dl.b = 255;
 
     for (int xx = wx1; xx<wx2; xx += watersubdiv) {
       for (int yy = wy1; yy<wy2; yy += watersubdiv) {
-        float xo = xf*(xx+t2);
-        float yo = yf*(yy+t2);
+        const float xo = xf*(xx+t2);
+        const float yo = yf*(yy+t2);
         if (yy==wy1) {
           vertw(xx,             hf, yy,             &dl, dx(xo),    dy(yo), t1);
           vertw(xx+watersubdiv, hf, yy,             &dl, dx(xo+xs), dy(yo), t1);

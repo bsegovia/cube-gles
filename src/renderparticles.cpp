@@ -53,7 +53,6 @@ namespace rdr
     { 1.0f, 0.1f, 0.1f, 0,  7, 0.2f  }, // red:    demotrack
   };
 
-
   void render_particles(int time)
   {
     if (demoplayback && demotracking) {
@@ -61,13 +60,22 @@ namespace rdr
       newparticle(player1->o, nom, 100000000, 8);
     }
 
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_SRC_ALPHA);
-    glDisable(GL_FOG);
+    OGL(DepthMask, GL_FALSE);
+    OGL(Enable, GL_BLEND);
+    OGL(BlendFunc, GL_SRC_ALPHA, GL_SRC_ALPHA);
 
     int numrender = 0;
 
+    /* XXX */
+    OGL(DisableClientState, GL_COLOR_ARRAY);
+    OGL(DisableClientState, GL_TEXTURE_COORD_ARRAY);
+    OGL(DisableClientState, GL_VERTEX_ARRAY);
+
+    OGL(EnableVertexAttribArray, ogl::POS0);
+    OGL(EnableVertexAttribArray, ogl::COL);
+    OGL(EnableVertexAttribArray, ogl::TEX);
+
+    /* TODO -> state track texID and use index buffer */
     for (particle *p, **pp = &parlist; (p = *pp);) {
       const parttype *pt = &parttypes[p->type];
       const float sz = pt->sz*particlesize/100.0f;
@@ -75,13 +83,17 @@ namespace rdr
       glBindTexture(GL_TEXTURE_2D, pt->tex);
       glColor3f(pt->r, pt->g, pt->b);
 
-      const vvec<5> verts[] = {
-        vvec<5>(0.f, 1.f, p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz),
-        vvec<5>(1.f, 1.f, p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz),
-        vvec<5>(0.f, 0.f, p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz),
-        vvec<5>(1.f, 0.f, p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz)
+      const vvec<8> verts[] = {
+        vvec<8>(pt->r, pt->g, pt->b, 0.f, 1.f, p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz),
+        vvec<8>(pt->r, pt->g, pt->b, 1.f, 1.f, p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz),
+        vvec<8>(pt->r, pt->g, pt->b, 0.f, 0.f, p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz),
+        vvec<8>(pt->r, pt->g, pt->b, 1.f, 0.f, p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz)
       };
-      ogl::drawarray(GL_TRIANGLE_STRIP, 3, 2, 4, &verts[0][0]);
+
+      OGL(VertexAttribPointer, ogl::COL, 3, GL_FLOAT, 0, sizeof(float[8]), &verts[0][0]+0);
+      OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(float[8]), &verts[0][0]+3);
+      OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(float[8]), &verts[0][0]+5);
+      OGL(DrawArrays, GL_TRIANGLE_STRIP, 0, 4);
       xtraverts += 4;
 
       if (numrender++>maxparticles || (p->fade -= time)<0) {
@@ -98,7 +110,15 @@ namespace rdr
       }
     }
 
-    glEnable(GL_FOG);
+    OGL(DisableVertexAttribArray, ogl::POS0);
+    OGL(DisableVertexAttribArray, ogl::COL);
+    OGL(DisableVertexAttribArray, ogl::TEX);
+
+    /* XXX */
+    OGL(EnableClientState, GL_COLOR_ARRAY);
+    OGL(EnableClientState, GL_TEXTURE_COORD_ARRAY);
+    OGL(EnableClientState, GL_VERTEX_ARRAY);
+
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
   }
@@ -130,5 +150,4 @@ namespace rdr
     }
   }
 } /* namespace rdr */
-
 
