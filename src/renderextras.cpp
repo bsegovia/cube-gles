@@ -189,15 +189,20 @@ namespace rdr
 
   COMMAND(loadsky, ARG_1STR);
 
-  float cursordepth = 0.9f;
-  GLint viewport[4];
-  GLdouble mm[16], pm[16];
+  static float cursordepth = 0.9f;
+  static GLint viewport[4];
+  static GLdouble mm[16], pm[16];
 
-  void readmatrices()
+  static void readmatrices()
   {
     glGetIntegerv(GL_VIEWPORT, viewport);
     glGetDoublev(GL_MODELVIEW_MATRIX, mm);
     glGetDoublev(GL_PROJECTION_MATRIX, pm);
+    /* XXX clean up that */
+    const mat4x4f &modelview = ogl::matrix(ogl::MODELVIEW);
+    const mat4x4f &projection = ogl::matrix(ogl::PROJECTION);
+    loopi(16) mm[i] = (&modelview[0][0])[i];
+    loopi(16) pm[i] = (&projection[0][0])[i];
   }
 
   // stupid function to cater for stupid ATI linux drivers that return incorrect depth values

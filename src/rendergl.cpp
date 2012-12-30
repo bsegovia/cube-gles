@@ -18,43 +18,49 @@ namespace ogl {
   static mat4x4f vpstack[MATRIX_STACK][MATRIX_MODE];
   static int vpdepth = 0;
   static int vpmode = MODELVIEW;
-
+  static bool vploaded[MATRIX_MODE] = {false,false}; /* XXX just to support OGL 1.x */
   static const int glmode[2]={GL_MODELVIEW,GL_PROJECTION}; /* XXX remove that */
   static const int glmatrix[2]={GL_MODELVIEW_MATRIX,GL_PROJECTION_MATRIX};
 
   void matrixmode(int mode)
   {
-    glMatrixMode(glmode[mode]);
+    OGL(MatrixMode, glmode[mode]);
     vpmode = mode;
   }
   void loadmatrix(const mat4x4f &m)
   {
+    vploaded[vpmode] = false;
     glLoadMatrixf(&m[0][0]);
     vp[vpmode] = m;
   }
   const mat4x4f &matrix(int mode) { return vp[mode]; }
   void identity(void)
   {
+    vploaded[vpmode] = false;
     glLoadIdentity();
     vp[vpmode] = mat4x4f(one);
   }
   void translate(const vec3f &v)
   {
+    vploaded[vpmode] = false;
     glTranslatef(v.x,v.y,v.z);
     vp[vpmode] = translate(vp[vpmode],v);
   }
   void mulmatrix(const mat4x4f &m)
   {
+    vploaded[vpmode] = false;
     glMultMatrixf(&m[0][0]);
     vp[vpmode] = m*vp[vpmode];
   }
   void rotate(float angle, const vec3f &axis)
   {
+    vploaded[vpmode] = false;
     glRotatef(angle, axis.x, axis.y, axis.z);
     vp[vpmode] = rotate(vp[vpmode],angle,axis);
   }
   void perspective(float fovy, float aspect, float znear, float zfar)
   {
+    vploaded[vpmode] = false;
     double p[16];
     ::perspective(p, fovy, aspect, znear, zfar);
     glMultMatrixd(p);
@@ -62,11 +68,13 @@ namespace ogl {
   }
 
   void ortho(float left, float right, float bottom, float top, float znear, float zfar) {
+    vploaded[vpmode] = false;
     vp[vpmode] = ::ortho(left,right,bottom,top,znear,zfar);
     glOrtho(left,right,bottom,top,znear,zfar);
   }
   void scale(const vec3f &s)
   {
+    vploaded[vpmode] = false;
     glScalef(s.x,s.y,s.z);
     scale(vp[vpmode],s);
   }
@@ -77,9 +85,32 @@ namespace ogl {
     vpstack[vpdepth++][vpmode] = vp[vpmode];
   }
   void popmatrix(void) {
+    vploaded[vpmode] = false;
     assert(vpdepth>0);
     glPopMatrix();
     vp[vpmode] = vpstack[--vpdepth][vpmode];
+  }
+
+  /* XXX remove all that when OGL 1 is removed ? */
+  static void loadmatrices(void) {
+    return;
+    if (!vploaded[MODELVIEW]) {
+      OGL(MatrixMode, GL_MODELVIEW);
+      OGL(LoadMatrixf, &vp[MODELVIEW][0][0]);
+    }
+    if (!vploaded[PROJECTION]) {
+      OGL(MatrixMode, GL_PROJECTION);
+      OGL(LoadMatrixf, &vp[PROJECTION][0][0]);
+    }
+    vploaded[MODELVIEW] = vploaded[PROJECTION] = true;
+  }
+  void drawarrays(int mode, int first, int count) {
+    loadmatrices();
+    OGL(DrawArrays, mode, first, count);
+  }
+  void drawelements(int mode, int count, int type, const void *indices) {
+    loadmatrices();
+    OGL(DrawElements, mode, count, type, indices);
   }
 
   /* management of texture slots each texture slot can have multople texture
@@ -312,18 +343,10 @@ namespace ogl {
 
   static void bindshader(shader shader, bool keyframe, bool fog, float lerp)
   {
-#if 0
-    mat4x4f view, proj, viewproj; /* XXX DO IT ELSEWHERE ONLY ONCE! */
-    OGL(GetFloatv, GL_PROJECTION_MATRIX, &proj.vx.x);
-    OGL(GetFloatv, GL_MODELVIEW_MATRIX, &view.vx.x);
-    viewproj = proj*view;
-#else
-    //const mat4x4f viewproj = vp[PROJECTION]*vp[MODELVIEW];
+    /* XXX DO IT ELSEWHERE ONLY ONCE! */
     const mat4x4f viewproj = vp[PROJECTION]*vp[MODELVIEW];
-#endif
     OGL(UseProgram, shader.program);
     if (fog) {
-      //const vec3f zaxis(view.vx.z,view.vy.z,view.vz.z);
       const vec3f zaxis(vp[MODELVIEW].vx.z,vp[MODELVIEW].vy.z,vp[MODELVIEW].vz.z);
       OGL(Uniform2fv, shader.ufogstartend, 1, fogstartend);
       OGL(Uniform4fv, shader.ufogcolor, 1, fogcolor);
@@ -348,7 +371,7 @@ namespace ogl {
     OGL(EnableVertexAttribArray, TEX);
     bindshader(md2, true, true, lerp);
     OGL(DisableClientState, GL_COLOR_ARRAY);
-    OGL(DrawArrays, GL_TRIANGLES, 0, n);
+    drawarrays(GL_TRIANGLES, 0, n);
     unbindshader();
     OGL(DisableVertexAttribArray, POS0);
     OGL(DisableVertexAttribArray, POS1);
@@ -515,7 +538,7 @@ namespace ogl {
     OGL(BindTexture, GL_TEXTURE_2D, skyoglid);
     loopv(strips)
       if (strips[i].tex==skyoglid)
-        glDrawArrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
+        ogl::drawarrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
   }
 
   static void renderstrips(void)
@@ -526,7 +549,7 @@ namespace ogl {
         OGL(BindTexture, GL_TEXTURE_2D, strips[i].tex);
         lasttex = strips[i].tex;
       }
-      glDrawArrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
+      ogl::drawarrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
     }
   }
 
@@ -608,7 +631,7 @@ namespace ogl {
     if (!tex) OGL(DisableClientState, GL_TEXTURE_COORD_ARRAY);
     OGL(VertexPointer, pos, GL_FLOAT, (pos+tex)*sizeof(float), data+tex);
     if (tex) OGL(TexCoordPointer, tex, GL_FLOAT, (pos+tex)*sizeof(float), data);
-    OGL(DrawArrays, mode, 0, n);
+    ogl::drawarrays(mode, 0, n);
     if (!tex) OGL(EnableClientState, GL_TEXTURE_COORD_ARRAY);
     OGL(EnableClientState, GL_COLOR_ARRAY);
   }

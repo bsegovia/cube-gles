@@ -176,7 +176,7 @@ namespace rdr
 
     OGL(VertexPointer, 2, GL_FLOAT, sizeof(vvec<4>), &verts[0][2]);
     OGL(TexCoordPointer, 2, GL_FLOAT, sizeof(vvec<4>), &verts[0][0]);
-    OGL(DrawElements, GL_TRIANGLES, index, GL_UNSIGNED_INT, indices);
+    ogl::drawelements(GL_TRIANGLES, index, GL_UNSIGNED_INT, indices);
     OGL(DisableClientState, GL_INDEX_ARRAY);
     OGL(EnableClientState, GL_COLOR_ARRAY);
   }
@@ -196,7 +196,7 @@ namespace rdr
     OGL(BindTexture, GL_TEXTURE_2D, texture);
     OGL(VertexPointer, 3, GL_FLOAT, sizeof(vvec<5>), &verts[0][2]);
     OGL(TexCoordPointer, 2, GL_FLOAT, sizeof(vvec<5>), &verts[0][0]);
-    OGL(DrawElements, GL_TRIANGLES, 6, GL_UNSIGNED_INT, twotriangles);
+    ogl::drawelements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, twotriangles);
     xtraverts += 4;
   }
 

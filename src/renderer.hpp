@@ -25,6 +25,8 @@ namespace rdr
     void addstrip(int tex, int start, int n);
     int lookuptex(int tex, int &xs, int &ys);
     void drawarray(int mode, size_t pos, size_t tex, size_t n, const float *data);
+    void drawarrays(int mode, int first, int count);
+    void drawelements(int mode, int count, int type, const void *indices);
     void rendermd2(const float *pos0, const float *pos1, float lerp, int n);
     void drawsphere(void);
     void matrixmode(int mode);

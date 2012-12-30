@@ -32,6 +32,7 @@ void quit() // normal exit
 
 void fatal(const char *s, const char *o)    // failure exit
 {
+  assert(0);
   sprintf_sd(msg)("%s%s (%s)\n", s, o, SDL_GetError());
   cleanup(msg);
 }

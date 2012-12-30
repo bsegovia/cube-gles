@@ -300,7 +300,7 @@ namespace rdr
       int n = (wy2-wy1-1)/watersubdiv;
       nquads += n;
       n = (n+2)*2;
-      glDrawArrays(GL_TRIANGLE_STRIP, curvert -= n, n);
+      ogl::drawarrays(GL_TRIANGLE_STRIP, curvert -= n, n);
     }
 
     OGL(Disable, GL_BLEND);
