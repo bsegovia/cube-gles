@@ -64,13 +64,13 @@ namespace ogl {
     double p[16];
     ::perspective(p, fovy, aspect, znear, zfar);
     glMultMatrixd(p);
-    vp[vpmode] = ::perspective(fovy,aspect,znear,zfar)*vp[vpmode];
+    vp[vpmode] = vp[vpmode]*::perspective(fovy,aspect,znear,zfar);
   }
 
   void ortho(float left, float right, float bottom, float top, float znear, float zfar) {
     vploaded[vpmode] = false;
     //vp[vpmode] = ::ortho(left,right,bottom,top,znear,zfar)*vp[vpmode];
-    vp[vpmode] = ::ortho(left,right,bottom,top,znear,zfar);
+    vp[vpmode] = vp[vpmode]*::ortho(left,right,bottom,top,znear,zfar);
     glMultMatrixf(&::ortho(left,right,bottom,top,znear,zfar)[0][0]);
   }
   void scale(const vec3f &s)
@@ -94,7 +94,7 @@ namespace ogl {
 
   /* XXX remove all that when OGL 1 is removed ? */
   static void loadmatrices(void) {
-    return;
+    //return;
     if (!vploaded[MODELVIEW]) {
       OGL(MatrixMode, GL_MODELVIEW);
       OGL(LoadMatrixf, &vp[MODELVIEW][0][0]);
@@ -745,6 +745,7 @@ namespace ogl {
     glDisable(GL_FOG);
 
     OGL(Disable, GL_TEXTURE_2D);
+    printf("\r%i", vpmode);
 
     drawhud(w, h, (int)curfps, nquads, curvert, underwater);
 
