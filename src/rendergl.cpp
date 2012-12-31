@@ -14,7 +14,7 @@ namespace ogl {
 
   /* matrix handling. very inspired by opengl 1.0 :-) */
   enum {MATRIX_STACK = 16};
-  static mat4x4f vp[MATRIX_MODE];
+  static mat4x4f vp[MATRIX_MODE] = {mat4x4f(one), mat4x4f(one)};
   static mat4x4f vpstack[MATRIX_STACK][MATRIX_MODE];
   static int vpdepth = 0;
   static int vpmode = MODELVIEW;
@@ -37,7 +37,7 @@ namespace ogl {
   void identity(void)
   {
     vploaded[vpmode] = false;
-    glLoadIdentity();
+   glLoadIdentity();
     vp[vpmode] = mat4x4f(one);
   }
   void translate(const vec3f &v)
@@ -49,7 +49,7 @@ namespace ogl {
   void mulmatrix(const mat4x4f &m)
   {
     vploaded[vpmode] = false;
-    glMultMatrixf(&m[0][0]);
+   glMultMatrixf(&m[0][0]);
     vp[vpmode] = m*vp[vpmode];
   }
   void rotate(float angle, const vec3f &axis)
@@ -69,8 +69,9 @@ namespace ogl {
 
   void ortho(float left, float right, float bottom, float top, float znear, float zfar) {
     vploaded[vpmode] = false;
+    //vp[vpmode] = ::ortho(left,right,bottom,top,znear,zfar)*vp[vpmode];
     vp[vpmode] = ::ortho(left,right,bottom,top,znear,zfar);
-    glOrtho(left,right,bottom,top,znear,zfar);
+    glMultMatrixf(&::ortho(left,right,bottom,top,znear,zfar)[0][0]);
   }
   void scale(const vec3f &s)
   {
@@ -103,6 +104,7 @@ namespace ogl {
       OGL(LoadMatrixf, &vp[PROJECTION][0][0]);
     }
     vploaded[MODELVIEW] = vploaded[PROJECTION] = true;
+    OGL(MatrixMode, glmode[vpmode]);
   }
   void drawarrays(int mode, int first, int count) {
     loadmatrices();
