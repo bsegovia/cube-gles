@@ -134,7 +134,7 @@ struct sprintf_s_f
 #define sprintf_sd(d) string d; sprintf_s(d)
 #define sprintf_sdlv(d,last,fmt) string d; { va_list ap; va_start(ap, last); formatstring(d, fmt, ap); va_end(ap); }
 #define sprintf_sdv(d,fmt) sprintf_sdlv(d,fmt,fmt)
-#define ATOI(s) strtol(s, NULL, 0) // supports hexadecimal numbers
+#define ATOI(s) strtol(s, NULL, 0) /* supports hexadecimal numbers */
 
 #define fast_f2nat(val) ((int)(val))
 

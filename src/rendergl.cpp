@@ -12,8 +12,8 @@ namespace rdr { extern int curvert; }
 namespace rdr {
 namespace ogl {
 
-  /* matrix handling. very inspired by opengl 1.0 :-) */
-  enum {MATRIX_STACK = 16};
+  /* matrix handling. very inspired by opengl :-) */
+  enum {MATRIX_STACK = 4};
   static mat4x4f vp[MATRIX_MODE] = {mat4x4f(one), mat4x4f(one)};
   static mat4x4f vpstack[MATRIX_STACK][MATRIX_MODE];
   static int vpdepth = 0;
@@ -52,7 +52,7 @@ namespace ogl {
   }
   void scale(const vec3f &s) {
     vploaded[vpmode] = false;
-    scale(vp[vpmode],s);
+    vp[vpmode] = scale(vp[vpmode],s);
   }
   void pushmatrix(void) {
     assert(vpdepth+1<MATRIX_STACK);
@@ -63,9 +63,7 @@ namespace ogl {
     assert(vpdepth>0);
     vp[vpmode] = vpstack[--vpdepth][vpmode];
   }
-
-  /* XXX remove all that when OGL 1 is removed ? */
-  static void loadmatrices(void) {
+  static void loadmatrices(void) { /* XXX remove all that when OGL 1 is removed ? */
     if (!vploaded[MODELVIEW]) {
       OGL(MatrixMode, GL_MODELVIEW);
       OGL(LoadMatrixf, &vp[MODELVIEW][0][0]);
@@ -184,18 +182,18 @@ namespace ogl {
     return true;
   }
 
-  static bool checkshader(GLuint shaderName, const char *source)
+  static bool checkshader(GLuint shadername)
   {
     GLint result = GL_FALSE;
-    int infoLogLength;
+    int infologlength;
 
-    if (!shaderName) return false;
-    OGL(GetShaderiv, shaderName, GL_COMPILE_STATUS, &result);
-    OGL(GetShaderiv, shaderName, GL_INFO_LOG_LENGTH, &infoLogLength);
-    if (infoLogLength) {
-      char *buffer = new char[infoLogLength + 1];
-      buffer[infoLogLength] = 0;
-      OGL(GetShaderInfoLog, shaderName, infoLogLength, NULL, buffer);
+    if (!shadername) return false;
+    OGL(GetShaderiv, shadername, GL_COMPILE_STATUS, &result);
+    OGL(GetShaderiv, shadername, GL_INFO_LOG_LENGTH, &infologlength);
+    if (infologlength) {
+      char *buffer = new char[infologlength + 1];
+      buffer[infologlength] = 0;
+      OGL(GetShaderInfoLog, shadername, infologlength, NULL, buffer);
       printf(buffer);
       delete [] buffer;
     }
@@ -203,20 +201,33 @@ namespace ogl {
     return result == GL_TRUE;
   }
 
-  static GLuint loadshader(GLenum type, const char *source)
+  /* mostly to define an quick and dirty uber-shader */
+  static const int subtypen = 3;
+  static const int shadern = 1<<subtypen;
+  static const int FOG = 1<<0;
+  static const int KEYFRAME = 1<<1;
+  static const int DIFFUSETEX = 1<<2;
+
+  static GLuint loadshader(GLenum type, const char *source, const char *rulestr)
   {
     const GLuint name = glCreateShader(type);
-    OGL(ShaderSource, name, 1, &source, NULL);
+    const char *sources[] = {rulestr, source};
+    OGL(ShaderSource, name, 2, sources, NULL);
     OGL(CompileShader, name);
-    if (!checkshader(name, source)) fatal("OGL: shader not valid");
+    if (!checkshader(name)) fatal("OGL: shader not valid");
     return name;
   }
 
-  static GLuint loadprogram(const char *vertstr, const char *fragstr)
+  static GLuint loadprogram(const char *vertstr, const char *fragstr, uint rules)
   {
     GLuint program = 0;
-    const GLuint vert = loadshader(GL_VERTEX_SHADER, vertstr);
-    const GLuint frag = loadshader(GL_FRAGMENT_SHADER, fragstr);
+    sprintf_sd(rulestr)("#version 130\n"
+                        "#define USE_FOG %i\n"
+                        "#define USE_KEYFRAME %i\n"
+                        "#define USE_DIFFUSETEX %i\n",
+                        rules&FOG,rules&KEYFRAME,rules&DIFFUSETEX);
+    const GLuint vert = loadshader(GL_VERTEX_SHADER, vertstr, rulestr);
+    const GLuint frag = loadshader(GL_FRAGMENT_SHADER, fragstr, rulestr);
     OGLR(program, CreateProgram);
     OGL(AttachShader, program, vert);
     OGL(AttachShader, program, frag);
@@ -225,106 +236,90 @@ namespace ogl {
     return program;
   }
 
-  /* for diffuse models */
-  static const char diffusevert[] = {
-    "#version 130\n"
+  static const char ubervert[] = {
     "uniform mat4 MVP;\n"
-    "uniform vec3 zaxis;\n"
-    "in vec3 p,incol;\n"
-    "in vec2 t;\n"
-    "out vec2 texcoord;\n"
+    "#if USE_FOG\n"
+    "  uniform vec3 zaxis;\n"
+    "  out float fogz;\n"
+    "#endif\n"
+    "#if USE_KEYFRAME\n"
+    "  uniform float delta;\n"
+    "  in vec3 p0, p1;\n"
+    "#else\n"
+    "  in vec3 p;\n"
+    "#endif\n"
+    "in vec3 incol;\n"
+    "#if USE_DIFFUSETEX\n"
+    "  out vec2 texcoord;\n"
+    "  in vec2 t;\n"
+    "#endif\n"
     "out vec3 outcol;\n"
-    "out float fogz;\n"
     "void main() {\n"
+    "#if USE_DIFFUSETEX\n"
     "  texcoord = t;\n"
+    "#endif\n"
+    "  outcol = incol;\n"
+    "#if USE_KEYFRAME\n"
+    "  const vec3 p = mix(p0,p1,delta);\n"
+    "#endif\n"
+    "#if USE_FOG\n"
     "  fogz = dot(zaxis,p);\n"
-    "  outcol = incol;\n"
+    "#endif\n"
     "  gl_Position = MVP * vec4(p,1.0);\n"
     "}\n"
   };
-  /* mix(texture, fog) * color */
-  static const char diffusefrag[] = {
-    "#version 130\n"
-    "uniform sampler2D diffuse;\n"
-    "uniform vec4 fogcolor;\n"
-    "uniform vec2 fogstartend;\n"
+  static const char uberfrag[] = {
+    "#if USE_DIFFUSETEX\n"
+    "  uniform sampler2D diffuse;\n"
+    "  in vec2 texcoord;\n"
+    "#endif\n"
+    "#if USE_FOG\n"
+    "  uniform vec4 fogcolor;\n"
+    "  uniform vec2 fogstartend;\n"
+    "  in float fogz;\n"
+    "#endif\n"
     "uniform float overbright;\n"
-    "in vec2 texcoord;\n"
     "in vec3 outcol;\n"
-    "in float fogz;\n"
     "out vec4 c;\n"
     "void main() {\n"
-    "  const float factor = clamp((-fogz-fogstartend.x)*fogstartend.y.x,0.0,1.0)\n;"
-    "  const vec4 tex = texture(diffuse, texcoord);\n"
-    "  const vec3 col = mix(tex.xyz,fogcolor.xyz,factor);\n"
-    "  c = vec4(col*overbright*outcol,tex.w);\n"
+    "  vec4 col;\n"
+    "#if USE_DIFFUSETEX\n"
+    "  col = texture(diffuse, texcoord);\n"
+    "  col.xyz *= outcol.xyz;\n"
+    "#else\n"
+    "  col = vec4(outcol.xyz,1.0);\n"
+    "#endif\n"
+    "#if USE_FOG\n"
+    "  const float factor = clamp((-fogz-fogstartend.x)*fogstartend.y,0.0,1.0)\n;"
+    "  col.xyz = mix(col.xyz,fogcolor.xyz,factor);\n"
+    "#endif\n"
+    "  col.xyz *= overbright;\n"
+    "  c = col;\n"
     "}\n"
   };
 
-  /* for particles */
-  static const char particlevert[] = {
-    "#version 130\n"
-    "uniform mat4 MVP;\n"
-    "in vec3 p,incol;\n"
-    "in vec2 t;\n"
-    "out vec2 texcoord;\n"
-    "out vec4 outcol;\n"
-    "void main() {\n"
-    "  texcoord = t;\n"
-    "  outcol = vec4(incol,1.0);\n"
-    "  gl_Position = MVP * vec4(p,1.0);\n"
-    "}\n"
-  };
-  /* texture * color (for particles) */
-  static const char particlefrag[] = {
-    "#version 130\n"
-    "uniform sampler2D diffuse;\n"
-    "uniform float overbright;\n"
-    "in vec2 texcoord;\n"
-    "in vec4 outcol;\n"
-    "out vec4 c;\n"
-    "void main() {c = overbright*outcol*texture(diffuse, texcoord);}\n"
-  };
-
-  /* for md2 models with key frame interpolation */
-  static const char md2vert[] = {
-    "#version 130\n"
-    "uniform mat4 MVP;\n"
-    "uniform float delta;\n"
-    "uniform vec3 zaxis;\n"
-    "in vec3 p0,p1,incol;\n"
-    "in vec2 t;\n"
-    "out vec2 texcoord;\n"
-    "out vec3 outcol;\n"
-    "out float fogz;\n"
-    "void main() {\n"
-    "  texcoord = t;\n"
-    "  const vec4 p = vec4(mix(p0,p1,delta),1.0);\n"
-    "  fogz = dot(zaxis,p.xyz);\n"
-    "  outcol = incol;\n"
-    "  gl_Position = MVP * p;\n"
-    "}\n"
-  };
   static struct shader {
-    GLuint program;
-    GLuint udiffuse, udelta, umvp, uzaxis, ufogstartend, ufogcolor, uoverbright;
-  } md2, diffuse, particle;
+    uint rules; /* fog,keyframe...? */
+    GLuint program; /* ogl program */
+    GLuint udiffuse, udelta, umvp, uoverbright; /* uniforms */
+    GLuint uzaxis, ufogstartend, ufogcolor; /* uniforms */
+  } shaders[shadern];
 
   static float fogcolor[4];
   static float fogstartend[2];
 
-  static void bindshader(shader shader, bool keyframe, bool fog, float lerp)
+  static void bindshader(shader shader, float lerp=0.f)
   {
     /* XXX DO IT ELSEWHERE ONLY ONCE! */
     const mat4x4f viewproj = vp[PROJECTION]*vp[MODELVIEW];
     OGL(UseProgram, shader.program);
-    if (fog) {
+    if (shader.rules & FOG) {
       const vec3f zaxis(vp[MODELVIEW].vx.z,vp[MODELVIEW].vy.z,vp[MODELVIEW].vz.z);
       OGL(Uniform2fv, shader.ufogstartend, 1, fogstartend);
       OGL(Uniform4fv, shader.ufogcolor, 1, fogcolor);
       OGL(Uniform3fv, shader.uzaxis, 1, &zaxis.x);
     }
-    if (keyframe) OGL(Uniform1f, shader.udelta, lerp);
+    if (shader.rules & KEYFRAME) OGL(Uniform1f, shader.udelta, lerp);
     OGL(UniformMatrix4fv, shader.umvp, 1, GL_FALSE, &viewproj.vx.x);
     OGL(Uniform1f, shader.uoverbright, overbrightf);
   }
@@ -341,7 +336,7 @@ namespace ogl {
     OGL(EnableVertexAttribArray, POS0);
     OGL(EnableVertexAttribArray, POS1);
     OGL(EnableVertexAttribArray, TEX);
-    bindshader(md2, true, true, lerp);
+    bindshader(shaders[FOG|KEYFRAME|DIFFUSETEX], lerp);
     OGL(DisableClientState, GL_COLOR_ARRAY);
     drawarrays(GL_TRIANGLES, 0, n);
     unbindshader();
@@ -353,14 +348,17 @@ namespace ogl {
     OGL(EnableClientState, GL_TEXTURE_COORD_ARRAY);
   }
 
-  static void buildshader(shader &shader, bool keyframe, bool fog)
+  static void buildshader(shader &shader, uint rules)
   {
-    if (keyframe) {
+    shader.program = loadprogram(ubervert, uberfrag, rules);
+    shader.rules = rules;
+    if (rules&KEYFRAME) {
       OGL(BindAttribLocation, shader.program, POS0, "p0");
       OGL(BindAttribLocation, shader.program, POS1, "p1");
     } else
       OGL(BindAttribLocation, shader.program, POS0, "p");
-    OGL(BindAttribLocation, shader.program, TEX, "t");
+    if (rules&DIFFUSETEX)
+      OGL(BindAttribLocation, shader.program, TEX, "t");
     OGL(BindAttribLocation, shader.program, COL, "incol");
     OGL(BindFragDataLocation, shader.program, 0, "c");
     OGL(LinkProgram, shader.program);
@@ -368,17 +366,19 @@ namespace ogl {
     OGL(UseProgram, shader.program);
     OGLR(shader.uoverbright, GetUniformLocation, shader.program, "overbright");
     OGLR(shader.umvp, GetUniformLocation, shader.program, "MVP");
-    if (keyframe)
+    if (rules&KEYFRAME)
       OGLR(shader.udelta, GetUniformLocation, shader.program, "delta");
     else
       shader.udelta = 0;
-    OGLR(shader.udiffuse, GetUniformLocation, shader.program, "diffuse");
-    if (fog) {
+    if (rules&DIFFUSETEX) {
+      OGLR(shader.udiffuse, GetUniformLocation, shader.program, "diffuse");
+      OGL(Uniform1i, shader.udiffuse, 0);
+    }
+    if (rules&FOG) {
       OGLR(shader.uzaxis, GetUniformLocation, shader.program, "zaxis");
       OGLR(shader.ufogcolor, GetUniformLocation, shader.program, "fogcolor");
       OGLR(shader.ufogstartend, GetUniformLocation, shader.program, "fogstartend");
     }
-    OGL(Uniform1i, shader.udiffuse, 0);
     OGL(UseProgram, 0);
   }
 
@@ -412,14 +412,7 @@ namespace ogl {
 
     purgetextures();
     buildsphere(1, 12, 6);
-    md2.program = loadprogram(md2vert, diffusefrag);
-    buildshader(md2, true, true);
-
-    diffuse.program = loadprogram(diffusevert, diffusefrag);
-    buildshader(diffuse, false, true);
-
-    particle.program = loadprogram(particlevert, particlefrag);
-    buildshader(particle, false, false);
+    loopi(shadern) buildshader(shaders[i], i);
   }
 
   void clean(void) { OGL(DeleteBuffers, 1, &spherevbo); }
@@ -610,10 +603,10 @@ namespace ogl {
 
   void drawframe(int w, int h, float curfps)
   {
-    float hf = hdr.waterlevel-0.3f;
+    const float hf = hdr.waterlevel-0.3f;
+    const bool underwater = player1->o.z<hf;
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
-    bool underwater = player1->o.z<hf;
 
     glFogi(GL_FOG_START, (fog+64)/8);
     glFogi(GL_FOG_END, fog);
@@ -707,7 +700,7 @@ namespace ogl {
     const int nquads = renderwater(hf);
 
     overbright(2);
-    bindshader(particle,false,false,0.f);
+    bindshader(shaders[DIFFUSETEX]);
     render_particles(curtime);
     unbindshader();
     overbright(1);
