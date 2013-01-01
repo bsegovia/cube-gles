@@ -14,7 +14,7 @@ namespace ogl {
 
   /* matrix handling. very inspired by opengl :-) */
   enum {MATRIX_STACK = 4};
-  static mat4x4f vp[MATRIX_MODE] = {mat4x4f(one), mat4x4f(one)};
+  static mat4x4f vp[MATRIX_MODE] = {one, one};
   static mat4x4f vpstack[MATRIX_STACK][MATRIX_MODE];
   static int vpdepth = 0;
   static int vpmode = MODELVIEW;
@@ -350,6 +350,7 @@ namespace ogl {
 
   static void buildshader(shader &shader, uint rules)
   {
+    memset(&shader, 0, sizeof(struct shader));
     shader.program = loadprogram(ubervert, uberfrag, rules);
     shader.rules = rules;
     if (rules&KEYFRAME) {
@@ -441,7 +442,7 @@ namespace ogl {
 
   int lookuptex(int tex, int &xs, int &ys)
   {
-    int frame = 0;  /* other frames? */
+    int frame = 0; /* other frames? */
     int tid = mapping[tex][frame];
 
     if (tid>=FIRSTTEX) {
@@ -451,7 +452,7 @@ namespace ogl {
     }
 
     xs = ys = 16;
-    if (!tid) return 1;                  // crosshair :)
+    if (!tid) return 1; /* crosshair :) */
 
     loopi(curtex) { /* lazily happens once per "texture" command */
       if (strcmp(mapname[tex][frame], texname[i])==0) {
@@ -590,6 +591,7 @@ namespace ogl {
     OGL(Disable, GL_CULL_FACE);
   }
 
+  /* XXX remove that when use of shaders is done */
   void drawarray(int mode, size_t pos, size_t tex, size_t n, const float *data)
   {
     OGL(DisableClientState, GL_COLOR_ARRAY);

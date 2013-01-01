@@ -20,13 +20,14 @@ namespace game
   VARP(invmouse, 0, 0, 1);
 
   static void mode(int n) { client::addmsg(1, 2, SV_GAMEMODE, nextmode = n); }
+  COMMAND(mode, ARG_1INT);
 
   static bool intermission = false;
   static string clientmap;
 
   const char *getclientmap() { return clientmap; }
 
-  // creation of scoreboard pseudo-menu
+  /* creation of scoreboard pseudo-menu */
   static bool scoreson = false;
   static void showscores(bool on)
   {
@@ -45,7 +46,7 @@ namespace game
     d->move = 0;
   }
 
-  /*! Reset player state not persistent accross spawns */
+  /* reset player state not persistent accross spawns */
   static void spawnstate(dynent *d)
   {
     resetmovement(d);
@@ -130,6 +131,7 @@ namespace game
     spawnplayer(player1);
     showscores(false);
   }
+  COMMAND(showscores, ARG_DOWN);
 
   void arenacount(dynent *d, int &alive, int &dead, char *&lastteam, bool &oneteam)
   {
@@ -219,6 +221,7 @@ namespace game
     sleepwait = atoi(msec)+lastmillis;
     strcpy_s(sleepcmd, cmd);
   }
+  COMMANDN(sleep, sleepf, ARG_2STR);
 
   void updateworld(int millis)
   {
@@ -268,13 +271,12 @@ namespace game
       float dy = (rnd(21)-10)/10.0f*i;
       d->o.x += dx;
       d->o.y += dy;
-      if (physics::collide(d, true, 0, 0))
-        return;
+      if (physics::collide(d, true, 0, 0)) return;
       d->o.x -= dx;
       d->o.y -= dy;
     }
     console::out("can't find entity spawn spot! (%d, %d)",
-      (int)d->o.x, (int)d->o.y);
+                 (int)d->o.x, (int)d->o.y);
   }
 
   static int spawncycle = -1;
@@ -305,14 +307,15 @@ namespace game
     player1->s = isdown; \
     player1->v = isdown ? d : (player1->os ? -(d) : 0); \
     player1->lastmove = lastmillis; \
-  }
+  }\
+  COMMAND(name, ARG_DOWN);
   DIRECTION(backward, move,   -1, k_down,  k_up);
   DIRECTION(forward,  move,    1, k_up,    k_down);
   DIRECTION(left,     strafe,  1, k_left,  k_right);
   DIRECTION(right,    strafe, -1, k_right, k_left);
 #undef DIRECTION
 
-  void attack(bool on)
+  static void attack(bool on)
   {
     if (intermission)
       return;
@@ -321,11 +324,12 @@ namespace game
     else if ((player1->attacking = on) != 0)
       respawn();
   }
+  COMMAND(attack, ARG_DOWN);
 
   static void jumpn(bool on) {
-    if (!intermission && (player1->jumpnext = on))
-      respawn();
+    if (!intermission && (player1->jumpnext = on)) respawn();
   }
+  COMMANDN(jump, jumpn, ARG_DOWN);
 
   void fixplayer1range(void)
   {
@@ -387,8 +391,7 @@ namespace game
       sound::play(S_DIE1+rnd(2));
       spawnstate(player1);
       player1->lastaction = lastmillis;
-    }
-    else
+    } else
       sound::play(S_PAIN6);
   }
 
@@ -470,8 +473,7 @@ namespace game
       }
       basetime = d->lastaction;
       int t = lastmillis-d->lastaction;
-      if (t<0 || t>20000)
-        return;
+      if (t<0 || t>20000) return;
       if (t>(r-1)*100) {
         n += 4; if (t>(r+10)*100) {
           t -= (r+10)*100;
@@ -479,22 +481,19 @@ namespace game
         }
       }
       if (mz<-1000) return;
-      //mdl = (((int)d>>6)&1)+1;
-      //mz = d->o.z-d->eyeheight+0.2f;
-      //scale = 1.2f;
     }
     else if (d->state==CS_EDITING)
       n = 16;
     else if (d->state==CS_LAGGED)
-      n = 17; 
+      n = 17;
     else if (d->monsterstate==M_ATTACKING)
-      n = 8;  
+      n = 8;
     else if (d->monsterstate==M_PAIN)
-      n = 10; 
+      n = 10;
     else if ((!d->move && !d->strafe) || !d->moving)
-      n = 12; 
+      n = 12;
     else if (!d->onfloor && d->timeinair>100)
-      n = 18; 
+      n = 18;
     else {
       n = 14;
       speed = 1200/d->maxspeed*scale;
@@ -576,14 +575,12 @@ namespace game
 
   static void sendmap(const char *mapname)
   {
-    if (*mapname)
-      world::save(mapname);
+    if (*mapname) world::save(mapname);
     client::changemap(mapname);
     mapname = game::getclientmap();
     int mapsize;
     uchar *mapdata = world::readmap(mapname, &mapsize);
-    if (!mapdata)
-      return;
+    if (!mapdata) return;
     ENetPacket *packet = enet_packet_create(NULL, MAXTRANS + mapsize, ENET_PACKET_FLAG_RELIABLE);
     uchar *start = packet->data;
     uchar *p = start+2;
@@ -606,6 +603,7 @@ namespace game
     sprintf_sd(msg)("[map %s uploaded to server, \"getmap\" to receive it]", mapname);
     client::toserver(msg);
   }
+  COMMAND(sendmap, ARG_1STR);
 
   static void getmap(void)
   {
@@ -618,19 +616,6 @@ namespace game
     client::sendpackettoserv(packet);
     console::out("requesting map from server...");
   }
-
-  COMMAND(mode, ARG_1INT);
-  COMMAND(backward, ARG_DOWN);
-  COMMAND(forward, ARG_DOWN);
-  COMMAND(left, ARG_DOWN);
-  COMMAND(right, ARG_DOWN);
-  COMMANDN(jump, jumpn, ARG_DOWN);
-  COMMAND(attack, ARG_DOWN);
-  COMMAND(showscores, ARG_DOWN);
-  COMMANDN(sleep, sleepf, ARG_2STR);
-  COMMAND(sendmap, ARG_1STR);
   COMMAND(getmap, ARG_NONE);
-
 } /* namespace game */
-
 
