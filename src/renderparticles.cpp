@@ -123,7 +123,7 @@ namespace rdr
     OGL(DepthMask, GL_TRUE);
   }
 
-  void particle_splash(int type, int num, int fade, vec &p)
+  void particle_splash(int type, int num, int fade, const vec &p)
   {
     loopi(num) {
       const int radius = type==5 ? 50 : 150;

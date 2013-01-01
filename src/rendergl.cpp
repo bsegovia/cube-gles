@@ -5,7 +5,6 @@
 
 // XXX
 int xtraverts;
-bool hasoverbright = false;
 
 namespace rdr { extern int curvert; }
 
@@ -117,10 +116,6 @@ namespace ogl {
       const float zHigh = radius * cosf(angle1);
       const float sin1 = radius * sinf(angle0);
       const float sin2 = radius * sinf(angle1);
-      /* const float sin3 = -sinf(angle0); */
-      /* const float cos3 = -cosf(angle0); */
-      /* const float sin4 = -sinf(angle1); */
-      /* const float cos4 = -cosf(angle1); */
 
       loopi(slices+1) {
         const float angle = 2.f * M_PI * float(i) / float(slices);
@@ -131,14 +126,11 @@ namespace ogl {
         loopk(start) { /* stick the strips together */
           const float s = 1.f-float(i)/slices, t = 1.f-float(j)/stacks;
           const float x = sin1*sin0, y = sin1*cos0, z = zLow;
-          /* glNormal3f(sin0*sin3, cos0*sin3, cos3); */
           v.add(vvec<5>(s, t, x, y, z));
         }
-
         loopk(end) { /* idem */
           const float s = 1.f-float(i)/slices, t = 1.f-float(j+1)/stacks;
           const float x = sin2*sin0, y = sin2*cos0, z = zHigh;
-          /* glNormal3f(sin0*sin4, cos0*sin4, cos4); */
           v.add(vvec<5>(s, t, x, y, z));
         }
         spherevertn += start+end;
@@ -239,7 +231,7 @@ namespace ogl {
   static const char ubervert[] = {
     "uniform mat4 MVP;\n"
     "#if USE_FOG\n"
-    "  uniform vec3 zaxis;\n"
+    "  uniform vec4 zaxis;\n"
     "  out float fogz;\n"
     "#endif\n"
     "#if USE_KEYFRAME\n"
@@ -263,7 +255,7 @@ namespace ogl {
     "  const vec3 p = mix(p0,p1,delta);\n"
     "#endif\n"
     "#if USE_FOG\n"
-    "  fogz = dot(zaxis,p);\n"
+    "  fogz = dot(zaxis,vec4(p,1.0));\n"
     "#endif\n"
     "  gl_Position = MVP * vec4(p,1.0);\n"
     "}\n"
@@ -314,10 +306,11 @@ namespace ogl {
     const mat4x4f viewproj = vp[PROJECTION]*vp[MODELVIEW];
     OGL(UseProgram, shader.program);
     if (shader.rules & FOG) {
-      const vec3f zaxis(vp[MODELVIEW].vx.z,vp[MODELVIEW].vy.z,vp[MODELVIEW].vz.z);
+      const mat4x4f &mv = vp[MODELVIEW];
+      const vec4f zaxis(mv.vx.z,mv.vy.z,mv.vz.z,mv.vw.z);
       OGL(Uniform2fv, shader.ufogstartend, 1, fogstartend);
       OGL(Uniform4fv, shader.ufogcolor, 1, fogcolor);
-      OGL(Uniform3fv, shader.uzaxis, 1, &zaxis.x);
+      OGL(Uniform4fv, shader.uzaxis, 1, &zaxis.x);
     }
     if (shader.rules & KEYFRAME) OGL(Uniform1f, shader.udelta, lerp);
     OGL(UniformMatrix4fv, shader.umvp, 1, GL_FALSE, &viewproj.vx.x);
@@ -389,26 +382,8 @@ namespace ogl {
     glClearDepth(1.f);
     OGL(DepthFunc, GL_LESS);
     OGL(Enable, GL_DEPTH_TEST);
-    glShadeModel(GL_SMOOTH);
-
-    glEnable(GL_FOG);
-    glFogi(GL_FOG_MODE, GL_LINEAR);
-    glFogf(GL_FOG_DENSITY, 0.25f);
-    glHint(GL_FOG_HINT, GL_NICEST);
-
-    glEnable(GL_LINE_SMOOTH);
-    glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-
     OGL(CullFace, GL_FRONT);
     OGL(Enable, GL_CULL_FACE);
-
-    const char *exts = (const char *)glGetString(GL_EXTENSIONS);
-
-    if (strstr(exts, "GL_EXT_texture_env_combine"))
-      hasoverbright = true;
-    else
-      console::out("WARNING: cannot use overbright lighting");
-
     OGL(GetIntegerv, GL_MAX_TEXTURE_SIZE, &glmaxtexsize);
 
     purgetextures();
@@ -482,17 +457,13 @@ namespace ogl {
 
   static void setupworld(void)
   {
-    glEnableClientState(GL_VERTEX_ARRAY);
-    glEnableClientState(GL_COLOR_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-    setarraypointers();
-
-    if (hasoverbright) {
-      glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE_EXT);
-      glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB_EXT, GL_MODULATE);
-      glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB_EXT, GL_TEXTURE);
-      glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB_EXT, GL_PRIMARY_COLOR_EXT);
-    }
+    glDisableClientState(GL_VERTEX_ARRAY);
+    glDisableClientState(GL_COLOR_ARRAY);
+    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+    OGL(EnableVertexAttribArray, POS0);
+    OGL(EnableVertexAttribArray, COL);
+    OGL(EnableVertexAttribArray, TEX);
+    setarraypointers2();
   }
 
   static int skyoglid;
@@ -519,12 +490,7 @@ namespace ogl {
     }
   }
 
-  static void overbright(float amount)
-  {
-    if (hasoverbright)
-      glTexEnvf(GL_TEXTURE_ENV, GL_RGB_SCALE_EXT, amount);
-    overbrightf = amount;
-  }
+  static void overbright(float amount) { overbrightf = amount; }
 
   void addstrip(int tex, int start, int n)
   {
@@ -610,8 +576,6 @@ namespace ogl {
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
 
-    glFogi(GL_FOG_START, (fog+64)/8);
-    glFogi(GL_FOG_END, fog);
     fogstartend[0] = float((fog+64)/8);
     fogstartend[1] = 1.f/(float(fog)-fogstartend[0]);
 
@@ -626,14 +590,11 @@ namespace ogl {
     fogcolor[2] = float(fogcolour&255)/256.0f;
     fogcolor[3] = 1.f;
 
-    glFogfv(GL_FOG_COLOR, fogc);
     OGL(ClearColor, fogc[0], fogc[1], fogc[2], 1.0f);
 
     if (underwater) {
       fovy += (float)sin(lastmillis/1000.0)*2.0f;
       aspect += (float)sin(lastmillis/1000.0+PI)*0.1f;
-      glFogi(GL_FOG_START, 0);
-      glFogi(GL_FOG_END, (fog+96)/8);
       fogstartend[0] = 0.f;
       fogstartend[1] = 1.f/float((fog+96)/8);
     }
@@ -664,25 +625,34 @@ namespace ogl {
 
     setupworld();
 
+    bindshader(shaders[0]);
     renderstripssky();
+    OGL(DisableVertexAttribArray, COL);
 
     identity();
     rotate(player1->pitch, pitch);
     rotate(player1->yaw, yaw);
     rotate(90.f, vec3f(1.f,0.f,0.f));
-    glColor3f(1.0f, 1.0f, 1.0f);
-    glDisable(GL_FOG);
-    glDepthFunc(GL_GREATER);
+    OGL(VertexAttrib3f, COL, 1.0f, 1.0f, 1.0f);
+    OGL(DepthFunc, GL_GREATER);
+    bindshader(shaders[DIFFUSETEX]);
     draw_envbox(14, fog*4/3);
-    glDepthFunc(GL_LESS);
-    glEnable(GL_FOG);
+    OGL(DepthFunc, GL_LESS);
+    OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
+    OGL(DisableVertexAttribArray, TEX);
+    unbindshader();
 
-    setupworld();
     transplayer();
 
     overbright(2);
 
+    setupworld(); /* XXX REMOVE ! */
+    bindshader(shaders[DIFFUSETEX|FOG]);
     renderstrips();
+    unbindshader();
+    OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
+    OGL(DisableVertexAttribArray, COL);
+    OGL(DisableVertexAttribArray, TEX);
 
     xtraverts = 0;
 
@@ -699,7 +669,13 @@ namespace ogl {
     drawhudgun(fovy, aspect, farplane);
 
     overbright(1);
+    setupworld(); /* XXX REMOVE ! */
+    bindshader(shaders[DIFFUSETEX]);
     const int nquads = renderwater(hf);
+    unbindshader();
+    OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
+    OGL(DisableVertexAttribArray, COL);
+    OGL(DisableVertexAttribArray, TEX);
 
     overbright(2);
     bindshader(shaders[DIFFUSETEX]);
@@ -707,15 +683,11 @@ namespace ogl {
     unbindshader();
     overbright(1);
 
-    glDisable(GL_FOG);
-
     OGL(Disable, GL_TEXTURE_2D);
-    printf("\r%i", vpmode);
 
     drawhud(w, h, (int)curfps, nquads, curvert, underwater);
 
     OGL(Enable, GL_CULL_FACE);
-    glEnable(GL_FOG);
   }
 } /* namespace ogl */
 } /* namespace rdr */

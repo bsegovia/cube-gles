@@ -53,6 +53,7 @@ namespace rdr
   int renderwater(float hf);
   void finishstrips(void);
   void setarraypointers(void);
+  void setarraypointers2(void);
   void mipstats(int a, int b, int c);
 
   /* rendertext */
@@ -76,7 +77,7 @@ namespace rdr
 
   /* renderparticles */
   void setorient(const vec &r, const vec &u);
-  void particle_splash(int type, int num, int fade, vec &p);
+  void particle_splash(int type, int num, int fade, const vec &p);
   void particle_trail(int type, int fade, vec &from, vec &to);
   void render_particles(int time);
 

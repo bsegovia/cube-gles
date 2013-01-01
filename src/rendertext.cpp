@@ -194,8 +194,8 @@ namespace rdr
     verts[3] = vvec<5>(s0, t0, float(x0), float(y0), float(z0));
 
     OGL(BindTexture, GL_TEXTURE_2D, texture);
-    OGL(VertexPointer, 3, GL_FLOAT, sizeof(vvec<5>), &verts[0][2]);
-    OGL(TexCoordPointer, 2, GL_FLOAT, sizeof(vvec<5>), &verts[0][0]);
+    OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(vvec<5>), &verts[0][2]);
+    OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(vvec<5>), &verts[0][0]);
     ogl::drawelements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, twotriangles);
     xtraverts += 4;
   }

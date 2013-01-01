@@ -567,77 +567,63 @@ namespace world
     // incorrect: light will fade quicker if near edge of the world
     int stepl = fast_f2nat(l/(float)steps);
 
-    if (hasoverbright) {
-      l /= lightscale;
-      stepl /= lightscale;
-      // coloured light version, special case because most lights are white
-      if (light.attr3 || light.attr4) {
-        int dimness = rnd((255-(light.attr2+light.attr3+light.attr4)/3)/16+1);
-        x += stepx*dimness;
-        y += stepy*dimness;
+    l /= lightscale;
+    stepl /= lightscale;
+    // coloured light version, special case because most lights are white
+    if (light.attr3 || light.attr4) {
+      int dimness = rnd((255-(light.attr2+light.attr3+light.attr4)/3)/16+1);
+      x += stepx*dimness;
+      y += stepy*dimness;
 
-        if (OUTBORD(x>>PRECBITS, y>>PRECBITS))
-          return;
+      if (OUTBORD(x>>PRECBITS, y>>PRECBITS))
+        return;
 
-        int g = light.attr3<<PRECBITS;
-        int stepg = fast_f2nat(g/(float)steps);
-        int b = light.attr4<<PRECBITS;
-        int stepb = fast_f2nat(b/(float)steps);
-        g /= lightscale;
-        stepg /= lightscale;
-        b /= lightscale;
-        stepb /= lightscale;
-        loopi(steps)
-        {
-          sqr *s = S(x>>PRECBITS, y>>PRECBITS);
-          int tl = (l>>PRECBITS)+s->r;
-          s->r = tl>255 ? 255 : tl;
-          tl = (g>>PRECBITS)+s->g;
-          s->g = tl>255 ? 255 : tl;
-          tl = (b>>PRECBITS)+s->b;
-          s->b = tl>255 ? 255 : tl;
-          if (SOLID(s)) return;
-          x += stepx;
-          y += stepy;
-          l -= stepl;
-          g -= stepg;
-          b -= stepb;
-          stepl -= 25;
-          stepg -= 25;
-          stepb -= 25;
-        }
-      } else { // white light, special optimized version
-        int dimness = rnd((255-light.attr2)/16+1);
-        x += stepx*dimness;
-        y += stepy*dimness;
-
-        if (OUTBORD(x>>PRECBITS, y>>PRECBITS)) return;
-
-        loopi(steps)
-        {
-          sqr *s = S(x>>PRECBITS, y>>PRECBITS);
-          int tl = (l>>PRECBITS)+s->r;
-          s->r = s->g = s->b = tl>255 ? 255 : tl;
-          if (SOLID(s)) return;
-          x += stepx;
-          y += stepy;
-          l -= stepl;
-          stepl -= 25;
-        }
-      }
-    }
-    // the old (white) light code, here for the few people with old video
-    // cards that don't support overbright
-    else
-      loopi(steps) {
+      int g = light.attr3<<PRECBITS;
+      int stepg = fast_f2nat(g/(float)steps);
+      int b = light.attr4<<PRECBITS;
+      int stepb = fast_f2nat(b/(float)steps);
+      g /= lightscale;
+      stepg /= lightscale;
+      b /= lightscale;
+      stepb /= lightscale;
+      loopi(steps)
+      {
         sqr *s = S(x>>PRECBITS, y>>PRECBITS);
-        int light = l>>PRECBITS;
-        if (light>s->r) s->r = s->g = s->b = (uchar)light;
+        int tl = (l>>PRECBITS)+s->r;
+        s->r = tl>255 ? 255 : tl;
+        tl = (g>>PRECBITS)+s->g;
+        s->g = tl>255 ? 255 : tl;
+        tl = (b>>PRECBITS)+s->b;
+        s->b = tl>255 ? 255 : tl;
         if (SOLID(s)) return;
         x += stepx;
         y += stepy;
         l -= stepl;
+        g -= stepg;
+        b -= stepb;
+        stepl -= 25;
+        stepg -= 25;
+        stepb -= 25;
       }
+    } else { // white light, special optimized version
+      int dimness = rnd((255-light.attr2)/16+1);
+      x += stepx*dimness;
+      y += stepy*dimness;
+
+      if (OUTBORD(x>>PRECBITS, y>>PRECBITS)) return;
+
+      loopi(steps)
+      {
+        sqr *s = S(x>>PRECBITS, y>>PRECBITS);
+        int tl = (l>>PRECBITS)+s->r;
+        s->r = s->g = s->b = tl>255 ? 255 : tl;
+        if (SOLID(s)) return;
+        x += stepx;
+        y += stepy;
+        l -= stepl;
+        stepl -= 25;
+      }
+    }
   }
 
   void calclightsource(persistent_entity &l)
