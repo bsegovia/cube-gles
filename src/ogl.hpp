@@ -6,13 +6,13 @@ namespace ogl
   enum {POS0=0, POS1=1, TEX=2, NOR=3, COL=4}; /* vertex attributes */
 
   /* quick, dirty and super simple uber-shader system */
-  static const int COLONLY = 0;
-  static const int FOG = 1<<0;
-  static const int KEYFRAME = 1<<1;
-  static const int DIFFUSETEX = 1<<2;
+  static const uint COLOR_ONLY = 0;
+  static const uint FOG = 1<<0;
+  static const uint KEYFRAME = 1<<1;
+  static const uint DIFFUSETEX = 1<<2;
   static const int subtypen = 3;
   static const int shadern = 1<<subtypen;
-  void bindshader(int flags, float lerp = 0.f);
+  void bindshader(uint flags);
 
   void init(int w, int h);
   void clean(void);

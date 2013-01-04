@@ -247,19 +247,31 @@ namespace rdr
     ogl::addstrip(gltex, curvert-4, 4);
   }
 
-  static int wx1, wy1, wx2, wy2;
+  static int wx1, wy1, wx2, wy2; /* water bounding rectangle */
 
   VAR(watersubdiv, 1, 4, 64);
   VARF(waterlevel, -128, -128, 127, if (!edit::noteditmode()) hdr.waterlevel = waterlevel);
 
+#if 0
   INLINE void vertw(int v1, float v2, int v3, sqr *c, float t1, float t2, float t)
   {
     vertcheck();
-    vertf((float)v1, v2-(float)sin(v1*v3*0.1+t)*0.2f, (float)v3, c, t1, t2);
+    vertf(float(v1), v2-sin(float(v1)*float(v3)*0.1f+t)*0.2f, float(v3), c, t1, t2);
   }
 
-  INLINE float dx(float x) { return x+(float)sin(x*2+lastmillis/1000.0f)*0.04f; }
-  INLINE float dy(float x) { return x+(float)sin(x*2+lastmillis/900.0f+PI/5)*0.05f; }
+  INLINE float dx(float x) { return x+(float)sin(x*2.f+lastmillis/1000.0f)*0.04f; }
+  INLINE float dy(float x) { return x+(float)sin(x*2.f+lastmillis/900.0f+PI/5)*0.05f; }
+#else
+  INLINE void vertw(int v1, float v2, int v3, sqr *c, float t1, float t2, float t)
+  {
+    vertcheck();
+    vertf(float(v1), v2, float(v3), c, t1, t2);
+  }
+
+  INLINE float dx(float x) { return x;}
+  INLINE float dy(float x) { return x;}
+
+#endif
 
   /* renders water for bounding rect area that contains water... simple but very
    * inefficient
@@ -313,8 +325,8 @@ namespace rdr
   /* update bounding rect that contains water */
   void addwaterquad(int x, int y, int size)
   {
-    int x2 = x+size;
-    int y2 = y+size;
+    const int x2 = x+size;
+    const int y2 = y+size;
     if (wx1<0) {
       wx1 = x;
       wy1 = y;
