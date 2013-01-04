@@ -1,4 +1,5 @@
 #include "cube.h"
+#include "ogl.hpp"
 #include <GL/gl.h>
 #include <SDL/SDL.h>
 #include <enet/enet.h>
@@ -9,7 +10,7 @@ void cleanup(char *msg)         // single program exit point;
   demo::stop();
   client::disconnect(true);
   cmd::writecfg();
-  rdr::ogl::clean();
+  ogl::clean();
   sound::clean();
   server::cleanup();
   SDL_ShowCursor(1);
@@ -142,19 +143,19 @@ int main(int argc, char **argv)
   SDL_ShowCursor(0);
 
   log("gl");
-  rdr::ogl::init(scr_w, scr_h);
+  ogl::init(scr_w, scr_h);
 
   log("basetex");
   int xs, ys;
-  if (!rdr::ogl::installtex(2, path(newstring("data/newchars.png")), xs, ys) ||
-      !rdr::ogl::installtex(3, path(newstring("data/martin/base.png")), xs, ys) ||
-      !rdr::ogl::installtex(6, path(newstring("data/martin/ball1.png")), xs, ys) ||
-      !rdr::ogl::installtex(7, path(newstring("data/martin/smoke.png")), xs, ys) ||
-      !rdr::ogl::installtex(8, path(newstring("data/martin/ball2.png")), xs, ys) ||
-      !rdr::ogl::installtex(9, path(newstring("data/martin/ball3.png")), xs, ys) ||
-      !rdr::ogl::installtex(4, path(newstring("data/explosion.jpg")), xs, ys) ||
-      !rdr::ogl::installtex(5, path(newstring("data/items.png")), xs, ys) ||
-      !rdr::ogl::installtex(1, path(newstring("data/crosshair.png")), xs, ys))
+  if (!ogl::installtex(2, path(newstring("data/newchars.png")), xs, ys) ||
+      !ogl::installtex(3, path(newstring("data/martin/base.png")), xs, ys) ||
+      !ogl::installtex(6, path(newstring("data/martin/ball1.png")), xs, ys) ||
+      !ogl::installtex(7, path(newstring("data/martin/smoke.png")), xs, ys) ||
+      !ogl::installtex(8, path(newstring("data/martin/ball2.png")), xs, ys) ||
+      !ogl::installtex(9, path(newstring("data/martin/ball3.png")), xs, ys) ||
+      !ogl::installtex(4, path(newstring("data/explosion.jpg")), xs, ys) ||
+      !ogl::installtex(5, path(newstring("data/items.png")), xs, ys) ||
+      !ogl::installtex(1, path(newstring("data/crosshair.png")), xs, ys))
     fatal("could not find core textures (hint: run cube from the parent of the bin directory)");
 
   log("sound");
@@ -196,10 +197,10 @@ int main(int argc, char **argv)
     /* cheap hack to get rid of initial sparklies when triple buffering */
     if (framesinmap++<5) {
       player1->yaw += 5;
-      rdr::ogl::drawframe(scr_w, scr_h, fps);
+      ogl::drawframe(scr_w, scr_h, fps);
       player1->yaw -= 5;
     }
-    rdr::ogl::drawframe(scr_w, scr_h, fps);
+    ogl::drawframe(scr_w, scr_h, fps);
     SDL_Event event;
     int lasttype = 0, lastbut = 0;
     while (SDL_PollEvent(&event)) {
@@ -228,7 +229,4 @@ int main(int argc, char **argv)
   quit();
   return 1;
 }
-
-
-
 

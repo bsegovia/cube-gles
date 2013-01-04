@@ -1,4 +1,5 @@
 #include "cube.h"
+#include "ogl.hpp"
 #include <GL/gl.h>
 
 namespace rdr
@@ -175,7 +176,7 @@ namespace rdr
     const float *pos1 = (const float*)(fr2*framesz);
     ogl::rendermd2(pos0, pos1, frac, n);
     OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
-    xtraverts += n;
+    ogl::xtraverts += n;
 
     ogl::popmatrix();
   }
@@ -266,7 +267,4 @@ namespace rdr
     m->render(light, frame, range, x, y, z, yaw, pitch, scale, speed, snap, basetime);
   }
 } /* namespace rdr */
-
-
-
 

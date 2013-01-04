@@ -11,13 +11,13 @@ CLIENT_OBJS= \
 	console.o \
 	editing.o \
 	entities.o \
+	ogl.o \
 	main.o \
 	menu.o \
 	monster.o \
 	physics.o \
 	rendercubes.o \
 	renderextras.o \
-	rendergl.o \
 	rendermd2.o \
 	renderparticles.o \
 	rendertext.o \

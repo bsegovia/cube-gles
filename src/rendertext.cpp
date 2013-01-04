@@ -1,4 +1,5 @@
 #include "cube.h"
+#include "ogl.hpp"
 #include <GL/gl.h>
 
 namespace rdr
@@ -166,7 +167,7 @@ namespace rdr
       verts[vert+2] = vvec<4>(in_right,in_bottom,float(x+in_width),float(y+in_height));
       verts[vert+3] = vvec<4>(in_left, in_bottom,float(x),         float(y+in_height));
 
-      xtraverts += 4;
+      ogl::xtraverts += 4;
       x += in_width + 1;
       index += 6;
       vert += 4;
@@ -198,7 +199,7 @@ namespace rdr
     OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(vvec<5>), &verts[0][2]);
     OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(vvec<5>), &verts[0][0]);
     ogl::drawelements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, twotriangles);
-    xtraverts += 4;
+    ogl::xtraverts += 4;
   }
 
   void draw_envbox(int t, int w)

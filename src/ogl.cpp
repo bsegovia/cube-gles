@@ -1,16 +1,25 @@
-#if 0
 #include "cube.h"
+#include "ogl.hpp"
 #include <GL/gl.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 
 // XXX
-int xtraverts;
-
 namespace rdr { extern int curvert; }
 
-namespace rdr {
-namespace ogl {
+namespace ogl
+{
+  int xtraverts = 0;
+
+  /* very simple state tracking */
+  union {
+    struct {
+      uint shader:1; /* will force to reload everything */
+      uint mvp:1;
+      uint fog:1;
+    } flags;
+    uint all;
+  } dirty;
 
   /* matrix handling. very inspired by opengl :-) */
   enum {MATRIX_STACK = 4};
@@ -18,40 +27,39 @@ namespace ogl {
   static mat4x4f vpstack[MATRIX_STACK][MATRIX_MODE];
   static int vpdepth = 0;
   static int vpmode = MODELVIEW;
-  static bool vploaded[MATRIX_MODE] = {false,false}; /* XXX just to support OGL 1.x */
 
   void matrixmode(int mode) { vpmode = mode; }
   const mat4x4f &matrix(int mode) { return vp[mode]; }
   void loadmatrix(const mat4x4f &m) {
-    vploaded[vpmode] = false;
+    dirty.flags.mvp=1;
     vp[vpmode] = m;
   }
   void identity(void) {
-    vploaded[vpmode] = false;
+    dirty.flags.mvp=1;
     vp[vpmode] = mat4x4f(one);
   }
   void translate(const vec3f &v) {
-    vploaded[vpmode] = false;
+    dirty.flags.mvp=1;
     vp[vpmode] = translate(vp[vpmode],v);
   }
   void mulmatrix(const mat4x4f &m) {
-    vploaded[vpmode] = false;
+    dirty.flags.mvp=1;
     vp[vpmode] = m*vp[vpmode];
   }
   void rotate(float angle, const vec3f &axis) {
-    vploaded[vpmode] = false;
+    dirty.flags.mvp=1;
     vp[vpmode] = rotate(vp[vpmode],angle,axis);
   }
   void perspective(float fovy, float aspect, float znear, float zfar) {
-    vploaded[vpmode] = false;
+    dirty.flags.mvp=1;
     vp[vpmode] = vp[vpmode]*::perspective(fovy,aspect,znear,zfar);
   }
   void ortho(float left, float right, float bottom, float top, float znear, float zfar) {
-    vploaded[vpmode] = false;
+    dirty.flags.mvp=1;
     vp[vpmode] = vp[vpmode]*::ortho(left,right,bottom,top,znear,zfar);
   }
   void scale(const vec3f &s) {
-    vploaded[vpmode] = false;
+    dirty.flags.mvp=1;
     vp[vpmode] = scale(vp[vpmode],s);
   }
   void pushmatrix(void) {
@@ -59,21 +67,9 @@ namespace ogl {
     vpstack[vpdepth++][vpmode] = vp[vpmode];
   }
   void popmatrix(void) {
-    vploaded[vpmode] = false;
     assert(vpdepth>0);
+    dirty.flags.mvp=1;
     vp[vpmode] = vpstack[--vpdepth][vpmode];
-  }
- /* XXX remove all that when OGL 1 is removed ? */
-  static void loadmatrices(void) {
-    vploaded[MODELVIEW] = vploaded[PROJECTION] = true;
-  }
-  void drawarrays(int mode, int first, int count) {
-    loadmatrices();
-    OGL(DrawArrays, mode, first, count);
-  }
-  void drawelements(int mode, int count, int type, const void *indices) {
-    loadmatrices();
-    OGL(DrawElements, mode, count, type, indices);
   }
 
   /* management of texture slots each texture slot can have multople texture
@@ -283,6 +279,7 @@ namespace ogl {
     GLuint udiffuse, udelta, umvp, uoverbright; /* uniforms */
     GLuint uzaxis, ufogstartend, ufogcolor; /* uniforms */
   } shaders[shadern];
+  /* static shader *bindedshader = NULL; */
 
   static float fogcolor[4];
   static float fogstartend[2];
@@ -319,6 +316,13 @@ namespace ogl {
     OGL(DisableVertexAttribArray, POS0);
     OGL(DisableVertexAttribArray, POS1);
     OGL(DisableVertexAttribArray, TEX);
+  }
+
+  void drawarrays(int mode, int first, int count) {
+    OGL(DrawArrays, mode, first, count);
+  }
+  void drawelements(int mode, int count, int type, const void *indices) {
+    OGL(DrawElements, mode, count, type, indices);
   }
 
   static void buildshader(shader &shader, uint rules)
@@ -365,7 +369,7 @@ namespace ogl {
     OGL(CullFace, GL_FRONT);
     OGL(Enable, GL_CULL_FACE);
     OGL(GetIntegerv, GL_MAX_TEXTURE_SIZE, &glmaxtexsize);
-
+    dirty.all = ~0x0;
     purgetextures();
     buildsphere(1, 12, 6);
     loopi(shadern) buildshader(shaders[i], i);
@@ -441,7 +445,7 @@ namespace ogl {
     OGL(EnableVertexAttribArray, POS0);
     OGL(EnableVertexAttribArray, COL);
     OGL(EnableVertexAttribArray, TEX);
-    setarraypointers();
+    rdr::setarraypointers();
   }
 
   static int skyoglid;
@@ -505,7 +509,7 @@ namespace ogl {
 
   static void drawhudmodel(int start, int end, float speed, int base)
   {
-    rendermodel(hudgunnames[player1->gunselect], start, end, 0, 1.0f, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 1.0f, speed, 0, base);
+    rdr::rendermodel(hudgunnames[player1->gunselect], start, end, 0, 1.0f, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 1.0f, speed, 0, base);
   }
 
   static void drawhudgun(float fovy, float aspect, int farplane)
@@ -596,14 +600,14 @@ namespace ogl {
     int xs, ys;
     skyoglid = lookuptex(DEFAULT_SKY, xs, ys);
 
-    resetcubes();
+    rdr::resetcubes();
 
-    curvert = 0;
+    rdr::curvert = 0;
     strips.setsize(0);
 
     world::render(player1->o.x, player1->o.y, player1->o.z,
                   (int)player1->yaw, (int)player1->pitch, (float)fov, w, h);
-    finishstrips();
+    rdr::finishstrips();
 
     setupworld();
 
@@ -618,7 +622,7 @@ namespace ogl {
     OGL(VertexAttrib3f, COL, 1.0f, 1.0f, 1.0f);
     OGL(DepthFunc, GL_GREATER);
     bindshader(DIFFUSETEX);
-    draw_envbox(14, fog*4/3);
+    rdr::draw_envbox(14, fog*4/3);
     OGL(DepthFunc, GL_LESS);
 
     transplayer();
@@ -632,14 +636,14 @@ namespace ogl {
     OGL(DisableVertexAttribArray, COL);
     OGL(DisableVertexAttribArray, TEX);
 
-    xtraverts = 0;
+    ogl::xtraverts = 0;
 
     game::renderclients();
     monster::monsterrender();
 
     entities::renderentities();
 
-    renderspheres(curtime);
+    rdr::renderspheres(curtime);
     rdr::renderents();
 
     OGL(Disable, GL_CULL_FACE);
@@ -649,23 +653,21 @@ namespace ogl {
     overbright(1);
     setupworld(); /* XXX REMOVE ! */
     bindshader(DIFFUSETEX);
-    const int nquads = renderwater(hf);
+    const int nquads = rdr::renderwater(hf);
     OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
     OGL(DisableVertexAttribArray, COL);
     OGL(DisableVertexAttribArray, TEX);
 
     overbright(2);
     bindshader(DIFFUSETEX);
-    render_particles(curtime);
+    rdr::render_particles(curtime);
     overbright(1);
 
     OGL(Disable, GL_TEXTURE_2D);
 
-    drawhud(w, h, (int)curfps, nquads, curvert, underwater);
+    rdr::drawhud(w, h, int(curfps), nquads, rdr::curvert, underwater);
 
     OGL(Enable, GL_CULL_FACE);
   }
 } /* namespace ogl */
-} /* namespace rdr */
-#endif
 

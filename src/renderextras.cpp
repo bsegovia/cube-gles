@@ -1,4 +1,5 @@
 #include "cube.h"
+#include "ogl.hpp"
 #include <GL/gl.h>
 
 // XXX
@@ -24,7 +25,7 @@ namespace rdr
     };
     ogl::bindshader(0);
     ogl::draw(GL_TRIANGLE_STRIP, 3, 0, 4, &verts[0][0]);
-    xtraverts += 4;
+    ogl::xtraverts += 4;
   }
 
   void linestyle(float width, int r, int g, int b)
@@ -43,7 +44,7 @@ namespace rdr
     };
     ogl::bindshader(0);
     ogl::draw(GL_LINE_LOOP, 3, 0, 4, &verts[0][0]);
-    xtraverts += 4;
+    ogl::xtraverts += 4;
   }
 
   void dot(int x, int y, float z)
@@ -57,7 +58,7 @@ namespace rdr
     };
     ogl::bindshader(0);
     ogl::draw(GL_LINE_LOOP, 3, 0, 4, &verts[0][0]);
-    xtraverts += 4;
+    ogl::xtraverts += 4;
   }
 
   void blendbox(int x1, int y1, int x2, int y2, bool border)
@@ -89,7 +90,7 @@ namespace rdr
     };
     ogl::draw(GL_LINE_LOOP, 2, 0, 4, &verts1[0][0]);
 
-    xtraverts += 8;
+    ogl::xtraverts += 8;
     OGL(Enable, GL_BLEND);
     OGL(Enable, GL_TEXTURE_2D);
     OGL(DepthMask, GL_TRUE);
@@ -139,7 +140,7 @@ namespace rdr
       ogl::scale(vec3f(0.8f));
       ogl::drawsphere();
       ogl::popmatrix();
-      xtraverts += 12*6*2;
+      ogl::xtraverts += 12*6*2;
 
       if (p->size>p->max) {
         *pp = p->next;
@@ -249,7 +250,7 @@ namespace rdr
     };
     ogl::bindshader(ogl::DIFFUSETEX);
     ogl::draw(GL_TRIANGLE_STRIP, 2, 2, 4, &verts[0][0]);
-    xtraverts += 4;
+    ogl::xtraverts += 4;
   }
 
   static void invertperspective(void)
@@ -352,7 +353,7 @@ namespace rdr
       draw_textf("fps %d", 3200, 2390, 2, curfps);
       draw_textf("wqd %d", 3200, 2460, 2, nquads);
       draw_textf("wvt %d", 3200, 2530, 2, curvert);
-      draw_textf("evt %d", 3200, 2600, 2, xtraverts);
+      draw_textf("evt %d", 3200, 2600, 2, ogl::xtraverts);
     }
 
     ogl::popmatrix();

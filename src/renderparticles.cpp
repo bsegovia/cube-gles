@@ -1,4 +1,5 @@
 #include "cube.h"
+#include "ogl.hpp"
 #include <GL/gl.h>
 
 namespace rdr
@@ -88,7 +89,7 @@ namespace rdr
       OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(float[8]), &verts[0][0]+3);
       OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(float[8]), &verts[0][0]+5);
       ogl::drawarrays(GL_TRIANGLE_STRIP, 0, 4);
-      xtraverts += 4;
+      ogl::xtraverts += 4;
 
       if (numrender++>maxparticles || (p->fade -= time)<0) {
         *pp = p->next;

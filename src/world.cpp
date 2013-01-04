@@ -1,4 +1,5 @@
 #include "cube.h"
+#include "ogl.hpp"
 #include <SDL/SDL.h>
 #include <zlib.h>
 
@@ -1362,7 +1363,7 @@ namespace world
     world::settagareas();
     int xs, ys;
 
-    loopi(256) rdr::ogl::lookuptex(i, xs, ys);
+    loopi(256) ogl::lookuptex(i, xs, ys);
     console::out("read map %s (%d milliseconds)", cgzname, SDL_GetTicks()-lastmillis);
     console::out("%s", hdr.maptitle);
     game::startmap(mname);
@@ -1389,8 +1390,4 @@ namespace world
   COMMAND(toggleocull, ARG_NONE);
 
 } /* namespace world */
-
-
-
-
 

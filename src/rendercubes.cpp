@@ -1,4 +1,5 @@
 #include "cube.h"
+#include "ogl.hpp"
 #include <GL/gl.h>
 
 namespace rdr
@@ -337,6 +338,4 @@ namespace rdr
     sdark.r = sdark.g = sdark.b = 0;
   }
 } /* namespace rdr */
-
-
 
