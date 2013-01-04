@@ -509,7 +509,7 @@ TINLINE bool op== (m44arg m, m44arg n) {return (m.vx==n[0]) && (m.vy==n[1]) && (
 TINLINE bool op!= (m44arg m, m44arg n) {return (m.vx!=n[0]) || (m.vy!=n[1]) || (m.vz!=n[2]) || (m.vw!=n[3]);}
 TINLINE m44 translate(m44arg m, v3arg v) {
   m44 dst(m);
-  dst[3] = m.vx*v[0] + m.vy*v[1] + m.vz*v[2] + m.vw;
+  dst.vw = m.vx*v.x + m.vy*v.y + m.vz*v.z + m.vw;
   return dst;
 }
 TINLINE m44 lookat(v3arg eye, v3arg center, v3arg up)
@@ -532,11 +532,11 @@ TINLINE m44 perspective(T fovy, T aspect, T znear, T zfar)
   const T bottom = -range;
   const T top = range;
   m44 dst(zero);
-  dst[0][0] = (T(two) * znear) / (right - left);
-  dst[1][1] = (T(two) * znear) / (top - bottom);
-  dst[2][2] = -(zfar + znear) / (zfar - znear);
-  dst[2][3] = -T(one);
-  dst[3][2] = -(T(two) * zfar * znear) / (zfar - znear);
+  dst.vx.x = (T(two) * znear) / (right - left);
+  dst.vy.y = (T(two) * znear) / (top - bottom);
+  dst.vz.z = -(zfar + znear) / (zfar - znear);
+  dst.vz.w = -T(one);
+  dst.vw.z = -(T(two) * zfar * znear) / (zfar - znear);
   return dst;
 }
 TINLINE m44 rotate(m44arg m, T angle, v3arg v)
@@ -547,19 +547,19 @@ TINLINE m44 rotate(m44arg m, T angle, v3arg v)
   const T s = sin(a);
   const v3 axis = normalize(v);
   const v3 temp = (T(one) - c) * axis;
-  rot[0][0] = c + temp[0]*axis[0];
-  rot[0][1] = T(zero) + temp[0]*axis[1] + s*axis[2];
-  rot[0][2] = T(zero) + temp[0]*axis[2] - s*axis[1];
-  rot[1][0] = T(zero) + temp[1]*axis[0] - s*axis[2];
-  rot[1][1] = c + temp[1]*axis[1];
-  rot[1][2] = T(zero) + temp[1]*axis[2] + s*axis[0];
-  rot[2][0] = T(zero) + temp[2]*axis[0] + s*axis[1];
-  rot[2][1] = T(zero) + temp[2]*axis[1] - s*axis[0];
-  rot[2][2] = c + temp[2]*axis[2];
-  dst[0] = m.vx*rot[0][0] + m.vy*rot[0][1] + m.vz*rot[0][2];
-  dst[1] = m.vx*rot[1][0] + m.vy*rot[1][1] + m.vz*rot[1][2];
-  dst[2] = m.vx*rot[2][0] + m.vy*rot[2][1] + m.vz*rot[2][2];
-  dst[3] = m.vw;
+  rot.vx[0] = c + temp[0]*axis[0];
+  rot.vx[1] = T(zero) + temp[0]*axis[1] + s*axis[2];
+  rot.vx[2] = T(zero) + temp[0]*axis[2] - s*axis[1];
+  rot.vy[0] = T(zero) + temp[1]*axis[0] - s*axis[2];
+  rot.vy[1] = c + temp[1]*axis[1];
+  rot.vy[2] = T(zero) + temp[1]*axis[2] + s*axis[0];
+  rot.vz[0] = T(zero) + temp[2]*axis[0] + s*axis[1];
+  rot.vz[1] = T(zero) + temp[2]*axis[1] - s*axis[0];
+  rot.vz[2] = c + temp[2]*axis[2];
+  dst.vx = m.vx*rot.vx[0] + m.vy*rot.vx[1] + m.vz*rot.vx[2];
+  dst.vy = m.vx*rot.vy[0] + m.vy*rot.vy[1] + m.vz*rot.vy[2];
+  dst.vz = m.vx*rot.vz[0] + m.vy*rot.vz[1] + m.vz*rot.vz[2];
+  dst.vw = m.vw;
   return dst;
 }
 TINLINE m44 ortho(T left, T right, T bottom, T top, T znear, T zfar)
@@ -634,5 +634,7 @@ typedef vec4<double> vec4d;
 #undef m44arg
 
 #endif /* __CUBE_MATH_HPP__ */
+
+
 
 

@@ -105,7 +105,7 @@ namespace edit
 
   VAR(flrceil,0,0,2);
 
-  float sheight(sqr *s, sqr *t, float z)                  // finds out z height when cursor points at wall
+  float sheight(sqr *s, sqr *t, float z) // finds out z height when cursor points at wall
   {
     return !flrceil //z-s->floor<s->ceil-z
       ? (s->type==FHF ? s->floor-t->vdelta/4.0f : (float)s->floor)
@@ -173,9 +173,9 @@ namespace edit
       const block b = { cx, cy, 1, 1 };
       rdr::linestyle(GRIDS, 0xFF, 0xFF, 0xFF);
       rdr::box(b, ih+dh,
-                    sheight(s, SWS(s,1,0,ssize), z)+dh,
-                    sheight(s, SWS(s,1,1,ssize), z)+dh,
-                    sheight(s, SWS(s,0,1,ssize), z)+dh);
+               sheight(s, SWS(s,1,0,ssize), z)+dh,
+               sheight(s, SWS(s,1,1,ssize), z)+dh,
+               sheight(s, SWS(s,0,1,ssize), z)+dh);
       rdr::linestyle(GRIDS, 0xFF, 0x00, 0x00);
       rdr::dot(cx, cy, ih);
       ch = (int)ih;
@@ -484,6 +484,8 @@ namespace edit
   COMMAND(perlin, ARG_3INT);
 
 } /* namespace edit */
+
+
 
 
 

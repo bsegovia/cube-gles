@@ -540,29 +540,24 @@ namespace game
       teamscore[i] += d->frags;
       return;
     }
-    if (teamsused==maxteams)
-      return;
+    if (teamsused==maxteams) return;
     teamname[teamsused] = d->team;
     teamscore[teamsused++] = d->frags;
   };
 
   void renderscores(void)
   {
-    if (!scoreson)
-      return;
+    if (!scoreson) return;
     scorelines.setsize(0);
-    if (!demoplayback)
-      renderscore(player1);
-    loopv(players)
-      if (players[i])
-        renderscore(players[i]);
+    if (!demoplayback) renderscore(player1);
+    loopv(players) if (players[i])
+      renderscore(players[i]);
     menu::sort(0, scorelines.length());
     if (m_teammode) {
       teamsused = 0;
       loopv(players)
         addteamscore(players[i]);
-      if (!demoplayback)
-        addteamscore(player1);
+      if (!demoplayback) addteamscore(player1);
       teamscores[0] = 0;
       loopj(teamsused) {
         sprintf_sd(sc)("[ %s: %d ]", teamname[j], teamscore[j]);
@@ -618,4 +613,6 @@ namespace game
   }
   COMMAND(getmap, ARG_NONE);
 } /* namespace game */
+
+
 

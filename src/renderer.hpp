@@ -16,7 +16,15 @@ namespace rdr
   namespace ogl
   {
     enum {POS0=0, POS1=1, TEX=2, NOR=3, COL=4}; /* vertex attributes */
-    enum {MODELVIEW=0, PROJECTION=1, MATRIX_MODE=2}; /* matrices */
+
+    /* quick, dirty and super simple uber-shader */
+    static const int COLONLY = 0;
+    static const int FOG = 1<<0;
+    static const int KEYFRAME = 1<<1;
+    static const int DIFFUSETEX = 1<<2;
+    static const int subtypen = 3;
+    static const int shadern = 1<<subtypen;
+
     void init(int w, int h);
     void clean(void);
     void drawframe(int w, int h, float curfps);
@@ -24,11 +32,16 @@ namespace rdr
     void vertf(float v1, float v2, float v3, sqr *ls, float t1, float t2);
     void addstrip(int tex, int start, int n);
     int lookuptex(int tex, int &xs, int &ys);
-    void drawarray(int mode, size_t pos, size_t tex, size_t n, const float *data);
+    void draw(int mode, int pos, int tex, size_t n, const float *data);
     void drawarrays(int mode, int first, int count);
     void drawelements(int mode, int count, int type, const void *indices);
     void rendermd2(const float *pos0, const float *pos1, float lerp, int n);
     void drawsphere(void);
+
+    void bindshader(int flags, float lerp = 0.f);
+
+    /* matrix interface (mostly OGL like) */
+    enum {MODELVIEW=0, PROJECTION=1, MATRIX_MODE=2};
     void matrixmode(int mode);
     void identity(void);
     void rotate(float angle, const vec3f &axis);
@@ -53,7 +66,6 @@ namespace rdr
   int renderwater(float hf);
   void finishstrips(void);
   void setarraypointers(void);
-  void setarraypointers2(void);
   void mipstats(int a, int b, int c);
 
   /* rendertext */

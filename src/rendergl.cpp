@@ -62,15 +62,8 @@ namespace ogl {
     assert(vpdepth>0);
     vp[vpmode] = vpstack[--vpdepth][vpmode];
   }
-  static void loadmatrices(void) { /* XXX remove all that when OGL 1 is removed ? */
-    if (!vploaded[MODELVIEW]) {
-      OGL(MatrixMode, GL_MODELVIEW);
-      OGL(LoadMatrixf, &vp[MODELVIEW][0][0]);
-    }
-    if (!vploaded[PROJECTION]) {
-      OGL(MatrixMode, GL_PROJECTION);
-      OGL(LoadMatrixf, &vp[PROJECTION][0][0]);
-    }
+ /* XXX remove all that when OGL 1 is removed ? */
+  static void loadmatrices(void) {
     vploaded[MODELVIEW] = vploaded[PROJECTION] = true;
   }
   void drawarrays(int mode, int first, int count) {
@@ -193,13 +186,6 @@ namespace ogl {
     return result == GL_TRUE;
   }
 
-  /* mostly to define an quick and dirty uber-shader */
-  static const int subtypen = 3;
-  static const int shadern = 1<<subtypen;
-  static const int FOG = 1<<0;
-  static const int KEYFRAME = 1<<1;
-  static const int DIFFUSETEX = 1<<2;
-
   static GLuint loadshader(GLenum type, const char *source, const char *rulestr)
   {
     const GLuint name = glCreateShader(type);
@@ -240,12 +226,12 @@ namespace ogl {
     "#else\n"
     "  in vec3 p;\n"
     "#endif\n"
-    "in vec3 incol;\n"
+    "in vec4 incol;\n"
     "#if USE_DIFFUSETEX\n"
     "  out vec2 texcoord;\n"
     "  in vec2 t;\n"
     "#endif\n"
-    "out vec3 outcol;\n"
+    "out vec4 outcol;\n"
     "void main() {\n"
     "#if USE_DIFFUSETEX\n"
     "  texcoord = t;\n"
@@ -271,15 +257,15 @@ namespace ogl {
     "  in float fogz;\n"
     "#endif\n"
     "uniform float overbright;\n"
-    "in vec3 outcol;\n"
+    "in vec4 outcol;\n"
     "out vec4 c;\n"
     "void main() {\n"
     "  vec4 col;\n"
     "#if USE_DIFFUSETEX\n"
     "  col = texture(diffuse, texcoord);\n"
-    "  col.xyz *= outcol.xyz;\n"
+    "  col *= outcol;\n"
     "#else\n"
-    "  col = vec4(outcol.xyz,1.0);\n"
+    "  col = outcol;\n"
     "#endif\n"
     "#if USE_FOG\n"
     "  const float factor = clamp((-fogz-fogstartend.x)*fogstartend.y,0.0,1.0)\n;"
@@ -300,8 +286,10 @@ namespace ogl {
   static float fogcolor[4];
   static float fogstartend[2];
 
-  static void bindshader(shader shader, float lerp=0.f)
+  void bindshader(int flags, float lerp)
   {
+    const shader &shader = shaders[flags];
+
     /* XXX DO IT ELSEWHERE ONLY ONCE! */
     const mat4x4f viewproj = vp[PROJECTION]*vp[MODELVIEW];
     OGL(UseProgram, shader.program);
@@ -317,28 +305,19 @@ namespace ogl {
     OGL(Uniform1f, shader.uoverbright, overbrightf);
   }
 
-  static void unbindshader(void) { OGL(UseProgram, 0); }
-
   void rendermd2(const float *pos0, const float *pos1, float lerp, int n)
   {
-    OGL(DisableClientState, GL_VERTEX_ARRAY);
-    OGL(DisableClientState, GL_TEXTURE_COORD_ARRAY);
     OGL(VertexAttribPointer, TEX, 2, GL_FLOAT, 0, sizeof(float[5]), pos0);
     OGL(VertexAttribPointer, POS0, 3, GL_FLOAT, 0, sizeof(float[5]), pos0+2);
     OGL(VertexAttribPointer, POS1, 3, GL_FLOAT, 0, sizeof(float[5]), pos1+2);
     OGL(EnableVertexAttribArray, POS0);
     OGL(EnableVertexAttribArray, POS1);
     OGL(EnableVertexAttribArray, TEX);
-    bindshader(shaders[FOG|KEYFRAME|DIFFUSETEX], lerp);
-    OGL(DisableClientState, GL_COLOR_ARRAY);
+    bindshader(FOG|KEYFRAME|DIFFUSETEX, lerp);
     drawarrays(GL_TRIANGLES, 0, n);
-    unbindshader();
     OGL(DisableVertexAttribArray, POS0);
     OGL(DisableVertexAttribArray, POS1);
     OGL(DisableVertexAttribArray, TEX);
-    OGL(EnableClientState, GL_COLOR_ARRAY);
-    OGL(EnableClientState, GL_VERTEX_ARRAY);
-    OGL(EnableClientState, GL_TEXTURE_COORD_ARRAY);
   }
 
   static void buildshader(shader &shader, uint rules)
@@ -396,7 +375,8 @@ namespace ogl {
   void drawsphere(void)
   {
     OGL(BindBuffer, GL_ARRAY_BUFFER, spherevbo);
-    drawarray(GL_TRIANGLE_STRIP, 3, 2, spherevertn, NULL);
+    ogl::bindshader(DIFFUSETEX);
+    draw(GL_TRIANGLE_STRIP, 3, 2, spherevertn, NULL);
     OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
   }
 
@@ -457,13 +437,10 @@ namespace ogl {
 
   static void setupworld(void)
   {
-    glDisableClientState(GL_VERTEX_ARRAY);
-    glDisableClientState(GL_COLOR_ARRAY);
-    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
     OGL(EnableVertexAttribArray, POS0);
     OGL(EnableVertexAttribArray, COL);
     OGL(EnableVertexAttribArray, TEX);
-    setarraypointers2();
+    setarraypointers();
   }
 
   static int skyoglid;
@@ -557,16 +534,20 @@ namespace ogl {
     OGL(Disable, GL_CULL_FACE);
   }
 
-  /* XXX remove that when use of shaders is done */
-  void drawarray(int mode, size_t pos, size_t tex, size_t n, const float *data)
+  /* XXX remove state crap */
+  void draw(int mode, int pos, int tex, size_t n, const float *data)
   {
-    OGL(DisableClientState, GL_COLOR_ARRAY);
-    if (!tex) OGL(DisableClientState, GL_TEXTURE_COORD_ARRAY);
-    OGL(VertexPointer, pos, GL_FLOAT, (pos+tex)*sizeof(float), data+tex);
-    if (tex) OGL(TexCoordPointer, tex, GL_FLOAT, (pos+tex)*sizeof(float), data);
+    if (tex) {
+      OGL(EnableVertexAttribArray, TEX);
+      OGL(VertexAttribPointer, TEX, tex, GL_FLOAT, 0, (pos+tex)*sizeof(float), data);
+    }
+    OGL(EnableVertexAttribArray, POS0);
+    OGL(VertexAttribPointer, POS0, pos, GL_FLOAT, 0, (pos+tex)*sizeof(float), data+tex);
     ogl::drawarrays(mode, 0, n);
-    if (!tex) OGL(EnableClientState, GL_TEXTURE_COORD_ARRAY);
-    OGL(EnableClientState, GL_COLOR_ARRAY);
+
+    OGL(DisableVertexAttribArray, TEX);
+    OGL(DisableVertexAttribArray, COL);
+    OGL(DisableVertexAttribArray, POS0);
   }
 
   void drawframe(int w, int h, float curfps)
@@ -625,7 +606,7 @@ namespace ogl {
 
     setupworld();
 
-    bindshader(shaders[0]);
+    bindshader(0);
     renderstripssky();
     OGL(DisableVertexAttribArray, COL);
 
@@ -635,21 +616,17 @@ namespace ogl {
     rotate(90.f, vec3f(1.f,0.f,0.f));
     OGL(VertexAttrib3f, COL, 1.0f, 1.0f, 1.0f);
     OGL(DepthFunc, GL_GREATER);
-    bindshader(shaders[DIFFUSETEX]);
+    bindshader(DIFFUSETEX);
     draw_envbox(14, fog*4/3);
     OGL(DepthFunc, GL_LESS);
-    OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
-    OGL(DisableVertexAttribArray, TEX);
-    unbindshader();
 
     transplayer();
 
     overbright(2);
 
     setupworld(); /* XXX REMOVE ! */
-    bindshader(shaders[DIFFUSETEX|FOG]);
+    bindshader(DIFFUSETEX|FOG);
     renderstrips();
-    unbindshader();
     OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
     OGL(DisableVertexAttribArray, COL);
     OGL(DisableVertexAttribArray, TEX);
@@ -670,17 +647,15 @@ namespace ogl {
 
     overbright(1);
     setupworld(); /* XXX REMOVE ! */
-    bindshader(shaders[DIFFUSETEX]);
+    bindshader(DIFFUSETEX);
     const int nquads = renderwater(hf);
-    unbindshader();
     OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
     OGL(DisableVertexAttribArray, COL);
     OGL(DisableVertexAttribArray, TEX);
 
     overbright(2);
-    bindshader(shaders[DIFFUSETEX]);
+    bindshader(DIFFUSETEX);
     render_particles(curtime);
-    unbindshader();
     overbright(1);
 
     OGL(Disable, GL_TEXTURE_2D);

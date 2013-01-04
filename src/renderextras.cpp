@@ -22,14 +22,15 @@ namespace rdr
       vvec<3>(float(x2), z2, float(y2)),
       vvec<3>(float(x2), z2, float(y2)+0.01f)
     };
-    ogl::drawarray(GL_TRIANGLE_STRIP, 3, 0, 4, &verts[0][0]);
+    ogl::bindshader(0);
+    ogl::draw(GL_TRIANGLE_STRIP, 3, 0, 4, &verts[0][0]);
     xtraverts += 4;
   }
 
   void linestyle(float width, int r, int g, int b)
   {
     OGL(LineWidth, width);
-    glColor3ub(r,g,b);
+    OGL(VertexAttrib3f,ogl::COL,float(r)/255.f,float(g)/255.f,float(b)/255.f);
   }
 
   void box(const block &b, float z1, float z2, float z3, float z4)
@@ -40,7 +41,8 @@ namespace rdr
       vvec<3>(float(b.x+b.xs), z3, float(b.y+b.ys)),
       vvec<3>(float(b.x),      z4, float(b.y+b.ys))
     };
-    ogl::drawarray(GL_LINE_LOOP, 3, 0, 4, &verts[0][0]);
+    ogl::bindshader(0);
+    ogl::draw(GL_LINE_LOOP, 3, 0, 4, &verts[0][0]);
     xtraverts += 4;
   }
 
@@ -50,10 +52,11 @@ namespace rdr
     const vvec<3> verts[] = {
       vvec<3>(x-DOF, float(z), y-DOF),
       vvec<3>(x+DOF, float(z), y-DOF),
-      vvec<3>(x-DOF, float(z), y+DOF),
-      vvec<3>(x+DOF, float(z), y+DOF)
+      vvec<3>(x+DOF, float(z), y+DOF),
+      vvec<3>(x-DOF, float(z), y+DOF)
     };
-    ogl::drawarray(GL_TRIANGLE_STRIP, 3, 0, 4, &verts[0][0]);
+    ogl::bindshader(0);
+    ogl::draw(GL_LINE_LOOP, 3, 0, 4, &verts[0][0]);
     xtraverts += 4;
   }
 
@@ -62,29 +65,29 @@ namespace rdr
     OGL(DepthMask, GL_FALSE);
     OGL(Disable, GL_TEXTURE_2D);
     OGL(BlendFunc, GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
+    ogl::bindshader(0);
     if (border)
-      glColor3f(.5f, .3f, .4f);
+      OGL(VertexAttrib3f, ogl::COL, .5f, .3f, .4f);
     else
-      glColor3f(1.f, 1.f, 1.f);
+      OGL(VertexAttrib3f, ogl::COL, 1.f, 1.f, 1.f);
+
     const vvec<2> verts0[] = {
       vvec<2>(float(x1), float(y1)),
       vvec<2>(float(x2), float(y1)),
       vvec<2>(float(x1), float(y2)),
       vvec<2>(float(x2), float(y2))
     };
-    ogl::drawarray(GL_TRIANGLE_STRIP, 2, 0, 4, &verts0[0][0]);
+    ogl::draw(GL_TRIANGLE_STRIP, 2, 0, 4, &verts0[0][0]);
 
     OGL(Disable, GL_BLEND);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    glColor3f(.2f, .7f, .4f);
+    OGL(VertexAttrib3f, ogl::COL, .2f, .7f, .4f);
     const vvec<2> verts1[] = {
       vvec<2>(float(x1), float(y1)),
       vvec<2>(float(x2), float(y1)),
       vvec<2>(float(x2), float(y2)),
       vvec<2>(float(x1), float(y2))
     };
-    ogl::drawarray(GL_LINE_LOOP, 2, 0, 4, &verts1[0][0]);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    ogl::draw(GL_LINE_LOOP, 2, 0, 4, &verts1[0][0]);
 
     xtraverts += 8;
     OGL(Enable, GL_BLEND);
@@ -128,7 +131,7 @@ namespace rdr
     for (sphere *p, **pp = &slist; (p = *pp);) {
       const float size = p->size/p->max;
       ogl::pushmatrix();
-      glColor4f(1.0f, 1.0f, 1.0f, 1.0f-size);
+      OGL(VertexAttrib4f, ogl::COL, 1.0f, 1.0f, 1.0f, 1.0f-size);
       ogl::translate(vec3f(p->o.x, p->o.z, p->o.y));
       ogl::rotate(lastmillis/5.0f, vec3f(one));
       ogl::scale(vec3f(p->size));
@@ -165,7 +168,7 @@ namespace rdr
       vec v = { float(e.x), float(e.y), float(e.z) };
       particle_splash(2, 2, 40, v);
     }
-    int e = world::closestent();
+    const int e = world::closestent();
     if (e>=0) {
       entity &c = ents[e];
       sprintf_s(closeent)("closest entity = %s (%d, %d, %d, %d), selection = (%d, %d)", entnames[c.type], c.attr1, c.attr2, c.attr3, c.attr4, cmd::getvar("selxs"), cmd::getvar("selys"));
@@ -191,18 +194,13 @@ namespace rdr
 
   static float cursordepth = 0.9f;
   static GLint viewport[4];
-  static GLdouble mm[16], pm[16];
+  static mat4x4f readmm, readpm;
 
   static void readmatrices()
   {
     glGetIntegerv(GL_VIEWPORT, viewport);
-    glGetDoublev(GL_MODELVIEW_MATRIX, mm);
-    glGetDoublev(GL_PROJECTION_MATRIX, pm);
-    /* XXX clean up that */
-    const mat4x4f &modelview = ogl::matrix(ogl::MODELVIEW);
-    const mat4x4f &projection = ogl::matrix(ogl::PROJECTION);
-    loopi(16) mm[i] = (&modelview[0][0])[i];
-    loopi(16) pm[i] = (&projection[0][0])[i];
+    readmm  = ogl::matrix(ogl::MODELVIEW);
+    readpm = ogl::matrix(ogl::PROJECTION);
   }
 
   // stupid function to cater for stupid ATI linux drivers that return incorrect depth values
@@ -217,12 +215,21 @@ namespace rdr
   void readdepth(int w, int h)
   {
     glReadPixels(w/2, h/2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &cursordepth);
+//    float worldx = 0, worldy = 0, worldz = 0;
+//    const mat4x4f &mm = ogl::matrix(ogl::MODELVIEW);
+//    const mat4x4f &pm = ogl::matrix(ogl::PROJECTION);
     double worldx = 0, worldy = 0, worldz = 0;
+    double pm[16],mm[16];
+    loopi(16) mm[i] = (&readmm[0][0])[i];
+    loopi(16) pm[i] = (&readpm[0][0])[i];
     unproject(w/2, h/2, depthcorrect(cursordepth), mm, pm, viewport, &worldx, &worldz, &worldy);
+ //   unproject(w/2, h/2, depthcorrect(cursordepth), &mm.vx.x, &pm.vx.x, viewport, &worldx, &worldz, &worldy);
     worldpos.x = (float)worldx;
     worldpos.y = (float)worldy;
     worldpos.z = (float)worldz;
-    const vec r = { (float)mm[0], (float)mm[4], (float)mm[8] };
+//    const vec r = { mm.vx.x, mm.vy.x, mm.vz.x };
+//    const vec u = { mm.vx.y, mm.vy.y, mm.vz.y };
+   const vec r = { (float)mm[0], (float)mm[4], (float)mm[8] };
     const vec u = { (float)mm[1], (float)mm[5], (float)mm[9] };
     setorient(r, u);
   }
@@ -240,23 +247,21 @@ namespace rdr
       vvec<4>(tx,   ty+o, x,   y+s),
       vvec<4>(tx+o, ty+o, x+s, y+s)
     };
-    ogl::drawarray(GL_TRIANGLE_STRIP, 2, 2, 4, &verts[0][0]);
+    ogl::bindshader(ogl::DIFFUSETEX);
+    ogl::draw(GL_TRIANGLE_STRIP, 2, 2, 4, &verts[0][0]);
     xtraverts += 4;
   }
 
   static void invertperspective(void)
   {
-    /* Generates a valid inverse matrix for matrices generated by
-     * gluPerspective
-     */
-    float inv[16];
-    memset(inv, 0, sizeof(inv));
-    inv[0*4+0] = 1.0/pm[0*4+0];
-    inv[1*4+1] = 1.0/pm[1*4+1];
-    inv[2*4+3] = 1.0/pm[3*4+2];
-    inv[3*4+2] = -1.0;
-    inv[3*4+3] = pm[2*4+2]/pm[3*4+2];
-    ogl::loadmatrix(*(const mat4x4f*)inv);
+    const mat4x4f &pm = ogl::matrix(ogl::PROJECTION); /* must be perspective */
+    mat4x4f inv(zero);
+    inv.vx.x = 1.f/pm.vx.x;
+    inv.vy.y = 1.f/pm.vy.y;
+    inv.vz.w = 1.f/pm.vw.z;
+    inv.vw.z = -1.f;
+    inv.vw.w = pm.vz.z/pm.vw.z;
+    ogl::loadmatrix(inv);
   }
 
   VARP(crosshairsize, 0, 15, 50);
@@ -272,9 +277,7 @@ namespace rdr
     readmatrices();
     if (editmode) {
       if (cursordepth==1.0f) worldpos = player1->o;
-      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
       edit::cursorupdate();
-      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
     OGL(Disable, GL_DEPTH_TEST);
@@ -284,24 +287,23 @@ namespace rdr
     OGL(Enable, GL_BLEND);
 
     OGL(DepthMask, GL_FALSE);
-
     if (dblend || underwater) {
       OGL(BlendFunc, GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-      if (dblend)
-        glColor3f(0.0f, 0.9f, 0.9f);
-      else
-        glColor3f(0.9f, 0.5f, 0.0f);
       const vvec<2> verts[] = {
-        vvec<2>(0.f, 0.f),
+        vvec<2>(0.f,          0.f),
         vvec<2>(float(VIRTW), 0.f),
-        vvec<2>(0.f, float(VIRTH)),
+        vvec<2>(0.f,          float(VIRTH)),
         vvec<2>(float(VIRTW), float(VIRTH))
       };
-      ogl::drawarray(GL_TRIANGLE_STRIP, 2, 0, 4, &verts[0][0]);
+      if (dblend)
+        OGL(VertexAttrib3f,ogl::COL,0.0f,0.9f,0.9f);
+      else
+        OGL(VertexAttrib3f,ogl::COL,0.9f,0.5f,0.0f);
+      ogl::bindshader(0);
+      ogl::draw(GL_TRIANGLE_STRIP,2,0,4,&verts[0][0]);
       dblend -= curtime/3;
       if (dblend<0) dblend = 0;
     }
-
     OGL(Enable, GL_TEXTURE_2D);
 
     const char *command = console::getcurcommand();
@@ -317,14 +319,14 @@ namespace rdr
     if (!menu::render()) {
       OGL(BlendFunc, GL_SRC_ALPHA, GL_SRC_ALPHA);
       OGL(BindTexture, GL_TEXTURE_2D, 1);
-      glColor3ub(255,255,255);
+      OGL(VertexAttrib3f,ogl::COL,1.f,1.f,1.f);
       if (crosshairfx) {
         if (player1->gunwait)
-          glColor3ub(128,128,128);
+          OGL(VertexAttrib3f,ogl::COL,0.5f,0.5f,0.5f);
         else if (player1->health<=25)
-          glColor3ub(255,0,0);
+          OGL(VertexAttrib3f,ogl::COL,1.0f,0.0f,0.0f);
         else if (player1->health<=50)
-          glColor3ub(255,128,0);
+          OGL(VertexAttrib3f,ogl::COL,1.0f,0.5f,0.0f);
       }
       const float csz = float(crosshairsize);
       const vvec<4> verts[] = {
@@ -333,7 +335,8 @@ namespace rdr
         vvec<4>(0.f, 1.f, float(VIRTW/2) - csz, float(VIRTH/2) + csz),
         vvec<4>(1.f, 1.f, float(VIRTW/2) + csz, float(VIRTH/2) + csz)
       };
-      ogl::drawarray(GL_TRIANGLE_STRIP, 2, 2, 4, &verts[0][0]);
+      ogl::bindshader(ogl::DIFFUSETEX);
+      ogl::draw(GL_TRIANGLE_STRIP, 2, 2, 4, &verts[0][0]);
     }
 
     ogl::popmatrix();

@@ -37,7 +37,7 @@ namespace game
   const char *modestr(int n);
   /*! Free the entity */
   void zapdynent(dynent *&d);
-  /*! Get entity for Client cn */
+  /*! Get entity for drawarray cn */
   dynent *getclient(int cn);
   /*! Useful for timi limited modes */
   void timeupdate(int timeremain);
@@ -58,6 +58,8 @@ namespace game
 } /* namespace game */
 
 #endif /* __QBE_GAME_HPP__ */
+
+
 
 
 

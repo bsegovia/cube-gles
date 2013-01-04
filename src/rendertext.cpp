@@ -139,8 +139,6 @@ namespace rdr
     int in_width, in_height;
 
     /* use a triangle mesh to display the text */
-    OGL(EnableClientState, GL_INDEX_ARRAY);
-    OGL(DisableClientState, GL_COLOR_ARRAY);
     const size_t len = strlen(str);
     int *indices = (int*) alloca(6*len*sizeof(int));
     vvec<4> *verts = (vvec<4>*) alloca(4*len*sizeof(vvec<4>));
@@ -150,7 +148,7 @@ namespace rdr
     for (int i = 0, vert = 0; str[i] != 0; ++i) {
       int c = str[i];
       if (c=='\t') { x = (x-left+PIXELTAB)/PIXELTAB*PIXELTAB+left; continue; }; 
-      if (c=='\f') { glColor3ub(64,255,128); continue; };
+      if (c=='\f') { OGL(VertexAttrib3f,ogl::COL,0.25f,1.f,0.5f); continue; };
       if (c==' ') { x += FONTH/2; continue; };
       c -= 33;
       if (c<0 || c>=95) continue;
@@ -173,12 +171,15 @@ namespace rdr
       index += 6;
       vert += 4;
     }
-
-    OGL(VertexPointer, 2, GL_FLOAT, sizeof(vvec<4>), &verts[0][2]);
-    OGL(TexCoordPointer, 2, GL_FLOAT, sizeof(vvec<4>), &verts[0][0]);
+    OGL(VertexAttrib3f,ogl::COL,1.f,1.f,1.f);
+    OGL(EnableVertexAttribArray, ogl::POS0);
+    OGL(EnableVertexAttribArray, ogl::TEX);
+    OGL(VertexAttribPointer, ogl::POS0, 2, GL_FLOAT, 0, sizeof(float[4]), &verts[0][2]);
+    OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(float[4]), &verts[0][0]);
+    ogl::bindshader(ogl::DIFFUSETEX);
     ogl::drawelements(GL_TRIANGLES, index, GL_UNSIGNED_INT, indices);
-    OGL(DisableClientState, GL_INDEX_ARRAY);
-    OGL(EnableClientState, GL_COLOR_ARRAY);
+    OGL(DisableVertexAttribArray, ogl::POS0);
+    OGL(DisableVertexAttribArray, ogl::TEX);
   }
 
   static void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
@@ -203,8 +204,6 @@ namespace rdr
   void draw_envbox(int t, int w)
   {
     OGL(DepthMask, GL_FALSE);
-    OGL(EnableClientState, GL_INDEX_ARRAY);
-    OGL(DisableClientState, GL_COLOR_ARRAY);
     draw_envbox_aux(1.0f, 1.0f, -w, -w,  w,
                     0.0f, 1.0f,  w, -w,  w,
                     0.0f, 0.0f,  w, -w, -w,
@@ -229,11 +228,7 @@ namespace rdr
                     0.0f, 0.0f, -w,  w, -w,
                     1.0f, 0.0f, -w, -w, -w,
                     1.0f, 1.0f, +w, -w, -w, t+5);
-    OGL(DisableClientState, GL_INDEX_ARRAY);
-    OGL(EnableClientState, GL_COLOR_ARRAY);
     OGL(DepthMask, GL_TRUE);
   }
 } /* namespace rdr */
-
-
 

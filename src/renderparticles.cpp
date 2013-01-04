@@ -66,11 +66,6 @@ namespace rdr
 
     int numrender = 0;
 
-    /* XXX */
-    OGL(DisableClientState, GL_COLOR_ARRAY);
-    OGL(DisableClientState, GL_TEXTURE_COORD_ARRAY);
-    OGL(DisableClientState, GL_VERTEX_ARRAY);
-
     OGL(EnableVertexAttribArray, ogl::POS0);
     OGL(EnableVertexAttribArray, ogl::COL);
     OGL(EnableVertexAttribArray, ogl::TEX);
@@ -81,7 +76,6 @@ namespace rdr
       const float sz = pt->sz*particlesize/100.0f;
 
       OGL(BindTexture, GL_TEXTURE_2D, pt->tex);
-      glColor3f(pt->r, pt->g, pt->b);
 
       const vvec<8> verts[] = {
         vvec<8>(pt->r, pt->g, pt->b, 0.f, 1.f, p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz),
@@ -113,11 +107,6 @@ namespace rdr
     OGL(DisableVertexAttribArray, ogl::POS0);
     OGL(DisableVertexAttribArray, ogl::COL);
     OGL(DisableVertexAttribArray, ogl::TEX);
-
-    /* XXX */
-    OGL(EnableClientState, GL_COLOR_ARRAY);
-    OGL(EnableClientState, GL_TEXTURE_COORD_ARRAY);
-    OGL(EnableClientState, GL_VERTEX_ARRAY);
 
     OGL(Disable, GL_BLEND);
     OGL(DepthMask, GL_TRUE);

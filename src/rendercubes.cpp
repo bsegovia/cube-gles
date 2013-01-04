@@ -7,19 +7,11 @@ namespace rdr
   int curvert;
   int curmaxverts = 10000;
 
-  /* XXX rename! */
-  void setarraypointers2(void)
+  void setarraypointers(void)
   {
     OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(vertex), &verts[0].x);
     OGL(VertexAttribPointer, ogl::COL, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex), &verts[0].r);
     OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(vertex), &verts[0].u);
-  }
-
-  void setarraypointers(void)
-  {
-    glVertexPointer(3, GL_FLOAT, sizeof(vertex), &verts[0].x);
-    glColorPointer(4, GL_UNSIGNED_BYTE, sizeof(vertex), &verts[0].r);
-    glTexCoordPointer(2, GL_FLOAT, sizeof(vertex), &verts[0].u);
   }
 
   void reallocv(void)
@@ -345,4 +337,6 @@ namespace rdr
     sdark.r = sdark.g = sdark.b = 0;
   }
 } /* namespace rdr */
+
+
 

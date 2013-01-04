@@ -6,7 +6,7 @@ namespace server
 {
   enum { ST_EMPTY, ST_LOCAL, ST_TCPIP };
 
-  struct Client                   // server side version of "dynent" type
+  struct drawarray                   // server side version of "dynent" type
   {
     int type;
     ENetPeer *peer;
@@ -16,7 +16,7 @@ namespace server
     int modevote;
   };
 
-  vector<Client> clients;
+  vector<drawarray> clients;
 
   int maxclients = 8;
   string smapname;
@@ -299,7 +299,7 @@ namespace server
     if (!packet->referenceCount) enet_packet_destroy (packet);
   };
 
-  Client &addclient()
+  drawarray &addclient()
   {
     loopv(clients) if (clients[i].type==ST_EMPTY) return clients[i];
     return clients.add();
@@ -384,7 +384,7 @@ namespace server
       {
         case ENET_EVENT_TYPE_CONNECT:
           {
-            Client &c = addclient();
+            drawarray &c = addclient();
             c.type = ST_TCPIP;
             c.peer = event.peer;
             c.peer->data = (void *)(&c-&clients[0]);
@@ -432,7 +432,7 @@ namespace server
 
   void localconnect()
   {
-    Client &c = addclient();
+    drawarray &c = addclient();
     c.type = ST_LOCAL;
     strcpy_s(c.hostname, "local");
     send_welcome(&c-&clients[0]); 
@@ -467,4 +467,6 @@ namespace server
     };
   };
 } /* namespace server */
+
+
 

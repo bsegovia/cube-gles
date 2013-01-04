@@ -123,6 +123,7 @@ void endianswap(void *memory, int stride, int length)
   }
 }
 
+/* XXX remove everything that follows */
 static void identity(double m[16])
 {
   m[0+4*0] = 1; m[0+4*1] = 0; m[0+4*2] = 0; m[0+4*3] = 0;
@@ -162,7 +163,7 @@ void mul(const double a[16], const double b[16], double r[16])
 /* Contributed by David Moore (See Mesa bug #6748) */
 int invert(const double m[16], double invOut[16])
 {
-  double inv[16], det;
+  float inv[16], det;
   inv[0] =   m[5]*m[10]*m[15] - m[5]*m[11]*m[14] - m[9]*m[6]*m[15]
            + m[9]*m[7]*m[14] + m[13]*m[6]*m[11] - m[13]*m[7]*m[10];
   inv[4] =  -m[4]*m[10]*m[15] + m[4]*m[11]*m[14] + m[8]*m[6]*m[15]
@@ -203,18 +204,19 @@ int invert(const double m[16], double invOut[16])
   return 1;
 }
 
+/* XXX REMOVE that crap completely */
 int unproject(double winx, double winy, double winz,
-              const double modelMatrix[16],
-              const double projMatrix[16],
+              const double modelmatrix[16],
+              const double projmartrix[16],
               const int viewport[4],
               double *objx, double *objy, double *objz)
 {
-  double finalMatrix[16];
+  double finalmatrix[16];
   double in[4];
   double out[4];
 
-  mul(modelMatrix, projMatrix, finalMatrix);
-  if (!invert(finalMatrix, finalMatrix)) return 0;
+  mul(modelmatrix, projmartrix, finalmatrix);
+  if (!invert(finalmatrix, finalmatrix)) return 0;
 
   in[0]=winx;
   in[1]=winy;
@@ -230,7 +232,7 @@ int unproject(double winx, double winy, double winz,
   in[1] = in[1] * 2 - 1;
   in[2] = in[2] * 2 - 1;
 
-  v4mul(finalMatrix, in, out);
+  v4mul(finalmatrix, in, out);
   if (out[3] == 0.0) return 0;
   out[0] /= out[3];
   out[1] /= out[3];
@@ -240,6 +242,4 @@ int unproject(double winx, double winy, double winz,
   *objz = out[2];
   return 1;
 }
-
-
 
