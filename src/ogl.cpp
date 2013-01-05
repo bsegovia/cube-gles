@@ -45,19 +45,18 @@ namespace ogl
   static int drawibooffset=0, drawvbooffset=0;
   static GLuint bigvbo=0u, bigibo=0u;
 
-  static void initbuffer(GLuint &bo, int &booffset, int target, int size)
+  static void initbuffer(GLuint &bo, int target, int size)
   {
     if (bo == 0u) OGL(GenBuffers, 1, &bo);
     bindbuffer(target, bo);
     OGL(BufferData, glbufferbinding[target], size, NULL, GL_DYNAMIC_DRAW);
     bindbuffer(target, 0);
-    booffset = 0u;
   }
 
   static void bigbufferinit(int size)
   {
-    initbuffer(bigvbo, bigvbooffset, ARRAY_BUFFER, size);
-    initbuffer(bigibo, bigibooffset, ELEMENT_ARRAY_BUFFER, size);
+    initbuffer(bigvbo, ARRAY_BUFFER, size);
+    initbuffer(bigibo, ELEMENT_ARRAY_BUFFER, size);
   }
 
   VARF(bigbuffersize, 4*MB, 4*MB, 16*MB, bigbufferinit(bigbuffersize));
@@ -80,7 +79,7 @@ namespace ogl
     GLuint &bo = target==ARRAY_BUFFER ? bigvbo : bigibo;
     int &offset = target==ARRAY_BUFFER ? bigvbooffset : bigibooffset;
     int &drawoffset = target==ARRAY_BUFFER ? drawvbooffset : drawibooffset;
-    if (offset+sz > uint(bigbuffersize)) {
+    if (offset+sz > bigbuffersize) {
       OGL(Flush);
       bindbuffer(target, 0);
       offset = 0u;
@@ -134,7 +133,6 @@ namespace ogl
       OGL(EnableVertexAttribArray, COL);
     }
     immediate_drawarrays(mode, 0, n);
-    bindbuffer(ARRAY_BUFFER,0); /* XXX BUFFER remove it */
     OGL(DisableVertexAttribArray, TEX);
     OGL(DisableVertexAttribArray, COL);
     OGL(DisableVertexAttribArray, POS0);
@@ -758,12 +756,21 @@ namespace ogl
 
   VAR(renderparticles,0,1,1);
 
+  /* enforce the gl states */
+  static void forceglstate(void)
+  {
+    bindbuffer(ARRAY_BUFFER,0);
+    bindbuffer(ELEMENT_ARRAY_BUFFER,0);
+  }
+
   void drawframe(int w, int h, float curfps)
   {
     const float hf = hdr.waterlevel-0.3f;
     const bool underwater = player1->o.z<hf;
     float fovy = (float)fov*h/w;
     float aspect = w/(float)h;
+
+    forceglstate();
 
     fogstartend.x = float((fog+64)/8);
     fogstartend.y = 1.f/(float(fog)-fogstartend[0]);
