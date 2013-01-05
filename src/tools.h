@@ -349,23 +349,6 @@ struct vertex { float u, v, x, y, z; uchar r, g, b, a; };
 typedef vector<char *> cvector;
 typedef vector<int> ivector;
 
-/* OpenGL debug function */
-#ifndef NDEBUG
-#define OGL(NAME, ...) \
-  do { \
-    gl##NAME(__VA_ARGS__); \
-    if (glGetError()) fatal("gl" #NAME " failed"); \
-  } while (0)
-#define OGLR(RET, NAME, ...) \
-  do { \
-    RET = gl##NAME(__VA_ARGS__); \
-    if (glGetError()) fatal("gl" #NAME " failed"); \
-  } while (0)
-#else
-  #define OGL(NAME, ...) do {gl##NAME(__VA_ARGS__);} while(0)
-  #define OGLR(RET, NAME, ...) do {RET=gl##NAME(__VA_ARGS__);} while(0)
-#endif /* NDEBUG */
-
 void fatal(const char *s, const char *o = "");
 void *alloc(int s);
 void keyrepeat(bool on);

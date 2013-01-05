@@ -45,5 +45,22 @@ namespace ogl
   extern int xtraverts; /* number of transformed vertices */
 } /* namespace ogl */
 
+/* OGL debug macros */
+#ifndef NDEBUG
+#define OGL(NAME, ...) \
+  do { \
+    gl##NAME(__VA_ARGS__); \
+    if (glGetError()) fatal("gl" #NAME " failed"); \
+  } while (0)
+#define OGLR(RET, NAME, ...) \
+  do { \
+    RET = gl##NAME(__VA_ARGS__); \
+    if (glGetError()) fatal("gl" #NAME " failed"); \
+  } while (0)
+#else
+  #define OGL(NAME, ...) do {gl##NAME(__VA_ARGS__);} while(0)
+  #define OGLR(RET, NAME, ...) do {RET=gl##NAME(__VA_ARGS__);} while(0)
+#endif /* NDEBUG */
+
 #endif /* __CUBE_OGL_HPP__ */
 

@@ -304,7 +304,7 @@ namespace rdr
     OGL(BindBuffer, GL_ARRAY_BUFFER, watervbo);
     OGL(DisableVertexAttribArray, ogl::COL);
     OGL(BindBuffer, GL_ARRAY_BUFFER, watervbo);
-    OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(float[5]), (void*) (2*sizeof(float)));
+    OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(float[5]), (void*) (sizeof(float[2])));
     OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(float[5]), NULL);
     OGL(VertexAttrib3f,ogl::COL,1.f,1.f,1.f);
     for (int xx = wx1; xx<wx2; xx += watersubdiv) {
