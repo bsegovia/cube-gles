@@ -25,6 +25,7 @@ namespace console
     if (conskip < 0)
       conskip = 0;
   }
+  COMMANDN(conskip, setconskip, ARG_1INT);
 
   static void line(const char *sf, bool highlight)
   {
@@ -74,7 +75,7 @@ namespace console
 
   // keymap is defined externally in keymap.cfg
   struct keym { int code; char *name; char *action; } keyms[256];
-  int numkm = 0;
+  static int numkm = 0;
 
   static void keymap(char *code, char *key, char *action)
   {
@@ -82,6 +83,7 @@ namespace console
     keyms[numkm].name = newstring(key);
     keyms[numkm++].action = newstringbuf(action);
   }
+  COMMAND(keymap, ARG_3STR);
 
   static void bindkey(char *key, char *action)
   {
@@ -92,8 +94,9 @@ namespace console
     }
     out("unknown key \"%s\"", key);
   }
+  COMMANDN(bind, bindkey, ARG_2STR);
 
-  /*! Turns input to the command line on or off */
+  /* turns input to the command line on or off */
   static void saycommand(const char *init)
   {
     SDL_EnableUNICODE(saycommandon = (init!=NULL));
@@ -101,8 +104,10 @@ namespace console
     if (!init) init = "";
     strcpy_s(commandbuf, init);
   }
+  COMMAND(saycommand, ARG_VARI);
 
   static void mapmsg(char *s) { strn0cpy(hdr.maptitle, s, 128); }
+  COMMAND(mapmsg, ARG_1STR);
 
   static void paste()
   {
@@ -113,7 +118,7 @@ namespace console
     strcat_s(commandbuf, cb);
     GlobalUnlock(cb);
     CloseClipboard();
-#else
+#elif !defined(EMSCRIPTEN)
     SDL_SysWMinfo wminfo;
     SDL_VERSION(&wminfo.version);
     wminfo.subsystem = SDL_SYSWM_X11;
@@ -148,6 +153,7 @@ namespace console
       rec = false;
     }
   }
+  COMMAND(history, ARG_1INT);
 
   void keypress(int code, bool isdown, int cooked)
   {
@@ -215,16 +221,5 @@ namespace console
       if (*keyms[i].action)
         fprintf(f, "bind \"%s\" [%s]\n", keyms[i].name, keyms[i].action);
   }
-
-  COMMANDN(conskip, setconskip, ARG_1INT);
-  COMMAND(keymap, ARG_3STR);
-  COMMANDN(bind, bindkey, ARG_2STR);
-  COMMAND(saycommand, ARG_VARI);
-  COMMAND(mapmsg, ARG_1STR);
-  COMMAND(history, ARG_1INT);
 } /* namespace console */
-
-
-
-
 

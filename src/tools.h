@@ -229,6 +229,7 @@ template <class T> struct vector : noncopyable
   INLINE T &last(void) { return buf[ulen-1]; }
   INLINE bool empty(void) { return ulen==0; }
   INLINE int length(void) const { return ulen; }
+  INLINE int size(void) const { return ulen*sizeof(T); }
   INLINE const T &operator[](int i) const { assert(i>=0 && i<ulen); return buf[i]; }
   INLINE T &operator[](int i) { assert(i>=0 && i<ulen); return buf[i]; }
   INLINE T *getbuf(void) { return buf; }
@@ -314,7 +315,7 @@ INLINE char *newstring(const char *s)           { return gp()->string(s); }
 INLINE char *newstring(const char *s, size_t l) { return gp()->string(s, l); }
 INLINE char *newstringbuf(const char *s)        { return gp()->stringbuf(s); }
 
-/* simplistic vector ops */
+/* simplistic vector ops XXX remove */
 #define dotprod(u,v) ((u).x * (v).x + (u).y * (v).y + (u).z * (v).z)
 #define vmul(u,f)    { (u).x *= (f); (u).y *= (f); (u).z *= (f); }
 #define vdiv(u,f)    { (u).x /= (f); (u).y /= (f); (u).z /= (f); }
@@ -324,13 +325,14 @@ INLINE char *newstringbuf(const char *s)        { return gp()->stringbuf(s); }
 #define vreject(v,u,max) ((v).x>(u).x+(max) || (v).x<(u).x-(max) || (v).y>(u).y+(max) || (v).y<(u).y-(max))
 #define vlinterp(v,f,u,g) { (v).x = (v).x*f+(u).x*g; (v).y = (v).y*f+(u).y*g; (v).z = (v).z*f+(u).z*g; }
 
+/* XXX REMOVE */
 struct vec {
   INLINE vec(void) {}
   INLINE vec(float x, float y, float z) : x(x),y(y),z(z) {}
   float x, y, z;
 };
 
-/* simplistic matrix ops */
+/* simplistic matrix ops -> XXX remove that crap! */
 void perspective(double m[16], double fovy, double aspect, double zNear, double zFar);
 void mul(const double a[16], const double b[16], double r[16]);
 int invert(const double m[16], double invOut[16]);
@@ -352,6 +354,9 @@ typedef vector<int> ivector;
 void fatal(const char *s, const char *o = "");
 void *alloc(int s);
 void keyrepeat(bool on);
+
+static const int KB = 1024;
+static const int MB = KB*KB;
 
 #include "math.hpp"
 #endif /* __CUBE_TOOLS_HPP__ */

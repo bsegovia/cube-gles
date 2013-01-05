@@ -11,7 +11,9 @@ namespace ogl
 {
   int xtraverts = 0;
 
-  /* very simple state tracking */
+  /*-------------------------------------------------------------------------
+   - very simple state tracking
+   -------------------------------------------------------------------------*/
   union {
     struct {
       uint shader:1; /* will force to reload everything */
@@ -22,7 +24,125 @@ namespace ogl
     uint any;
   } dirty;
 
-  /* matrix handling. very inspired by opengl :-) */
+  /*--------------------------------------------------------------------------
+   - immediate mode and buffer support
+   -------------------------------------------------------------------------*/
+  static const uint glbufferbinding[BUFFER_NUM] = {
+    GL_ARRAY_BUFFER,
+    GL_ELEMENT_ARRAY_BUFFER
+  };
+  static GLuint bindedvbo[BUFFER_NUM] = {0,0};
+  void bindbuffer(int target, uint buffer)
+  {
+    if (bindedvbo[target] != buffer) {
+      OGL(BindBuffer, glbufferbinding[target], buffer);
+      bindedvbo[target] = buffer;
+    }
+  }
+
+  /* we use two big circular buffers to handle immediate mode */
+  static int bigvbooffset=0, bigibooffset=0;
+  static int drawibooffset=0, drawvbooffset=0;
+  static GLuint bigvbo=0u, bigibo=0u;
+
+  static void initbuffer(GLuint &bo, int &booffset, int target, int size)
+  {
+    if (bo == 0u) OGL(GenBuffers, 1, &bo);
+    bindbuffer(target, bo);
+    OGL(BufferData, glbufferbinding[target], size, NULL, GL_DYNAMIC_DRAW);
+    bindbuffer(target, 0);
+    booffset = 0u;
+  }
+
+  static void bigbufferinit(int size)
+  {
+    initbuffer(bigvbo, bigvbooffset, ARRAY_BUFFER, size);
+    initbuffer(bigibo, bigibooffset, ELEMENT_ARRAY_BUFFER, size);
+  }
+
+  VARF(bigbuffersize, 4*MB, 4*MB, 16*MB, bigbufferinit(bigbuffersize));
+
+  void immediate(bool useibo)
+  {
+    bindbuffer(ARRAY_BUFFER, bigvbo);
+    if (useibo) bindbuffer(ELEMENT_ARRAY_BUFFER, bigibo);
+  }
+
+  void immediate_setattrib(int attrib, int n, int type, int sz, int offset)
+  {
+    const void *fake = (const void *) intptr_t(drawvbooffset+offset);
+    OGL(VertexAttribPointer, attrib, n, type, 0, sz, fake);
+  }
+
+  static void immediate_setdata(int target, int sz, const void *data)
+  {
+    assert(sz < bigbuffersize);
+    GLuint &bo = target==ARRAY_BUFFER ? bigvbo : bigibo;
+    int &offset = target==ARRAY_BUFFER ? bigvbooffset : bigibooffset;
+    int &drawoffset = target==ARRAY_BUFFER ? drawvbooffset : drawibooffset;
+    if (offset+sz > uint(bigbuffersize)) {
+      OGL(Flush);
+      bindbuffer(target, 0);
+      offset = 0u;
+      bindbuffer(target, bo);
+    }
+    bindbuffer(target, bo);
+    OGL(BufferSubData, glbufferbinding[target], offset, sz, data);
+    drawoffset = offset;
+    offset += sz;
+  }
+
+  void immediate_setvertices(int sz, const void *vertices)
+  {
+    immediate_setdata(ARRAY_BUFFER, sz, vertices);
+  }
+
+  void immediate_drawarrays(int mode, int count, int type)
+  {
+    drawarrays(mode,count,type);
+  }
+
+  void immediate_drawelements(int mode, int count, int type, const void *indices)
+  {
+    int sz = count;
+    switch (type) {
+      case GL_UNSIGNED_BYTE:  sz*=sizeof(uchar); break;
+      case GL_UNSIGNED_SHORT: sz*=sizeof(ushort); break;
+      case GL_UNSIGNED_INT: sz*=sizeof(uint); break;
+    };
+    immediate_setdata(ELEMENT_ARRAY_BUFFER, sz, indices);
+    const void *fake = (const void *) intptr_t(drawibooffset);
+    drawelements(mode, count, type, fake);
+  }
+
+  /* XXX remove state crap */
+  void immediate_draw(int mode, int pos, int tex, int col, size_t n, const float *data)
+  {
+    const int sz = (pos+tex+col)*sizeof(float);
+    immediate();
+    immediate_setvertices(n*sz, data);
+    if (pos) {
+      immediate_setattrib(ogl::POS0, pos, GL_FLOAT, sz, (tex+col)*sizeof(float));
+      OGL(EnableVertexAttribArray, POS0);
+    }
+    if (tex) {
+      immediate_setattrib(ogl::TEX, tex, GL_FLOAT, sz, col*sizeof(float));
+      OGL(EnableVertexAttribArray, TEX);
+    }
+    if (col) {
+      immediate_setattrib(ogl::COL, col, GL_FLOAT, sz, 0);
+      OGL(EnableVertexAttribArray, COL);
+    }
+    immediate_drawarrays(mode, 0, n);
+    bindbuffer(ARRAY_BUFFER,0); /* XXX BUFFER remove it */
+    OGL(DisableVertexAttribArray, TEX);
+    OGL(DisableVertexAttribArray, COL);
+    OGL(DisableVertexAttribArray, POS0);
+  }
+
+  /*-------------------------------------------------------------------------
+   - matrix handling. very inspired by opengl :-)
+   -------------------------------------------------------------------------*/
   enum {MATRIX_STACK = 4};
   static mat4x4f vp[MATRIX_MODE] = {one, one};
   static mat4x4f vpstack[MATRIX_STACK][MATRIX_MODE];
@@ -74,10 +194,11 @@ namespace ogl
     vp[vpmode] = vpstack[--vpdepth][vpmode];
   }
 
-  /* management of texture slots each texture slot can have multople texture
-   * frames, of which currently only the first is used additional frames can be
-   * used for various shaders
-   */
+  /*--------------------------------------------------------------------------
+   - management of texture slots each texture slot can have multiple texture
+   - frames, of which currently only the first is used additional frames can be
+   - used for various shaders
+   -------------------------------------------------------------------------*/
   static const int MAXTEX = 1000;
   static const int FIRSTTEX = 1000; /* opengl id = loaded id + FIRSTTEX */
   static const int MAXFRAMES = 2; /* increase for more complex shader defs */
@@ -92,11 +213,93 @@ namespace ogl
   static int mapping[256][MAXFRAMES]; /* (texture, frame) -> (oglid, name) */
   static string mapname[256][MAXFRAMES];
 
-  /* sphere management */
+  static void purgetextures(void) {loopi(256)loop(j,MAXFRAMES)mapping[i][j]=0;}
+
+  bool installtex(int tnum, const char *texname, int &xs, int &ys, bool clamp)
+  {
+    SDL_Surface *s = IMG_Load(texname);
+    if (!s) {
+      console::out("couldn't load texture %s", texname);
+      return false;
+    } else if (s->format->BitsPerPixel!=24) {
+      console::out("texture must be 24bpp: %s", texname);
+      return false;
+    }
+    OGL(BindTexture, GL_TEXTURE_2D, tnum);
+    OGL(PixelStorei, GL_UNPACK_ALIGNMENT, 1);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    OGL(TexEnvi, GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    xs = s->w;
+    ys = s->h;
+    if (xs>glmaxtexsize || ys>glmaxtexsize) fatal("texture dimensions are too large");
+    OGL(TexImage2D, GL_TEXTURE_2D, 0, GL_RGB, xs, ys, 0, GL_RGB, GL_UNSIGNED_BYTE, s->pixels);
+    OGL(GenerateMipmap, GL_TEXTURE_2D);
+    SDL_FreeSurface(s);
+    return true;
+  }
+
+  int lookuptex(int tex, int &xs, int &ys)
+  {
+    int frame = 0; /* other frames? */
+    int tid = mapping[tex][frame];
+
+    if (tid>=FIRSTTEX) {
+      xs = texx[tid-FIRSTTEX];
+      ys = texy[tid-FIRSTTEX];
+      return tid;
+    }
+
+    xs = ys = 16;
+    if (!tid) return 1; /* crosshair :) */
+
+    loopi(curtex) { /* lazily happens once per "texture" command */
+      if (strcmp(mapname[tex][frame], texname[i])==0) {
+        mapping[tex][frame] = tid = i+FIRSTTEX;
+        xs = texx[i];
+        ys = texy[i];
+        return tid;
+      }
+    }
+
+    if (curtex==MAXTEX) fatal("loaded too many textures");
+
+    int tnum = curtex+FIRSTTEX;
+    strcpy_s(texname[curtex], mapname[tex][frame]);
+
+    sprintf_sd(name)("packages%c%s", PATHDIV, texname[curtex]);
+
+    if (installtex(tnum, name, xs, ys)) {
+      mapping[tex][frame] = tnum;
+      texx[curtex] = xs;
+      texy[curtex] = ys;
+      curtex++;
+      return tnum;
+    } else
+      return mapping[tex][frame] = FIRSTTEX;  // temp fix
+  }
+
+  static void texturereset(void) { curtexnum = 0; }
+  COMMAND(texturereset, ARG_NONE);
+
+  static void texture(char *aframe, char *name)
+  {
+    int num = curtexnum++, frame = atoi(aframe);
+    if (num<0 || num>=256 || frame<0 || frame>=MAXFRAMES) return;
+    mapping[num][frame] = 1;
+    char *n = mapname[num][frame];
+    strcpy_s(n, name);
+    path(n);
+  }
+  COMMAND(texture, ARG_2STR);
+
+  /*--------------------------------------------------------------------------
+   - sphere management
+   -------------------------------------------------------------------------*/
   static GLuint spherevbo = 0;
   static int spherevertn = 0;
-
-  static float overbrightf = 1.f;
 
   static void buildsphere(float radius, int slices, int stacks)
   {
@@ -131,41 +334,23 @@ namespace ogl
 
     const size_t sz = sizeof(vvec<5>) * v.length();
     OGL(GenBuffers, 1, &spherevbo);
-    OGL(BindBuffer, GL_ARRAY_BUFFER, spherevbo);
+    ogl::bindbuffer(ARRAY_BUFFER, spherevbo);
     OGL(BufferData, GL_ARRAY_BUFFER, sz, &v[0][0], GL_STATIC_DRAW);
-    OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
   }
 
-  static void purgetextures(void) {
-    loopi(256) loop(j,MAXFRAMES) mapping[i][j] = 0;
-  }
-
-  bool installtex(int tnum, const char *texname, int &xs, int &ys, bool clamp)
+  /*--------------------------------------------------------------------------
+   - overbright -> just multiply final color
+   -------------------------------------------------------------------------*/
+  static float overbrightf = 1.f;
+  static void overbright(float amount)
   {
-    SDL_Surface *s = IMG_Load(texname);
-    if (!s) {
-      console::out("couldn't load texture %s", texname);
-      return false;
-    } else if (s->format->BitsPerPixel!=24) {
-      console::out("texture must be 24bpp: %s", texname);
-      return false;
-    }
-    OGL(BindTexture, GL_TEXTURE_2D, tnum);
-    OGL(PixelStorei, GL_UNPACK_ALIGNMENT, 1);
-    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    OGL(TexEnvi, GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    xs = s->w;
-    ys = s->h;
-    if (xs>glmaxtexsize || ys>glmaxtexsize) fatal("texture dimensions are too large");
-    OGL(TexImage2D, GL_TEXTURE_2D, 0, GL_RGB, xs, ys, 0, GL_RGB, GL_UNSIGNED_BYTE, s->pixels);
-    OGL(GenerateMipmap, GL_TEXTURE_2D);
-    SDL_FreeSurface(s);
-    return true;
+    dirty.flags.overbright=1;
+    overbrightf = amount;
   }
 
+  /*--------------------------------------------------------------------------
+   - quick and dirty shader management
+   -------------------------------------------------------------------------*/
   static bool checkshader(GLuint shadername)
   {
     GLint result = GL_FALSE;
@@ -320,57 +505,6 @@ namespace ogl
 
   void bindshader(uint flags) { bindshader(shaders[flags]); }
 
-  void rendermd2(const float *pos0, const float *pos1, float lerp, int n)
-  {
-    OGL(VertexAttribPointer, TEX, 2, GL_FLOAT, 0, sizeof(float[5]), pos0);
-    OGL(VertexAttribPointer, POS0, 3, GL_FLOAT, 0, sizeof(float[5]), pos0+2);
-    OGL(VertexAttribPointer, POS1, 3, GL_FLOAT, 0, sizeof(float[5]), pos1+2);
-    OGL(EnableVertexAttribArray, POS0);
-    OGL(EnableVertexAttribArray, POS1);
-    OGL(EnableVertexAttribArray, TEX);
-    bindshader(FOG|KEYFRAME|DIFFUSETEX);
-    OGL(Uniform1f, bindedshader->udelta, lerp);
-    drawarrays(GL_TRIANGLES, 0, n);
-    OGL(DisableVertexAttribArray, POS0);
-    OGL(DisableVertexAttribArray, POS1);
-    OGL(DisableVertexAttribArray, TEX);
-  }
-
-  static void flush(void)
-  {
-    if (dirty.any == 0) return; /* fast path */
-    if (dirty.flags.shader) {
-      OGL(UseProgram, bindedshader->program);
-      dirty.flags.shader = 0;
-    }
-    if ((bindedshader->rules & FOG) && (dirty.flags.fog || dirty.flags.mvp)) {
-      const mat4x4f &mv = vp[MODELVIEW];
-      const vec4f zaxis(mv.vx.z,mv.vy.z,mv.vz.z,mv.vw.z);
-      OGL(Uniform2fv, bindedshader->ufogstartend, 1, &fogstartend.x);
-      OGL(Uniform4fv, bindedshader->ufogcolor, 1, &fogcolor.x);
-      OGL(Uniform4fv, bindedshader->uzaxis, 1, &zaxis.x);
-      dirty.flags.fog = 0;
-    }
-    if (dirty.flags.mvp) {
-      viewproj = vp[PROJECTION]*vp[MODELVIEW];
-      OGL(UniformMatrix4fv, bindedshader->umvp, 1, GL_FALSE, &viewproj.vx.x);
-      dirty.flags.mvp = 0;
-    }
-    if (dirty.flags.overbright) {
-      OGL(Uniform1f, bindedshader->uoverbright, overbrightf);
-      dirty.flags.overbright = 0;
-    }
-  }
-
-  void drawarrays(int mode, int first, int count) {
-    flush();
-    OGL(DrawArrays, mode, first, count);
-  }
-  void drawelements(int mode, int count, int type, const void *indices) {
-    flush();
-    OGL(DrawElements, mode, count, type, indices);
-  }
-
   static void buildshaderattrib(shader &shader)
   {
     if (shader.rules&KEYFRAME) {
@@ -416,6 +550,69 @@ namespace ogl
     buildshader(shader, ubervert, uberfrag, rules);
   }
 
+  /*--------------------------------------------------------------------------
+   - world vbo is just a big vbo that contains all the triangles to render
+   -------------------------------------------------------------------------*/
+  static GLuint worldvbo = 0u;
+  static void bindworldvbo(void)
+  {
+    if (worldvbo == 0u) OGL(GenBuffers, 1, &worldvbo);
+    OGL(BindBuffer, GL_ARRAY_BUFFER, worldvbo);
+  }
+
+  /* display the binded md2 model */
+  void rendermd2(const float *pos0, const float *pos1, float lerp, int n)
+  {
+    OGL(VertexAttribPointer, TEX, 2, GL_FLOAT, 0, sizeof(float[5]), pos0);
+    OGL(VertexAttribPointer, POS0, 3, GL_FLOAT, 0, sizeof(float[5]), pos0+2);
+    OGL(VertexAttribPointer, POS1, 3, GL_FLOAT, 0, sizeof(float[5]), pos1+2);
+    OGL(EnableVertexAttribArray, POS0);
+    OGL(EnableVertexAttribArray, POS1);
+    OGL(EnableVertexAttribArray, TEX);
+    bindshader(FOG|KEYFRAME|DIFFUSETEX);
+    OGL(Uniform1f, bindedshader->udelta, lerp);
+    drawarrays(GL_TRIANGLES, 0, n);
+    OGL(DisableVertexAttribArray, POS0);
+    OGL(DisableVertexAttribArray, POS1);
+    OGL(DisableVertexAttribArray, TEX);
+  }
+
+  /* flush all the states required for the draw call */
+  static void flush(void)
+  {
+    if (dirty.any == 0) return; /* fast path */
+    if (dirty.flags.shader) {
+      OGL(UseProgram, bindedshader->program);
+      dirty.flags.shader = 0;
+    }
+    if ((bindedshader->rules & FOG) && (dirty.flags.fog || dirty.flags.mvp)) {
+      const mat4x4f &mv = vp[MODELVIEW];
+      const vec4f zaxis(mv.vx.z,mv.vy.z,mv.vz.z,mv.vw.z);
+      OGL(Uniform2fv, bindedshader->ufogstartend, 1, &fogstartend.x);
+      OGL(Uniform4fv, bindedshader->ufogcolor, 1, &fogcolor.x);
+      OGL(Uniform4fv, bindedshader->uzaxis, 1, &zaxis.x);
+      dirty.flags.fog = 0;
+    }
+    if (dirty.flags.mvp) {
+      viewproj = vp[PROJECTION]*vp[MODELVIEW];
+      OGL(UniformMatrix4fv, bindedshader->umvp, 1, GL_FALSE, &viewproj.vx.x);
+      dirty.flags.mvp = 0;
+    }
+    if (dirty.flags.overbright) {
+      OGL(Uniform1f, bindedshader->uoverbright, overbrightf);
+      dirty.flags.overbright = 0;
+    }
+  }
+
+  void drawarrays(int mode, int first, int count) {
+    flush();
+    OGL(DrawArrays, mode, first, count);
+  }
+  void drawelements(int mode, int count, int type, const void *indices) {
+    flush();
+    OGL(DrawElements, mode, count, type, indices);
+  }
+
   void init(int w, int h)
   {
     OGL(Viewport, 0, 0, w, h);
@@ -434,71 +631,16 @@ namespace ogl
     OGLR(watershader.uduv, GetUniformLocation, watershader.program, "duv");
     OGLR(watershader.udxy, GetUniformLocation, watershader.program, "dxy");
     OGLR(watershader.uhf, GetUniformLocation, watershader.program, "hf");
+    bigbufferinit(bigbuffersize);
   }
 
   void clean(void) { OGL(DeleteBuffers, 1, &spherevbo); }
 
   void drawsphere(void)
   {
-    OGL(BindBuffer, GL_ARRAY_BUFFER, spherevbo);
+    ogl::bindbuffer(ARRAY_BUFFER, spherevbo);
     ogl::bindshader(DIFFUSETEX);
     draw(GL_TRIANGLE_STRIP, 3, 2, spherevertn, NULL);
-    OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
-  }
-
-  static void texturereset(void) { curtexnum = 0; }
-
-  static void texture(char *aframe, char *name)
-  {
-    int num = curtexnum++, frame = atoi(aframe);
-    if (num<0 || num>=256 || frame<0 || frame>=MAXFRAMES) return;
-    mapping[num][frame] = 1;
-    char *n = mapname[num][frame];
-    strcpy_s(n, name);
-    path(n);
-  }
-
-  COMMAND(texturereset, ARG_NONE);
-  COMMAND(texture, ARG_2STR);
-
-  int lookuptex(int tex, int &xs, int &ys)
-  {
-    int frame = 0; /* other frames? */
-    int tid = mapping[tex][frame];
-
-    if (tid>=FIRSTTEX) {
-      xs = texx[tid-FIRSTTEX];
-      ys = texy[tid-FIRSTTEX];
-      return tid;
-    }
-
-    xs = ys = 16;
-    if (!tid) return 1; /* crosshair :) */
-
-    loopi(curtex) { /* lazily happens once per "texture" command */
-      if (strcmp(mapname[tex][frame], texname[i])==0) {
-        mapping[tex][frame] = tid = i+FIRSTTEX;
-        xs = texx[i];
-        ys = texy[i];
-        return tid;
-      }
-    }
-
-    if (curtex==MAXTEX) fatal("loaded too many textures");
-
-    int tnum = curtex+FIRSTTEX;
-    strcpy_s(texname[curtex], mapname[tex][frame]);
-
-    sprintf_sd(name)("packages%c%s", PATHDIV, texname[curtex]);
-
-    if (installtex(tnum, name, xs, ys)) {
-      mapping[tex][frame] = tnum;
-      texx[curtex] = xs;
-      texy[curtex] = ys;
-      curtex++;
-      return tnum;
-    } else
-      return mapping[tex][frame] = FIRSTTEX;  // temp fix
   }
 
   static void setupworld(void)
@@ -531,12 +673,6 @@ namespace ogl
       }
       ogl::drawarrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
     }
-  }
-
-  static void overbright(float amount)
-  {
-    dirty.flags.overbright=1;
-    overbrightf = amount;
   }
 
   void addstrip(int tex, int start, int n)
@@ -620,6 +756,8 @@ namespace ogl
     OGL(DisableVertexAttribArray, POS0);
   }
 
+  VAR(renderparticles,0,1,1);
+
   void drawframe(int w, int h, float curfps)
   {
     const float hf = hdr.waterlevel-0.3f;
@@ -665,41 +803,38 @@ namespace ogl
     world::render(player1->o.x, player1->o.y, player1->o.z,
                   (int)player1->yaw, (int)player1->pitch, (float)fov, w, h);
     rdr::finishstrips();
+    bindworldvbo();
+    rdr::uploadworld();
 
+    /* render sky */
     setupworld();
-
     bindshader(COLOR_ONLY);
     renderstripssky();
     OGL(DisableVertexAttribArray, COL);
-
     identity();
     rotate(player1->pitch, pitch);
     rotate(player1->yaw, yaw);
     rotate(90.f, vec3f(1.f,0.f,0.f));
-    OGL(VertexAttrib3f, COL, 1.0f, 1.0f, 1.0f);
+    OGL(VertexAttrib3f,COL,1.0f,1.0f,1.0f);
     OGL(DepthFunc, GL_GREATER);
     bindshader(DIFFUSETEX);
     rdr::draw_envbox(14, fog*4/3);
     OGL(DepthFunc, GL_LESS);
 
+    /* render diffuse objects */
     transplayer();
-
     overbright(2.f);
-
+    bindworldvbo();
     setupworld(); /* XXX REMOVE ! */
     bindshader(DIFFUSETEX|FOG);
     renderstrips();
-    OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
-    OGL(DisableVertexAttribArray, COL);
-    OGL(DisableVertexAttribArray, TEX);
+    OGL(DisableVertexAttribArray, COL); /* XXX put it elsewhere */
 
     ogl::xtraverts = 0;
 
     game::renderclients();
     monster::monsterrender();
-
     entities::renderentities();
-
     rdr::renderspheres(curtime);
     rdr::renderents();
 
@@ -708,24 +843,26 @@ namespace ogl
     drawhudgun(fovy, aspect, farplane);
 
     overbright(1.f);
-    setupworld(); /* XXX REMOVE ! */
     bindshader(watershader);
     OGL(Uniform1f, watershader.udelta, float(lastmillis));
     OGL(Uniform1f, watershader.uhf, hf);
+    OGL(EnableVertexAttribArray, POS0); /* XXX REMOVE! */
+    OGL(EnableVertexAttribArray, COL);
+    OGL(EnableVertexAttribArray, TEX);
     const int nquads = rdr::renderwater(hf, watershader.udxy, watershader.uduv);
     OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
     OGL(DisableVertexAttribArray, COL);
     OGL(DisableVertexAttribArray, TEX);
 
-    overbright(2.f);
-    bindshader(DIFFUSETEX);
-    rdr::render_particles(curtime);
+    if (renderparticles) {
+      overbright(2.f);
+      bindshader(DIFFUSETEX);
+      rdr::render_particles(curtime);
+    }
+
     overbright(1.f);
-
     OGL(Disable, GL_TEXTURE_2D);
-
     rdr::drawhud(w, h, int(curfps), nquads, rdr::curvert, underwater);
-
     OGL(Enable, GL_CULL_FACE);
   }
 } /* namespace ogl */

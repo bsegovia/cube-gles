@@ -213,6 +213,9 @@ namespace client
 
   void c2sinfo(const dynent *d)
   {
+#if defined(EMSCRIPTEN)
+    return;
+#endif
     // We haven't had a welcome message from the server yet
     if (clientnum<0)
       return;
@@ -287,6 +290,7 @@ namespace client
         lastping = lastmillis;
       }
     }
+#if !defined(EMSCRIPTEN)
     *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
     enet_packet_resize(packet, p-start);
     demo::incomingdata(start, p-start, true);
@@ -298,6 +302,7 @@ namespace client
     lastupdate = lastmillis;
     if (serveriteminitdone)
       demo::loadgamerest();  // hack
+#endif
   }
 
   /*! Update the position of other clients in the game in our world don't care
@@ -337,6 +342,9 @@ namespace client
 
   void localservertoclient(uchar *buf, int len)
   {
+#if defined(EMSCRIPTEN)
+    return;
+#else
     if (ENET_NET_TO_HOST_16(*(ushort *)buf) != len)
       neterr("packet length");
     demo::incomingdata(buf, len);
@@ -658,6 +666,7 @@ namespace client
         neterr("type");
         return;
     }
+#endif
   }
 
   void gets2c(void)
@@ -713,8 +722,4 @@ namespace client
   COMMANDN(map, changemap, ARG_1STR);
 
 } /* namespace client */
-
-
-
-
 

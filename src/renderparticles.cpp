@@ -67,6 +67,7 @@ namespace rdr
 
     int numrender = 0;
 
+    /* XXX remove that crap */
     OGL(EnableVertexAttribArray, ogl::POS0);
     OGL(EnableVertexAttribArray, ogl::COL);
     OGL(EnableVertexAttribArray, ogl::TEX);
@@ -78,17 +79,15 @@ namespace rdr
 
       OGL(BindTexture, GL_TEXTURE_2D, pt->tex);
 
-      const vvec<8> verts[] = {
+      const vvec<8> verts[] =
+      {
         vvec<8>(pt->r, pt->g, pt->b, 0.f, 1.f, p->o.x+(-right.x+up.x)*sz, p->o.z+(-right.y+up.y)*sz, p->o.y+(-right.z+up.z)*sz),
         vvec<8>(pt->r, pt->g, pt->b, 1.f, 1.f, p->o.x+( right.x+up.x)*sz, p->o.z+( right.y+up.y)*sz, p->o.y+( right.z+up.z)*sz),
         vvec<8>(pt->r, pt->g, pt->b, 0.f, 0.f, p->o.x+(-right.x-up.x)*sz, p->o.z+(-right.y-up.y)*sz, p->o.y+(-right.z-up.z)*sz),
         vvec<8>(pt->r, pt->g, pt->b, 1.f, 0.f, p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz)
       };
 
-      OGL(VertexAttribPointer, ogl::COL, 3, GL_FLOAT, 0, sizeof(float[8]), &verts[0][0]+0);
-      OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(float[8]), &verts[0][0]+3);
-      OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(float[8]), &verts[0][0]+5);
-      ogl::drawarrays(GL_TRIANGLE_STRIP, 0, 4);
+      ogl::immediate_draw(GL_TRIANGLE_STRIP, 3, 2, 3, 4, &verts[0][0]);
       ogl::xtraverts += 4;
 
       if (numrender++>maxparticles || (p->fade -= time)<0) {
@@ -105,6 +104,7 @@ namespace rdr
       }
     }
 
+    /* XXX remove that crap */
     OGL(DisableVertexAttribArray, ogl::POS0);
     OGL(DisableVertexAttribArray, ogl::COL);
     OGL(DisableVertexAttribArray, ogl::TEX);

@@ -120,7 +120,6 @@ namespace rdr
     return x;
   }
 
-
   void draw_textf(const char *fstr, int left, int top, int gl_num, ...)
   {
     sprintf_sdlv(str, gl_num, fstr);
@@ -131,7 +130,7 @@ namespace rdr
   {
     OGL(BlendFunc, GL_ONE, GL_ONE);
     OGL(BindTexture, GL_TEXTURE_2D, gl_num);
-    OGL(Color3ub, 255, 255, 255);
+    OGL(VertexAttrib3f,ogl::COL,1.f,1.f,1.f);
 
     int x = left;
     int y = top;
@@ -145,8 +144,8 @@ namespace rdr
     vvec<4> *verts = (vvec<4>*) alloca(4*len*sizeof(vvec<4>));
 
     /* traverse the string and build the mesh */
-    int index = 0;
-    for (int i = 0, vert = 0; str[i] != 0; ++i) {
+    int index = 0, vert = 0;
+    for (int i = 0; str[i] != 0; ++i) {
       int c = str[i];
       if (c=='\t') { x = (x-left+PIXELTAB)/PIXELTAB*PIXELTAB+left; continue; }; 
       if (c=='\f') { OGL(VertexAttrib3f,ogl::COL,0.25f,1.f,0.5f); continue; };
@@ -172,13 +171,16 @@ namespace rdr
       index += 6;
       vert += 4;
     }
-    OGL(VertexAttrib3f,ogl::COL,1.f,1.f,1.f);
     OGL(EnableVertexAttribArray, ogl::POS0);
     OGL(EnableVertexAttribArray, ogl::TEX);
-    OGL(VertexAttribPointer, ogl::POS0, 2, GL_FLOAT, 0, sizeof(float[4]), &verts[0][2]);
-    OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(float[4]), &verts[0][0]);
+    ogl::immediate(true);
+    ogl::immediate_setvertices(vert*sizeof(float[4]), &verts[0][0]);
+    ogl::immediate_setattrib(ogl::POS0, 2, GL_FLOAT, sizeof(float[4]), sizeof(float[2]));
+    ogl::immediate_setattrib(ogl::TEX, 2, GL_FLOAT, sizeof(float[4]), 0);
     ogl::bindshader(ogl::DIFFUSETEX);
-    ogl::drawelements(GL_TRIANGLES, index, GL_UNSIGNED_INT, indices);
+    ogl::immediate_drawelements(GL_TRIANGLES, index, GL_UNSIGNED_INT, indices);
+    ogl::bindbuffer(ogl::ARRAY_BUFFER, 0); /* XXX BUFFER remove it once we only use buffers */
+    ogl::bindbuffer(ogl::ELEMENT_ARRAY_BUFFER, 0);
     OGL(DisableVertexAttribArray, ogl::POS0);
     OGL(DisableVertexAttribArray, ogl::TEX);
   }
@@ -196,9 +198,12 @@ namespace rdr
     verts[3] = vvec<5>(s0, t0, float(x0), float(y0), float(z0));
 
     OGL(BindTexture, GL_TEXTURE_2D, texture);
-    OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(vvec<5>), &verts[0][2]);
-    OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(vvec<5>), &verts[0][0]);
-    ogl::drawelements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, twotriangles);
+    /* XXX bind shader here !!! */
+    ogl::immediate(true);
+    ogl::immediate_setvertices(4*sizeof(vvec<5>), &verts[0][0]);
+    ogl::immediate_setattrib(ogl::POS0, 3, GL_FLOAT, sizeof(vvec<5>), sizeof(float[2]));
+    ogl::immediate_setattrib(ogl::TEX, 2, GL_FLOAT, sizeof(vvec<5>), 0);
+    ogl::immediate_drawelements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, twotriangles);
     ogl::xtraverts += 4;
   }
 

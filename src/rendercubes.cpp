@@ -8,11 +8,19 @@ namespace rdr
   int curvert;
   int curmaxverts = 10000;
 
+  /* XXX remove it since we will upload everything in one big chunk */
   void setarraypointers(void)
   {
-    OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(vertex), &verts[0].x);
-    OGL(VertexAttribPointer, ogl::COL, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex), &verts[0].r);
-    OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(vertex), &verts[0].u);
+    OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(vertex),(const void*)offsetof(vertex,x));
+    OGL(VertexAttribPointer, ogl::COL, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex),(const void*)offsetof(vertex,r));
+    OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(vertex), (const void*)offsetof(vertex,u));
+  }
+
+  void uploadworld(void)
+  {
+    const size_t sz = curvert*sizeof(vertex);
+    OGL(BufferData, GL_ARRAY_BUFFER, sz, NULL, GL_DYNAMIC_DRAW);
+    OGL(BufferSubData, GL_ARRAY_BUFFER, 0, sz, verts);
   }
 
   void reallocv(void)
@@ -146,8 +154,7 @@ namespace rdr
     const float yo = yf*y;
     const bool first = !deltastrip || y!=oy+size || ogltex!=gltex || x!=ox;
 
-    if (first)
-    {
+    if (first) {
       stripend();
       firstindex = curvert;
       ogltex = gltex;
@@ -182,28 +189,28 @@ namespace rdr
 
   void render_2tris(sqr *h, sqr *s, int x1, int y1, int x2, int y2, int x3, int y3, sqr *l1, sqr *l2, sqr *l3)   // floor/ceil tris on a corner cube
   {
-      stripend();
-      vertcheck();
+    stripend();
+    vertcheck();
 
-      int sx, sy;
-      int gltex = ogl::lookuptex(h->ftex, sx, sy);
-      float xf = TEXTURESCALE/sx;
-      float yf = TEXTURESCALE/sy;
+    int sx, sy;
+    int gltex = ogl::lookuptex(h->ftex, sx, sy);
+    float xf = TEXTURESCALE/sx;
+    float yf = TEXTURESCALE/sy;
 
-      vertf((float)x1, h->floor, (float)y1, l1, xf*x1, yf*y1);
-      vertf((float)x2, h->floor, (float)y2, l2, xf*x2, yf*y2);
-      vertf((float)x3, h->floor, (float)y3, l3, xf*x3, yf*y3);
-      ogl::addstrip(gltex, curvert-3, 3);
+    vertf((float)x1, h->floor, (float)y1, l1, xf*x1, yf*y1);
+    vertf((float)x2, h->floor, (float)y2, l2, xf*x2, yf*y2);
+    vertf((float)x3, h->floor, (float)y3, l3, xf*x3, yf*y3);
+    ogl::addstrip(gltex, curvert-3, 3);
 
-      gltex = ogl::lookuptex(h->ctex, sx, sy);
-      xf = TEXTURESCALE/sx;
-      yf = TEXTURESCALE/sy;
+    gltex = ogl::lookuptex(h->ctex, sx, sy);
+    xf = TEXTURESCALE/sx;
+    yf = TEXTURESCALE/sy;
 
-      vertf((float)x3, h->ceil, (float)y3, l3, xf*x3, yf*y3);
-      vertf((float)x2, h->ceil, (float)y2, l2, xf*x2, yf*y2);
-      vertf((float)x1, h->ceil, (float)y1, l1, xf*x1, yf*y1);
-      ogl::addstrip(gltex, curvert-3, 3);
-      nquads++;
+    vertf((float)x3, h->ceil, (float)y3, l3, xf*x3, yf*y3);
+    vertf((float)x2, h->ceil, (float)y2, l2, xf*x2, yf*y2);
+    vertf((float)x1, h->ceil, (float)y1, l1, xf*x1, yf*y1);
+    ogl::addstrip(gltex, curvert-3, 3);
+    nquads++;
   }
 
   void render_tris(int x, int y, int size, bool topleft,
@@ -280,6 +287,8 @@ namespace rdr
     int yn = (wy2-wy1)/watersubdiv;
     yn += (wy2-wy1)%watersubdiv?1:0;
 
+    if (watervbo == 0u) OGL(GenBuffers, 1, &watervbo);
+    ogl::bindbuffer(ogl::ARRAY_BUFFER, watervbo);
     if (!watervbobuilt || yn>waterlength || sx!=waterx || sy!=watery) {
       vector<watervert> v;
       for (int yy = 0; yy<wy2-wy1; yy += watersubdiv) {
@@ -291,10 +300,8 @@ namespace rdr
         v.add(watervert(0.f,yo+ys,0.f,        yy+watersubdiv));
         v.add(watervert(xs, yo+ys,watersubdiv,yy+watersubdiv));
       }
-      if (watervbo == 0u) OGL(GenBuffers, 1, &watervbo);
-      OGL(BindBuffer, GL_ARRAY_BUFFER, watervbo);
       OGL(BufferData, GL_ARRAY_BUFFER, v.length()*sizeof(watervert), &v[0], GL_STATIC_DRAW);
-      OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
+      ogl::bindbuffer(ogl::ARRAY_BUFFER, 0);
       watervbobuilt=true;
       waterlength=yn;
       watervertn=v.length();
@@ -302,9 +309,8 @@ namespace rdr
       watery=sy;
     }
 
-    OGL(BindBuffer, GL_ARRAY_BUFFER, watervbo);
     OGL(DisableVertexAttribArray, ogl::COL);
-    OGL(BindBuffer, GL_ARRAY_BUFFER, watervbo);
+    ogl::bindbuffer(ogl::ARRAY_BUFFER, watervbo);
     OGL(VertexAttribPointer, ogl::POS0, 2, GL_FLOAT, 0, sizeof(watervert), (void*) (sizeof(float[2])));
     OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(watervert), NULL);
     OGL(VertexAttrib3f,ogl::COL,1.f,1.f,1.f);
@@ -314,9 +320,11 @@ namespace rdr
       OGL(Uniform2fv, uduv, 1, &duv.x);
       OGL(Uniform2fv, udxy, 1, &dxy.x);
       ogl::drawarrays(GL_TRIANGLE_STRIP, 0, watervertn);
+      ogl::xtraverts += watervertn;
+      nquads += watervertn-2;
     }
     OGL(EnableVertexAttribArray, ogl::COL);
-    OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
+    ogl::bindbuffer(ogl::ARRAY_BUFFER, 0);
     OGL(Disable, GL_BLEND);
     OGL(DepthMask, GL_TRUE);
 

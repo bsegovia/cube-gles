@@ -17,14 +17,15 @@ namespace rdr
 {
   void line(int x1, int y1, float z1, int x2, int y2, float z2)
   {
-    const vvec<3> verts[] = {
+    const vvec<3> verts[] =
+    {
       vvec<3>(float(x1), z1, float(y1)),
       vvec<3>(float(x1), z1, float(y1)+0.01f),
       vvec<3>(float(x2), z2, float(y2)),
       vvec<3>(float(x2), z2, float(y2)+0.01f)
     };
-    ogl::bindshader(0);
-    ogl::draw(GL_TRIANGLE_STRIP, 3, 0, 4, &verts[0][0]);
+    ogl::bindshader(ogl::COLOR_ONLY);
+    ogl::immediate_draw(GL_TRIANGLE_STRIP, 3, 0, 0, 4, &verts[0][0]);
     ogl::xtraverts += 4;
   }
 
@@ -36,28 +37,30 @@ namespace rdr
 
   void box(const block &b, float z1, float z2, float z3, float z4)
   {
-    const vvec<3> verts[] = {
+    const vvec<3> verts[] =
+    {
       vvec<3>(float(b.x),      z1, float(b.y)),
       vvec<3>(float(b.x+b.xs), z2, float(b.y)),
       vvec<3>(float(b.x+b.xs), z3, float(b.y+b.ys)),
       vvec<3>(float(b.x),      z4, float(b.y+b.ys))
     };
-    ogl::bindshader(0);
-    ogl::draw(GL_LINE_LOOP, 3, 0, 4, &verts[0][0]);
+    ogl::bindshader(ogl::COLOR_ONLY);
+    ogl::immediate_draw(GL_LINE_LOOP, 3, 0, 0, 4, &verts[0][0]);
     ogl::xtraverts += 4;
   }
 
   void dot(int x, int y, float z)
   {
     const float DOF = 0.1f;
-    const vvec<3> verts[] = {
+    const vvec<3> verts[] =
+    {
       vvec<3>(x-DOF, float(z), y-DOF),
       vvec<3>(x+DOF, float(z), y-DOF),
       vvec<3>(x+DOF, float(z), y+DOF),
       vvec<3>(x-DOF, float(z), y+DOF)
     };
-    ogl::bindshader(0);
-    ogl::draw(GL_LINE_LOOP, 3, 0, 4, &verts[0][0]);
+    ogl::bindshader(ogl::COLOR_ONLY);
+    ogl::immediate_draw(GL_LINE_LOOP, 3, 0, 0, 4, &verts[0][0]);
     ogl::xtraverts += 4;
   }
 
@@ -66,29 +69,31 @@ namespace rdr
     OGL(DepthMask, GL_FALSE);
     OGL(Disable, GL_TEXTURE_2D);
     OGL(BlendFunc, GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
-    ogl::bindshader(0);
+    ogl::bindshader(ogl::COLOR_ONLY);
     if (border)
       OGL(VertexAttrib3f, ogl::COL, .5f, .3f, .4f);
     else
       OGL(VertexAttrib3f, ogl::COL, 1.f, 1.f, 1.f);
 
-    const vvec<2> verts0[] = {
+    const vvec<2> verts0[] =
+    {
       vvec<2>(float(x1), float(y1)),
       vvec<2>(float(x2), float(y1)),
       vvec<2>(float(x1), float(y2)),
       vvec<2>(float(x2), float(y2))
     };
-    ogl::draw(GL_TRIANGLE_STRIP, 2, 0, 4, &verts0[0][0]);
+    ogl::immediate_draw(GL_TRIANGLE_STRIP, 2, 0, 0, 4, &verts0[0][0]);
 
     OGL(Disable, GL_BLEND);
     OGL(VertexAttrib3f, ogl::COL, .2f, .7f, .4f);
-    const vvec<2> verts1[] = {
+    const vvec<2> verts1[] =
+    {
       vvec<2>(float(x1), float(y1)),
       vvec<2>(float(x2), float(y1)),
       vvec<2>(float(x2), float(y2)),
       vvec<2>(float(x1), float(y2))
     };
-    ogl::draw(GL_LINE_LOOP, 2, 0, 4, &verts1[0][0]);
+    ogl::immediate_draw(GL_LINE_LOOP, 2, 0, 0, 4, &verts1[0][0]);
 
     ogl::xtraverts += 8;
     OGL(Enable, GL_BLEND);
@@ -200,11 +205,9 @@ namespace rdr
   static void readmatrices()
   {
     glGetIntegerv(GL_VIEWPORT, viewport);
-    readmm  = ogl::matrix(ogl::MODELVIEW);
+    readmm = ogl::matrix(ogl::MODELVIEW);
     readpm = ogl::matrix(ogl::PROJECTION);
   }
-
-  // stupid function to cater for stupid ATI linux drivers that return incorrect depth values
 
   static float depthcorrect(float d) { return (d<=1/256.0f) ? d*256 : d; }
 
@@ -213,24 +216,19 @@ namespace rdr
   // glReadPixels() and give false coordinates, making shooting and such
   // impossible. also hits map entities which is unwanted.  could be replaced
   // by a more acurate version of monster.cpp los() if needed
+  // XXX CLean that crap and use our clean math library
   void readdepth(int w, int h)
   {
     glReadPixels(w/2, h/2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &cursordepth);
-//    float worldx = 0, worldy = 0, worldz = 0;
-//    const mat4x4f &mm = ogl::matrix(ogl::MODELVIEW);
-//    const mat4x4f &pm = ogl::matrix(ogl::PROJECTION);
     double worldx = 0, worldy = 0, worldz = 0;
     double pm[16],mm[16];
     loopi(16) mm[i] = (&readmm[0][0])[i];
     loopi(16) pm[i] = (&readpm[0][0])[i];
     unproject(w/2, h/2, depthcorrect(cursordepth), mm, pm, viewport, &worldx, &worldz, &worldy);
- //   unproject(w/2, h/2, depthcorrect(cursordepth), &mm.vx.x, &pm.vx.x, viewport, &worldx, &worldz, &worldy);
     worldpos.x = (float)worldx;
     worldpos.y = (float)worldy;
     worldpos.z = (float)worldz;
-//    const vec r = { mm.vx.x, mm.vy.x, mm.vz.x };
-//    const vec u = { mm.vx.y, mm.vy.y, mm.vz.y };
-   const vec r = { (float)mm[0], (float)mm[4], (float)mm[8] };
+    const vec r = { (float)mm[0], (float)mm[4], (float)mm[8] };
     const vec u = { (float)mm[1], (float)mm[5], (float)mm[9] };
     setorient(r, u);
   }
@@ -249,7 +247,7 @@ namespace rdr
       vvec<4>(tx+o, ty+o, x+s, y+s)
     };
     ogl::bindshader(ogl::DIFFUSETEX);
-    ogl::draw(GL_TRIANGLE_STRIP, 2, 2, 4, &verts[0][0]);
+    ogl::immediate_draw(GL_TRIANGLE_STRIP, 2, 2, 0, 4, &verts[0][0]);
     ogl::xtraverts += 4;
   }
 
@@ -300,8 +298,8 @@ namespace rdr
         OGL(VertexAttrib3f,ogl::COL,0.0f,0.9f,0.9f);
       else
         OGL(VertexAttrib3f,ogl::COL,0.9f,0.5f,0.0f);
-      ogl::bindshader(0);
-      ogl::draw(GL_TRIANGLE_STRIP,2,0,4,&verts[0][0]);
+      ogl::bindshader(ogl::COLOR_ONLY);
+      ogl::immediate_draw(GL_TRIANGLE_STRIP,2,0,0,4,&verts[0][0]);
       dblend -= curtime/3;
       if (dblend<0) dblend = 0;
     }
@@ -337,7 +335,7 @@ namespace rdr
         vvec<4>(1.f, 1.f, float(VIRTW/2) + csz, float(VIRTH/2) + csz)
       };
       ogl::bindshader(ogl::DIFFUSETEX);
-      ogl::draw(GL_TRIANGLE_STRIP, 2, 2, 4, &verts[0][0]);
+      ogl::immediate_draw(GL_TRIANGLE_STRIP, 2, 2, 0, 4, &verts[0][0]);
     }
 
     ogl::popmatrix();

@@ -109,9 +109,9 @@ namespace rdr
       command += 3*n; /* +1 for index, +2 for u,v */
     }
     OGL(GenBuffers, 1, &vbo);
-    OGL(BindBuffer, GL_ARRAY_BUFFER, vbo);
+    ogl::bindbuffer(ogl::ARRAY_BUFFER, vbo);
     OGL(BufferData, GL_ARRAY_BUFFER, numFrames*framesz, NULL, GL_STATIC_DRAW);
-    OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
+    ogl::bindbuffer(ogl::ARRAY_BUFFER, 0);
     return true;
   }
 
@@ -156,7 +156,7 @@ namespace rdr
   void md2::render(vec &light, int frame, int range, float x, float y, float z,
                    float yaw, float pitch, float sc, float speed, int snap, int basetime)
   {
-    OGL(BindBuffer, GL_ARRAY_BUFFER, vbo);
+    ogl::bindbuffer(ogl::ARRAY_BUFFER, vbo);
     loopi(range) if (!builtframes[frame+i]) scale(frame+i, sc, snap);
 
     OGL(VertexAttrib3fv, ogl::COL, &light.x);
@@ -175,7 +175,7 @@ namespace rdr
     const float *pos0 = (const float*)(fr1*framesz);
     const float *pos1 = (const float*)(fr2*framesz);
     ogl::rendermd2(pos0, pos1, frac, n);
-    OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
+    ogl::bindbuffer(ogl::ARRAY_BUFFER, 0);
     ogl::xtraverts += n;
 
     ogl::popmatrix();

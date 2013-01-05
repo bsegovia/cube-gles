@@ -568,6 +568,12 @@ namespace game
     }
   }
 
+#if defined(EMSCRIPTEN)
+  static void sendmap(const char *mapname){}
+  COMMAND(sendmap, ARG_1STR);
+  static void getmap(void) {}
+  COMMAND(getmap, ARG_NONE);
+#else
   static void sendmap(const char *mapname)
   {
     if (*mapname) world::save(mapname);
@@ -612,7 +618,6 @@ namespace game
     console::out("requesting map from server...");
   }
   COMMAND(getmap, ARG_NONE);
+#endif
 } /* namespace game */
-
-
 

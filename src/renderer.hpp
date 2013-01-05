@@ -20,6 +20,7 @@ namespace rdr
   int renderwater(float hf, uint udxy, uint uduv);
   void finishstrips(void);
   void setarraypointers(void);
+  void uploadworld(void);
   void mipstats(int a, int b, int c);
 
   /* rendertext */

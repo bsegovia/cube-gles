@@ -10,6 +10,7 @@
 #define CONSTANT_TYPE(TYPE,VALUE,NUM)\
 static const struct TYPE\
 {\
+  INLINE TYPE(){}\
   INLINE operator double(void) const { return NUM; }\
   INLINE operator float (void) const { return NUM; }\
   INLINE operator int64 (void) const { return NUM; }\

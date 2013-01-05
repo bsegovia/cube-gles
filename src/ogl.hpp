@@ -21,11 +21,25 @@ namespace ogl
   void vertf(float v1, float v2, float v3, sqr *ls, float t1, float t2);
   void addstrip(int tex, int start, int n);
   int lookuptex(int tex, int &xs, int &ys);
+
+  /* draw helper functions */
   void draw(int mode, int pos, int tex, size_t n, const float *data);
   void drawarrays(int mode, int first, int count);
   void drawelements(int mode, int count, int type, const void *indices);
   void rendermd2(const float *pos0, const float *pos1, float lerp, int n);
   void drawsphere(void);
+
+  /* just to ensure state tracking */
+  enum {ARRAY_BUFFER=0,ELEMENT_ARRAY_BUFFER,BUFFER_NUM};
+  void bindbuffer(int target, uint buffer);
+
+  /* immediate mode rendering */
+  void immediate(bool useibo=false);
+  void immediate_setvertices(int sz, const void *data);
+  void immediate_setattrib(int attrib, int n, int type, int sz, int offset);
+  void immediate_drawelements(int mode, int count, int type, const void *indices);
+  void immediate_drawarrays(int mode, int first, int count);
+  void immediate_draw(int mode, int pos, int tex, int col, size_t n, const float *data);
 
   /* matrix interface (mostly OGL like) */
   enum {MODELVIEW=0, PROJECTION=1, MATRIX_MODE=2};
@@ -42,7 +56,8 @@ namespace ogl
   void scale(const vec3f &s);
   const mat4x4f &matrix(int mode);
 
-  extern int xtraverts; /* number of transformed vertices */
+  /* number of transformed vertices per frame */
+  extern int xtraverts;
 } /* namespace ogl */
 
 /* OGL debug macros */
