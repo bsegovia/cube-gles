@@ -59,7 +59,7 @@ namespace ogl
     initbuffer(bigibo, ELEMENT_ARRAY_BUFFER, size);
   }
 
-  VARF(bigbuffersize, 4*MB, 4*MB, 16*MB, bigbufferinit(bigbuffersize));
+  VARF(bigbuffersize, 1*MB, 4*MB, 16*MB, bigbufferinit(bigbuffersize));
 
   void immediate(bool useibo)
   {
@@ -551,11 +551,23 @@ namespace ogl
   /*--------------------------------------------------------------------------
    - world vbo is just a big vbo that contains all the triangles to render
    -------------------------------------------------------------------------*/
-  static GLuint worldvbo = 0u;
+  static GLuint worldvbo[2] = {0u,0u};
+  static int worldvbosz[2] = {0,0};
+  static int worldvbocurr = 0;
   static void bindworldvbo(void)
   {
-    if (worldvbo == 0u) OGL(GenBuffers, 1, &worldvbo);
-    OGL(BindBuffer, GL_ARRAY_BUFFER, worldvbo);
+    const int worldsz = rdr::worldsize();
+    if (worldvbo[worldvbocurr] == 0u)
+      OGL(GenBuffers, 1, worldvbo+worldvbocurr);
+    OGL(BindBuffer, GL_ARRAY_BUFFER, worldvbo[worldvbocurr]);
+    if (worldvbosz[worldvbocurr] < worldsz) {
+      OGL(BufferData, GL_ARRAY_BUFFER, worldsz, NULL, GL_DYNAMIC_DRAW);
+      worldvbosz[worldvbocurr] = worldsz;
+    }
+  }
+  static INLINE void switchworldvbo(void)
+  {
+    worldvbocurr = (worldvbocurr+1)&2;
   }
 
   /* display the binded md2 model */
@@ -755,6 +767,9 @@ namespace ogl
   }
 
   VAR(renderparticles,0,1,1);
+  VAR(rendersky,0,1,1);
+  VAR(renderworld,0,1,1);
+  VAR(renderwater,0,1,1);
 
   /* enforce the gl states */
   static void forceglstate(void)
@@ -771,6 +786,7 @@ namespace ogl
     float aspect = w/(float)h;
 
     forceglstate();
+    switchworldvbo();
 
     fogstartend.x = float((fog+64)/8);
     fogstartend.y = 1.f/(float(fog)-fogstartend[0]);
@@ -814,29 +830,33 @@ namespace ogl
     rdr::uploadworld();
 
     /* render sky */
-    setupworld();
-    bindshader(COLOR_ONLY);
-    renderstripssky();
-    OGL(DisableVertexAttribArray, COL);
-    identity();
-    rotate(player1->pitch, pitch);
-    rotate(player1->yaw, yaw);
-    rotate(90.f, vec3f(1.f,0.f,0.f));
-    OGL(VertexAttrib3f,COL,1.0f,1.0f,1.0f);
-    OGL(DepthFunc, GL_GREATER);
-    bindshader(DIFFUSETEX);
-    rdr::draw_envbox(14, fog*4/3);
-    OGL(DepthFunc, GL_LESS);
+    if (rendersky) {
+      setupworld();
+      bindshader(COLOR_ONLY);
+      renderstripssky();
+      OGL(DisableVertexAttribArray, COL);
+      identity();
+      rotate(player1->pitch, pitch);
+      rotate(player1->yaw, yaw);
+      rotate(90.f, vec3f(1.f,0.f,0.f));
+      OGL(VertexAttrib3f,COL,1.0f,1.0f,1.0f);
+      OGL(DepthFunc, GL_GREATER);
+      bindshader(DIFFUSETEX);
+      rdr::draw_envbox(14, fog*4/3);
+      OGL(DepthFunc, GL_LESS);
+    }
 
     /* render diffuse objects */
-    transplayer();
-    overbright(2.f);
-    bindworldvbo();
-    setupworld(); /* XXX REMOVE ! */
-    bindshader(DIFFUSETEX|FOG);
-    renderstrips();
-    OGL(DisableVertexAttribArray, COL); /* XXX put it elsewhere */
-
+    if (renderworld) {
+      transplayer();
+      overbright(2.f);
+      bindworldvbo();
+      setupworld();
+      bindshader(DIFFUSETEX|FOG);
+      renderstrips();
+      OGL(DisableVertexAttribArray, COL); /* XXX put it elsewhere */
+    } else
+      OGL(Clear, GL_COLOR_BUFFER_BIT);
     ogl::xtraverts = 0;
 
     game::renderclients();
@@ -849,17 +869,20 @@ namespace ogl
 
     drawhudgun(fovy, aspect, farplane);
 
-    overbright(1.f);
-    bindshader(watershader);
-    OGL(Uniform1f, watershader.udelta, float(lastmillis));
-    OGL(Uniform1f, watershader.uhf, hf);
-    OGL(EnableVertexAttribArray, POS0); /* XXX REMOVE! */
-    OGL(EnableVertexAttribArray, COL);
-    OGL(EnableVertexAttribArray, TEX);
-    const int nquads = rdr::renderwater(hf, watershader.udxy, watershader.uduv);
-    OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
-    OGL(DisableVertexAttribArray, COL);
-    OGL(DisableVertexAttribArray, TEX);
+    int nquads = 0;
+    if (renderwater) {
+      overbright(1.f);
+      bindshader(watershader);
+      OGL(Uniform1f, watershader.udelta, float(lastmillis));
+      OGL(Uniform1f, watershader.uhf, hf);
+      OGL(EnableVertexAttribArray, POS0); /* XXX REMOVE! */
+      OGL(EnableVertexAttribArray, COL);
+      OGL(EnableVertexAttribArray, TEX);
+      nquads = rdr::renderwater(hf, watershader.udxy, watershader.uduv);
+      OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
+      OGL(DisableVertexAttribArray, COL);
+      OGL(DisableVertexAttribArray, TEX);
+    }
 
     if (renderparticles) {
       overbright(2.f);

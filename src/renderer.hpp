@@ -22,6 +22,7 @@ namespace rdr
   void setarraypointers(void);
   void uploadworld(void);
   void mipstats(int a, int b, int c);
+  int worldsize(void);
 
   /* rendertext */
   void draw_text(const char *str, int left, int top, int gl_num);

@@ -179,9 +179,7 @@ namespace rdr
     ogl::immediate_setattrib(ogl::TEX, 2, GL_FLOAT, sizeof(float[4]), 0);
     ogl::bindshader(ogl::DIFFUSETEX);
     ogl::immediate_drawelements(GL_TRIANGLES, index, GL_UNSIGNED_INT, indices);
-    ogl::bindbuffer(ogl::ARRAY_BUFFER, 0); /* XXX BUFFER remove it once we only use buffers */
-    ogl::bindbuffer(ogl::ELEMENT_ARRAY_BUFFER, 0);
-    OGL(DisableVertexAttribArray, ogl::POS0);
+    OGL(DisableVertexAttribArray, ogl::POS0);/* XXX */
     OGL(DisableVertexAttribArray, ogl::TEX);
   }
 

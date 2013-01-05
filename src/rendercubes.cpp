@@ -16,11 +16,10 @@ namespace rdr
     OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(vertex), (const void*)offsetof(vertex,u));
   }
 
+  int worldsize(void) { return curvert*sizeof(vertex); }
   void uploadworld(void)
   {
-    const size_t sz = curvert*sizeof(vertex);
-    OGL(BufferData, GL_ARRAY_BUFFER, sz, NULL, GL_DYNAMIC_DRAW);
-    OGL(BufferSubData, GL_ARRAY_BUFFER, 0, sz, verts);
+    OGL(BufferSubData, GL_ARRAY_BUFFER, 0, worldsize(), verts);
   }
 
   void reallocv(void)
