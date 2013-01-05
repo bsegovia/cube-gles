@@ -285,7 +285,7 @@ namespace ogl
   static const char watervert[] = { /* use DIFFUSETEX */
     "#define PI 3.14159265\n"
     "uniform mat4 MVP;\n"
-    "uniform vec4 duv;\n"
+    "uniform vec2 duv;\n"
     "uniform vec2 dxy;\n"
     "uniform float hf;\n"
     "uniform float delta;\n"
@@ -297,7 +297,7 @@ namespace ogl
     "float dx(float x) { return x+sin(x*2.0+delta/1000.0)*0.04; }\n"
     "float dy(float x) { return x+sin(x*2.0+delta/900.0+PI/5.0)*0.05; }\n"
     "void main() {\n"
-    "  texcoord = vec2(dx(t.x+duv.z),dy(t.y+duv.w))+duv.xy;\n"
+    "  texcoord = vec2(dx(t.x+duv.x),dy(t.y+duv.y));\n"
     "  vec2 absp = dxy+p.xz;\n"
     "  vec3 pos = vec3(absp.x,hf-sin(absp.x*absp.y*0.1+delta/300.0)*0.2,absp.y);\n"
     "  outcol = incol;\n"

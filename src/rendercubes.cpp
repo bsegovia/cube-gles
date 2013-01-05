@@ -251,6 +251,7 @@ namespace rdr
   static bool watervbobuilt=false;
   static GLuint watervbo=0u;
   static int watervertn=0, waterlength=0, waterx=0, watery=0;
+  typedef vvec<5> watervert;
 
   VARF(watersubdiv, 1, 4, 64, watervbobuilt = false)
   VARF(waterlevel, -128, -128, 127, if (!edit::noteditmode()) hdr.waterlevel = waterlevel);
@@ -280,23 +281,23 @@ namespace rdr
     yn += (wy2-wy1)%watersubdiv?1:0;
 
     if (!watervbobuilt || yn>waterlength || sx!=waterx || sy!=watery) {
-      vector<vvec<5>> vertices;
+      vector<watervert> v;
       for (int yy = 0; yy<wy2-wy1; yy += watersubdiv) {
         const float yo = yf*yy;
         if (yy==0) {
-          vertices.add(vvec<5>(0.f,yo,0.f,0.f,yy));
-          vertices.add(vvec<5>(xs,yo,watersubdiv,0.f,yy));
+          v.add(watervert(0.f,yo,0.f,        0.f,yy));
+          v.add(watervert(xs, yo,watersubdiv,0.f,yy));
         }
-        vertices.add(vvec<5>(0.f,yo+ys,0.f,0.f,yy+watersubdiv));
-        vertices.add(vvec<5>(xs,yo+ys,watersubdiv,0.f,yy+watersubdiv));
+        v.add(watervert(0.f,yo+ys,0.f,        0.f,yy+watersubdiv));
+        v.add(watervert(xs, yo+ys,watersubdiv,0.f,yy+watersubdiv));
       }
       if (watervbo == 0u) OGL(GenBuffers, 1, &watervbo);
       OGL(BindBuffer, GL_ARRAY_BUFFER, watervbo);
-      OGL(BufferData, GL_ARRAY_BUFFER, vertices.length()*sizeof(vvec<5>), &vertices[0], GL_STATIC_DRAW);
+      OGL(BufferData, GL_ARRAY_BUFFER, v.length()*sizeof(watervert), &v[0], GL_STATIC_DRAW);
       OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
       watervbobuilt=true;
       waterlength=yn;
-      watervertn=vertices.length();
+      watervertn=v.length();
       waterx=sx;
       watery=sy;
     }
@@ -304,13 +305,13 @@ namespace rdr
     OGL(BindBuffer, GL_ARRAY_BUFFER, watervbo);
     OGL(DisableVertexAttribArray, ogl::COL);
     OGL(BindBuffer, GL_ARRAY_BUFFER, watervbo);
-    OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(float[5]), (void*) (sizeof(float[2])));
-    OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(float[5]), NULL);
+    OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(watervert), (void*) (sizeof(float[2])));
+    OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(watervert), NULL);
     OGL(VertexAttrib3f,ogl::COL,1.f,1.f,1.f);
     for (int xx = wx1; xx<wx2; xx += watersubdiv) {
-      const vec4f duv(xf*t2, yf*(t2+wy1), xf*xx, yf*wy1);
+      const vec2f duv(xf*(xx+t2), yf*(t2+wy1));
       const vec2f dxy(xx, wy1);
-      OGL(Uniform4fv, uduv, 1, &duv.x);
+      OGL(Uniform2fv, uduv, 1, &duv.x);
       OGL(Uniform2fv, udxy, 1, &dxy.x);
       ogl::drawarrays(GL_TRIANGLE_STRIP, 0, watervertn);
     }
@@ -344,9 +345,6 @@ namespace rdr
   {
     if (!verts) reallocv();
     floorstrip = deltastrip = false;
-//    if (watervbo) {OGL(DeleteBuffers,1,&watervbo); watervbo=0u;}
-//    if (wateribo) {OGL(DeleteBuffers,1,&wateribo); wateribo=0u;}
-//    watervbobuilt = false;
     wx1 = -1;
     nquads = 0;
     sbright.r = sbright.g = sbright.b = 255;
