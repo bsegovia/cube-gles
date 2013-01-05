@@ -141,7 +141,7 @@ namespace rdr
                     +(snap(sn, cv[2]*cf->scale[2])+cf->translate[2])/sc);
         trisv.add(vvec<floatn>(s,t,v.x,v.z,v.y));
       }
-      loopi(n-2) { /* just stolen from sauer. xxx just an index buffer */
+      loopi(n-2) { /* just stolen from sauer. XXX use an index buffer */
         if (moden <= 0) { /* fan */
           tris.add(trisv[0]);
           tris.add(trisv[i+1]);

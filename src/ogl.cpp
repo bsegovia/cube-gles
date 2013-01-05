@@ -274,12 +274,20 @@ namespace ogl
     "  c = col;\n"
     "}\n"
   };
+
+  static struct shader {
+    uint rules; /* fog,keyframe...? */
+    GLuint program; /* ogl program */
+    GLuint udiffuse, udelta, umvp, uoverbright; /* uniforms */
+    GLuint uzaxis, ufogstartend, ufogcolor; /* uniforms */
+  } shaders[shadern];
+
   static const char watervert[] = { /* use FOG | DIFFUSETEX */
     "#define PI 3.14159265\n"
     "uniform mat4 MVP;\n"
-    "uniform vec4 zaxis;\n"
+    "uniform vec2 xyf;\n"
+    "uniform float hf;\n"
     "uniform float delta;\n"
-    "out float fogz;\n"
     "in vec3 p;\n"
     "in vec4 incol;\n"
     "in vec2 t;\n"
@@ -288,22 +296,17 @@ namespace ogl
     "float dx(float x) { return x+sin(x*2.0+delta/1000.0)*0.04; }\n"
     "float dy(float x) { return x+sin(x*2.0+delta/900.0+PI/5)*0.05; }\n"
     "void main() {\n"
-    "  texcoord = vec2(dx(t.x),dy(t.y));\n"
-    "  vec3 pos = vec3(p.x,p.y-sin(p.x*p.z*0.1+delta/300.0)*0.2,p.z);\n"
+    "  texcoord = vec2(dx(t.x),dy(t.y))+xyf;\n"
+    "  vec3 pos = vec3(p.x,hf-sin(p.x*p.z*0.1+delta/300.0)*0.2,p.z);\n"
     "  outcol = incol;\n"
-    "  fogz = dot(zaxis,vec4(pos,1.0));\n"
     "  gl_Position = MVP * vec4(pos,1.0);\n"
     "}\n"
   };
+  static struct watershader : shader {
+    GLuint uxyf, uhf; /* to handle uv displacement and water height */
+  } watershader;
 
-  static struct shader {
-    uint rules; /* fog,keyframe...? */
-    GLuint program; /* ogl program */
-    GLuint udiffuse, udelta, umvp, uoverbright; /* uniforms */
-    GLuint uzaxis, ufogstartend, ufogcolor; /* uniforms */
-  } shaders[shadern], watershader;
   static shader *bindedshader = NULL;
-
   static vec4f fogcolor;
   static vec2f fogstartend;
 
@@ -336,7 +339,7 @@ namespace ogl
 
   static void flush(void)
   {
-    if (dirty.any == 0) return; // fast path
+    if (dirty.any == 0) return; /* fast path */
     if (dirty.flags.shader) {
       OGL(UseProgram, bindedshader->program);
       dirty.flags.shader = 0;
@@ -427,8 +430,10 @@ namespace ogl
     purgetextures();
     buildsphere(1, 12, 6);
     loopi(shadern) buildubershader(shaders[i], i);
-    buildshader(watershader, watervert, uberfrag, FOG|DIFFUSETEX);
+    buildshader(watershader, watervert, uberfrag, DIFFUSETEX);
     OGLR(watershader.udelta, GetUniformLocation, watershader.program, "delta");
+    OGLR(watershader.uxyf, GetUniformLocation, watershader.program, "xyf");
+    OGLR(watershader.uhf, GetUniformLocation, watershader.program, "hf");
   }
 
   void clean(void) { OGL(DeleteBuffers, 1, &spherevbo); }
@@ -705,8 +710,9 @@ namespace ogl
     overbright(1.f);
     setupworld(); /* XXX REMOVE ! */
     bindshader(watershader);
-    OGL(Uniform1f, bindedshader->udelta, float(lastmillis));
-    const int nquads = rdr::renderwater(hf);
+    OGL(Uniform1f, watershader.udelta, float(lastmillis));
+    OGL(Uniform1f, watershader.uhf, hf);
+    const int nquads = rdr::renderwater(hf, watershader.uxyf);
     OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
     OGL(DisableVertexAttribArray, COL);
     OGL(DisableVertexAttribArray, TEX);
