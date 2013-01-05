@@ -362,8 +362,8 @@ typedef vector<int> ivector;
     if (glGetError()) fatal("gl" #NAME " failed"); \
   } while (0)
 #else
-  #define OGL(NAME, ...) do {gl##NAME->NAME(__VA_ARGS__);} while(0)
-  #define OGLR(RET, NAME, ...) do {RET=gl##NAME->NAME(__VA_ARGS__);} while(0)
+  #define OGL(NAME, ...) do {gl##NAME(__VA_ARGS__);} while(0)
+  #define OGLR(RET, NAME, ...) do {RET=gl##NAME(__VA_ARGS__);} while(0)
 #endif /* NDEBUG */
 
 void fatal(const char *s, const char *o = "");

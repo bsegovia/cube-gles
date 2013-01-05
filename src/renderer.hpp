@@ -17,7 +17,7 @@ namespace rdr
   void render_square(int wtex, float floor1, float floor2, float ceil1, float ceil2, int x1, int y1, int x2, int y2, int size, sqr *l1, sqr *l2, bool topleft);
   void render_tris(int x, int y, int size, bool topleft, sqr *h1, sqr *h2, sqr *s, sqr *t, sqr *u, sqr *v);
   void addwaterquad(int x, int y, int size);
-  int renderwater(float hf, uint uxyf);
+  int renderwater(float hf, uint udxy, uint uduv);
   void finishstrips(void);
   void setarraypointers(void);
   void mipstats(int a, int b, int c);

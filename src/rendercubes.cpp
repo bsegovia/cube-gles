@@ -248,78 +248,24 @@ namespace rdr
   }
 
   static int wx1, wy1, wx2, wy2; /* water bounding rectangle */
-  static bool watervbobuilt = false;
-  static GLuint watervbo = 0u, wateribo = 0u;
-  static uint watervertn = 0u;
+  static bool watervbobuilt=false;
+  static GLuint watervbo=0u;
+  static int watervertn=0, waterlength=0, waterx=0, watery=0;
 
   VARF(watersubdiv, 1, 4, 64, watervbobuilt = false)
   VARF(waterlevel, -128, -128, 127, if (!edit::noteditmode()) hdr.waterlevel = waterlevel);
 
-  INLINE void vertw(int v1, float v2, int v3, sqr *c, float t1, float t2, float t)
-  {
-    vertcheck();
-    vertf(float(v1), v2, float(v3), c, t1, t2);
-  }
-
-  static void buildwatervbo(const vec2f &xyf)
-  {
-    //static int num = 0;
-    wx1 &= ~(watersubdiv-1);
-    wy1 &= ~(watersubdiv-1);
-    int xn = (wx2-wx1)/watersubdiv;
-    int yn = (wy2-wy1)/watersubdiv;
-    xn += (wx2-wx1)%watersubdiv?1:0;
-    yn += (wy2-wy1)%watersubdiv?1:0;
-//    printf("dd %i\n", ++num);
-
-    /* build vertices and upload them to the vbo */
-    vvec<5> *vertices = new vvec<5>[(xn+1)*(yn+1)];
-    int vertn = 0;
-    yn = 0;
-    for (int yy=wy1; yy<=wy2; yy+=watersubdiv, ++yn) {
-      xn = 0;
-      for (int xx=wx1; xx<=wx2; xx+=watersubdiv, ++vertn, ++xn) {
-        const float x = float(xx), y = float(yy);
-        const float u = x*xyf.x, v = y*xyf.y;
-        vertices[vertn] = vvec<5>(u,v,x,0.f,y);
-      }
-    }
-    //assert(vertn == (xn+1)*(yn+1));
-    if (watervbo == 0u) OGL(GenBuffers, 1, &watervbo);
-    OGL(BindBuffer, GL_ARRAY_BUFFER, watervbo);
-    OGL(BufferData, GL_ARRAY_BUFFER, vertn*sizeof(vvec<5>), &vertices[0], GL_STATIC_DRAW);
-    OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
-    delete [] vertices;
-
-    /* build the index buffer */
-    vector<uint> indices;
-    for (int yy=wy1, yyi=0; yy<wy2; yy+=watersubdiv, ++yyi) {
-      const int row0=yyi*xn, row1=(yyi+1)*xn;
-      const int twotriangles[]={row0,row0+1,row1,row0+1,row1+1,row1};
-      for (int xx=wx1, xxi=0; xx<wx2; xx+=watersubdiv, ++xxi)
-        loopi(6) indices.add(twotriangles[i]+xxi);
-    }
-    if (wateribo == 0u) OGL(GenBuffers, 1, &wateribo);
-    OGL(BindBuffer, GL_ELEMENT_ARRAY_BUFFER, wateribo);
-    OGL(BufferData, GL_ELEMENT_ARRAY_BUFFER, indices.length()*sizeof(uint), &indices[0], GL_STATIC_DRAW);
-    OGL(BindBuffer, GL_ELEMENT_ARRAY_BUFFER, 0);
-
-    /* we are done */
-    watervertn = indices.length();
-    watervbobuilt = true;
-  }
-#if 1
-  /* renders water for bounding rect area that contains water... simple but very
-   * inefficient
+  /* renders water for bounding rect area that contains water. use pseudo
+   * instancing and hardware transforms to make it faster
    */
-  int renderwater(float hf, uint uxyf)
+  int renderwater(float hf, uint udxy, uint uduv)
   {
+    int sx, sy;
     if (wx1<0) return nquads;
 
     OGL(DepthMask, GL_FALSE);
     OGL(Enable, GL_BLEND);
     OGL(BlendFunc, GL_ONE, GL_SRC_COLOR);
-    int sx, sy;
     OGL(BindTexture, GL_TEXTURE_2D, ogl::lookuptex(DEFAULT_LIQUID, sx, sy));
 
     wx1 &= ~(watersubdiv-1);
@@ -329,79 +275,53 @@ namespace rdr
     const float yf = TEXTURESCALE/sy;
     const float xs = watersubdiv*xf;
     const float ys = watersubdiv*yf;
-    const float t1 = lastmillis/300.0f;
     const float t2 = lastmillis/4000.0f;
+    int yn = (wy2-wy1)/watersubdiv;
+    yn += (wy2-wy1)%watersubdiv?1:0;
 
-    //if (!watervbobuilt) buildwatervbo(vec2f(xf,yf));
-
-    sqr dl;
-    dl.r = dl.g = dl.b = 255;
-
-    const vec2f xyf(xf*t2, yf*t2);
-    OGL(Uniform2fv, uxyf, 1, &xyf.x);
-    for (int xx = wx1; xx<wx2; xx += watersubdiv) {
-      for (int yy = wy1; yy<wy2; yy += watersubdiv) {
-        const float xo = xf*xx;
+    if (!watervbobuilt || yn>waterlength || sx!=waterx || sy!=watery) {
+      vector<vvec<5>> vertices;
+      for (int yy = 0; yy<wy2-wy1; yy += watersubdiv) {
         const float yo = yf*yy;
-        if (yy==wy1) {
-          vertw(xx,             0.f, yy,             &dl, xo,    yo, t1);
-          vertw(xx+watersubdiv, 0.f, yy,             &dl, xo+xs, yo, t1);
+        if (yy==0) {
+          vertices.add(vvec<5>(0.f,yo,0.f,0.f,yy));
+          vertices.add(vvec<5>(xs,yo,watersubdiv,0.f,yy));
         }
-        vertw(xx,             0.f, yy+watersubdiv, &dl, xo,    yo+ys, t1);
-        vertw(xx+watersubdiv, 0.f, yy+watersubdiv, &dl, xo+xs, yo+ys, t1);
+        vertices.add(vvec<5>(0.f,yo+ys,0.f,0.f,yy+watersubdiv));
+        vertices.add(vvec<5>(xs,yo+ys,watersubdiv,0.f,yy+watersubdiv));
       }
-      int n = (wy2-wy1-1)/watersubdiv;
-      nquads += n;
-      n = (n+2)*2;
-      ogl::drawarrays(GL_TRIANGLE_STRIP, curvert -= n, n);
+      if (watervbo == 0u) OGL(GenBuffers, 1, &watervbo);
+      OGL(BindBuffer, GL_ARRAY_BUFFER, watervbo);
+      OGL(BufferData, GL_ARRAY_BUFFER, vertices.length()*sizeof(vvec<5>), &vertices[0], GL_STATIC_DRAW);
+      OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
+      watervbobuilt=true;
+      waterlength=yn;
+      watervertn=vertices.length();
+      waterx=sx;
+      watery=sy;
     }
-    OGL(Disable, GL_BLEND);
-    OGL(DepthMask, GL_TRUE);
 
-    return nquads;
-  }
-#else
-  /* renders water for bounding rect area that contains water... simple but very
-   * inefficient
-   */
-  int renderwater(float hf, uint uxyf)
-  {
-    if (wx1<0) return nquads;
-
-    OGL(DepthMask, GL_FALSE);
-    OGL(Enable, GL_BLEND);
-    OGL(BlendFunc, GL_ONE, GL_SRC_COLOR);
-    int sx, sy;
-    OGL(BindTexture, GL_TEXTURE_2D, ogl::lookuptex(DEFAULT_LIQUID, sx, sy));
-
-    wx1 &= ~(watersubdiv-1);
-    wy1 &= ~(watersubdiv-1);
-
-    const float xf = TEXTURESCALE/sx;
-    const float yf = TEXTURESCALE/sy;
-    const float t2 = lastmillis/4000.0f;
-    if (!watervbobuilt) buildwatervbo(vec2f(xf,yf));
-
-    const vec2f xyf(xf*t2, yf*t2);
-    OGL(Uniform2fv, uxyf, 1, &xyf.x);
+    OGL(BindBuffer, GL_ARRAY_BUFFER, watervbo);
     OGL(DisableVertexAttribArray, ogl::COL);
-    OGL(EnableVertexAttribArray, ogl::POS0);
-    OGL(EnableVertexAttribArray, ogl::TEX);
     OGL(BindBuffer, GL_ARRAY_BUFFER, watervbo);
     OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(float[5]), (void*) (2*sizeof(float)));
     OGL(VertexAttribPointer, ogl::TEX, 2, GL_FLOAT, 0, sizeof(float[5]), NULL);
-    OGL(BindBuffer, GL_ELEMENT_ARRAY_BUFFER, wateribo);
     OGL(VertexAttrib3f,ogl::COL,1.f,1.f,1.f);
-    ogl::drawelements(GL_TRIANGLES, watervertn, GL_UNSIGNED_INT, NULL);
+    for (int xx = wx1; xx<wx2; xx += watersubdiv) {
+      const vec4f duv(xf*t2, yf*(t2+wy1), xf*xx, yf*wy1);
+      const vec2f dxy(xx, wy1);
+      OGL(Uniform4fv, uduv, 1, &duv.x);
+      OGL(Uniform2fv, udxy, 1, &dxy.x);
+      ogl::drawarrays(GL_TRIANGLE_STRIP, 0, watervertn);
+    }
+    OGL(EnableVertexAttribArray, ogl::COL);
     OGL(BindBuffer, GL_ARRAY_BUFFER, 0);
-    OGL(BindBuffer, GL_ELEMENT_ARRAY_BUFFER, 0);
     OGL(Disable, GL_BLEND);
     OGL(DepthMask, GL_TRUE);
 
     return nquads;
   }
 
-#endif
   /* update bounding rect that contains water */
   void addwaterquad(int x, int y, int size)
   {
@@ -412,12 +332,11 @@ namespace rdr
       wy1 = y;
       wx2 = x2;
       wy2 = y2;
-      watervbobuilt = false;
     } else {
-      if (x<wx1) {wx1 = x; watervbobuilt = false; }
-      if (y<wy1) {wy1 = y; watervbobuilt = false; }
-      if (x2>wx2) {wx2 = x2; watervbobuilt = false; }
-      if (y2>wy2) {wy2 = y2; watervbobuilt = false; }
+      if (x<wx1) wx1 = x;
+      if (y<wy1) wy1 = y;
+      if (x2>wx2) wx2 = x2;
+      if (y2>wy2) wy2 = y2;
     }
   }
 

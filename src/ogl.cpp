@@ -282,10 +282,11 @@ namespace ogl
     GLuint uzaxis, ufogstartend, ufogcolor; /* uniforms */
   } shaders[shadern];
 
-  static const char watervert[] = { /* use FOG | DIFFUSETEX */
+  static const char watervert[] = { /* use DIFFUSETEX */
     "#define PI 3.14159265\n"
     "uniform mat4 MVP;\n"
-    "uniform vec2 xyf;\n"
+    "uniform vec4 duv;\n"
+    "uniform vec2 dxy;\n"
     "uniform float hf;\n"
     "uniform float delta;\n"
     "in vec3 p;\n"
@@ -294,16 +295,17 @@ namespace ogl
     "out vec2 texcoord;\n"
     "out vec4 outcol;\n"
     "float dx(float x) { return x+sin(x*2.0+delta/1000.0)*0.04; }\n"
-    "float dy(float x) { return x+sin(x*2.0+delta/900.0+PI/5)*0.05; }\n"
+    "float dy(float x) { return x+sin(x*2.0+delta/900.0+PI/5.0)*0.05; }\n"
     "void main() {\n"
-    "  texcoord = vec2(dx(t.x),dy(t.y))+xyf;\n"
-    "  vec3 pos = vec3(p.x,hf-sin(p.x*p.z*0.1+delta/300.0)*0.2,p.z);\n"
+    "  texcoord = vec2(dx(t.x+duv.z),dy(t.y+duv.w))+duv.xy;\n"
+    "  vec2 absp = dxy+p.xz;\n"
+    "  vec3 pos = vec3(absp.x,hf-sin(absp.x*absp.y*0.1+delta/300.0)*0.2,absp.y);\n"
     "  outcol = incol;\n"
     "  gl_Position = MVP * vec4(pos,1.0);\n"
     "}\n"
   };
   static struct watershader : shader {
-    GLuint uxyf, uhf; /* to handle uv displacement and water height */
+    GLuint uduv, udxy, uhf;
   } watershader;
 
   static shader *bindedshader = NULL;
@@ -432,7 +434,8 @@ namespace ogl
     loopi(shadern) buildubershader(shaders[i], i);
     buildshader(watershader, watervert, uberfrag, DIFFUSETEX);
     OGLR(watershader.udelta, GetUniformLocation, watershader.program, "delta");
-    OGLR(watershader.uxyf, GetUniformLocation, watershader.program, "xyf");
+    OGLR(watershader.uduv, GetUniformLocation, watershader.program, "duv");
+    OGLR(watershader.udxy, GetUniformLocation, watershader.program, "dxy");
     OGLR(watershader.uhf, GetUniformLocation, watershader.program, "hf");
   }
 
@@ -712,7 +715,7 @@ namespace ogl
     bindshader(watershader);
     OGL(Uniform1f, watershader.udelta, float(lastmillis));
     OGL(Uniform1f, watershader.uhf, hf);
-    const int nquads = rdr::renderwater(hf, watershader.uxyf);
+    const int nquads = rdr::renderwater(hf, watershader.udxy, watershader.uduv);
     OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
     OGL(DisableVertexAttribArray, COL);
     OGL(DisableVertexAttribArray, TEX);

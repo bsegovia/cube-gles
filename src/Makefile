@@ -1,6 +1,6 @@
 CXX=g++
 #CXX=clang++
-CXXOPTFLAGS=-Wall -DGL_GLEXT_PROTOTYPES -g -pg -fsigned-char -std=c++0x
+CXXOPTFLAGS=-Wall -O3 -DNDEBUG -DGL_GLEXT_PROTOTYPES -g -pg -fsigned-char -std=c++0x
 CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include `sdl-config --cflags`
 
 CLIENT_LIBS=-L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lX11
