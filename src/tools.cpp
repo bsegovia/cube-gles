@@ -243,6 +243,3 @@ int unproject(double winx, double winy, double winz,
   return 1;
 }
 
-
-
-

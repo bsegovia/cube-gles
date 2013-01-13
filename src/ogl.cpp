@@ -834,7 +834,6 @@ namespace ogl
       rotate(90.f, vec3f(1.f,0.f,0.f));
       OGL(VertexAttrib3f,COL,1.0f,1.0f,1.0f);
       OGL(DepthFunc, GL_GREATER);
-      bindshader(DIFFUSETEX);
       rdr::draw_envbox(14, fog*4/3);
       OGL(DepthFunc, GL_LESS);
     }
@@ -889,7 +888,4 @@ namespace ogl
     OGL(Enable, GL_CULL_FACE);
   }
 } /* namespace ogl */
-
-
-
 

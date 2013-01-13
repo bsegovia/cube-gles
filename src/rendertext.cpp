@@ -206,6 +206,7 @@ namespace rdr
   void draw_envbox(int t, int w)
   {
     OGL(DepthMask, GL_FALSE);
+    ogl::bindshader(ogl::DIFFUSETEX);
     draw_envbox_aux(1.0f, 1.0f, -w, -w,  w,
                     0.0f, 1.0f,  w, -w,  w,
                     0.0f, 0.0f,  w, -w, -w,
@@ -233,7 +234,4 @@ namespace rdr
     OGL(DepthMask, GL_TRUE);
   }
 } /* namespace rdr */
-
-
-
 

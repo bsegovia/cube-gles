@@ -315,6 +315,8 @@ INLINE char *newstring(const char *s)           { return gp()->string(s); }
 INLINE char *newstring(const char *s, size_t l) { return gp()->string(s, l); }
 INLINE char *newstringbuf(const char *s)        { return gp()->stringbuf(s); }
 
+#define ARRAY_ELEM_N(X) (sizeof(X) / sizeof(X[0]))
+
 /* simplistic vector ops XXX remove */
 #define dotprod(u,v) ((u).x * (v).x + (u).y * (v).y + (u).z * (v).z)
 #define vmul(u,f)    { (u).x *= (f); (u).y *= (f); (u).z *= (f); }

@@ -8,7 +8,6 @@ namespace rdr
   int curvert;
   int curmaxverts = 10000;
 
-  /* XXX remove it since we will upload everything in one big chunk */
   void setarraypointers(void)
   {
     OGL(VertexAttribPointer, ogl::POS0, 3, GL_FLOAT, 0, sizeof(vertex),(const void*)offsetof(vertex,x));
@@ -358,7 +357,4 @@ namespace rdr
     sdark.r = sdark.g = sdark.b = 0;
   }
 } /* namespace rdr */
-
-
-
 
