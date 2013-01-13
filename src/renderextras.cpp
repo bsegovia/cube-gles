@@ -25,7 +25,7 @@ namespace rdr
       vvec<3>(float(x2), z2, float(y2)+0.01f)
     };
     ogl::bindshader(ogl::COLOR_ONLY);
-    ogl::immediate_draw(GL_TRIANGLE_STRIP, 3, 0, 0, 4, &verts[0][0]);
+    ogl::immdraw(GL_TRIANGLE_STRIP, 3, 0, 0, 4, &verts[0][0]);
     ogl::xtraverts += 4;
   }
 
@@ -45,7 +45,7 @@ namespace rdr
       vvec<3>(float(b.x),      z4, float(b.y+b.ys))
     };
     ogl::bindshader(ogl::COLOR_ONLY);
-    ogl::immediate_draw(GL_LINE_LOOP, 3, 0, 0, 4, &verts[0][0]);
+    ogl::immdraw(GL_LINE_LOOP, 3, 0, 0, 4, &verts[0][0]);
     ogl::xtraverts += 4;
   }
 
@@ -60,7 +60,7 @@ namespace rdr
       vvec<3>(x-DOF, float(z), y+DOF)
     };
     ogl::bindshader(ogl::COLOR_ONLY);
-    ogl::immediate_draw(GL_LINE_LOOP, 3, 0, 0, 4, &verts[0][0]);
+    ogl::immdraw(GL_LINE_LOOP, 3, 0, 0, 4, &verts[0][0]);
     ogl::xtraverts += 4;
   }
 
@@ -82,7 +82,7 @@ namespace rdr
       vvec<2>(float(x1), float(y2)),
       vvec<2>(float(x2), float(y2))
     };
-    ogl::immediate_draw(GL_TRIANGLE_STRIP, 2, 0, 0, 4, &verts0[0][0]);
+    ogl::immdraw(GL_TRIANGLE_STRIP, 2, 0, 0, 4, &verts0[0][0]);
 
     OGL(Disable, GL_BLEND);
     OGL(VertexAttrib3f, ogl::COL, .2f, .7f, .4f);
@@ -93,7 +93,7 @@ namespace rdr
       vvec<2>(float(x2), float(y2)),
       vvec<2>(float(x1), float(y2))
     };
-    ogl::immediate_draw(GL_LINE_LOOP, 2, 0, 0, 4, &verts1[0][0]);
+    ogl::immdraw(GL_LINE_LOOP, 2, 0, 0, 4, &verts1[0][0]);
 
     ogl::xtraverts += 8;
     OGL(Enable, GL_BLEND);
@@ -247,7 +247,7 @@ namespace rdr
       vvec<4>(tx+o, ty+o, x+s, y+s)
     };
     ogl::bindshader(ogl::DIFFUSETEX);
-    ogl::immediate_draw(GL_TRIANGLE_STRIP, 2, 2, 0, 4, &verts[0][0]);
+    ogl::immdraw(GL_TRIANGLE_STRIP, 2, 2, 0, 4, &verts[0][0]);
     ogl::xtraverts += 4;
   }
 
@@ -299,7 +299,7 @@ namespace rdr
       else
         OGL(VertexAttrib3f,ogl::COL,0.9f,0.5f,0.0f);
       ogl::bindshader(ogl::COLOR_ONLY);
-      ogl::immediate_draw(GL_TRIANGLE_STRIP,2,0,0,4,&verts[0][0]);
+      ogl::immdraw(GL_TRIANGLE_STRIP,2,0,0,4,&verts[0][0]);
       dblend -= curtime/3;
       if (dblend<0) dblend = 0;
     }
@@ -335,7 +335,7 @@ namespace rdr
         vvec<4>(1.f, 1.f, float(VIRTW/2) + csz, float(VIRTH/2) + csz)
       };
       ogl::bindshader(ogl::DIFFUSETEX);
-      ogl::immediate_draw(GL_TRIANGLE_STRIP, 2, 2, 0, 4, &verts[0][0]);
+      ogl::immdraw(GL_TRIANGLE_STRIP, 2, 2, 0, 4, &verts[0][0]);
     }
 
     ogl::popmatrix();
@@ -382,4 +382,7 @@ namespace rdr
   }
 
 } /* namespace rdr */
+
+
+
 

@@ -17,3 +17,6 @@ namespace console
 } /* namespace console */
 #endif /* __QBE_CONSOLE_HPP__ */
 
+
+
+

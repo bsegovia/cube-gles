@@ -34,12 +34,11 @@ namespace ogl
   void bindbuffer(int target, uint buffer);
 
   /* immediate mode rendering */
-  void immediate(bool useibo=false);
-  void immediate_setvertices(int sz, const void *data);
-  void immediate_setattrib(int attrib, int n, int type, int sz, int offset);
-  void immediate_drawelements(int mode, int count, int type, const void *indices);
-  void immediate_drawarrays(int mode, int first, int count);
-  void immediate_draw(int mode, int pos, int tex, int col, size_t n, const float *data);
+  void immvertices(int sz, const void *data);
+  void immattrib(int attrib, int n, int type, int sz, int offset);
+  void immdrawelements(int mode, int count, int type, const void *indices);
+  void immdrawarrays(int mode, int first, int count);
+  void immdraw(int mode, int pos, int tex, int col, size_t n, const float *data);
 
   /* matrix interface (mostly OGL like) */
   enum {MODELVIEW=0, PROJECTION=1, MATRIX_MODE=2};
@@ -78,4 +77,7 @@ namespace ogl
 #endif /* NDEBUG */
 
 #endif /* __CUBE_OGL_HPP__ */
+
+
+
 

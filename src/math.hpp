@@ -636,3 +636,6 @@ typedef vec4<double> vec4d;
 
 #endif /* __CUBE_MATH_HPP__ */
 
+
+
+

@@ -87,7 +87,7 @@ namespace rdr
         vvec<8>(pt->r, pt->g, pt->b, 1.f, 0.f, p->o.x+( right.x-up.x)*sz, p->o.z+( right.y-up.y)*sz, p->o.y+( right.z-up.z)*sz)
       };
 
-      ogl::immediate_draw(GL_TRIANGLE_STRIP, 3, 2, 3, 4, &verts[0][0]);
+      ogl::immdraw(GL_TRIANGLE_STRIP, 3, 2, 3, 4, &verts[0][0]);
       ogl::xtraverts += 4;
 
       if (numrender++>maxparticles || (p->fade -= time)<0) {
@@ -140,4 +140,7 @@ namespace rdr
     }
   }
 } /* namespace rdr */
+
+
+
 

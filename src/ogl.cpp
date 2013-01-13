@@ -61,19 +61,13 @@ namespace ogl
 
   VARF(bigbuffersize, 1*MB, 4*MB, 16*MB, bigbufferinit(bigbuffersize));
 
-  void immediate(bool useibo)
-  {
-    bindbuffer(ARRAY_BUFFER, bigvbo);
-    if (useibo) bindbuffer(ELEMENT_ARRAY_BUFFER, bigibo);
-  }
-
-  void immediate_setattrib(int attrib, int n, int type, int sz, int offset)
+  void immattrib(int attrib, int n, int type, int sz, int offset)
   {
     const void *fake = (const void *) intptr_t(drawvbooffset+offset);
     OGL(VertexAttribPointer, attrib, n, type, 0, sz, fake);
   }
 
-  static void immediate_setdata(int target, int sz, const void *data)
+  static void immsetdata(int target, int sz, const void *data)
   {
     assert(sz < bigbuffersize);
     GLuint &bo = target==ARRAY_BUFFER ? bigvbo : bigibo;
@@ -91,17 +85,17 @@ namespace ogl
     offset += sz;
   }
 
-  void immediate_setvertices(int sz, const void *vertices)
+  void immvertices(int sz, const void *vertices)
   {
-    immediate_setdata(ARRAY_BUFFER, sz, vertices);
+    immsetdata(ARRAY_BUFFER, sz, vertices);
   }
 
-  void immediate_drawarrays(int mode, int count, int type)
+  void immdrawarrays(int mode, int count, int type)
   {
     drawarrays(mode,count,type);
   }
 
-  void immediate_drawelements(int mode, int count, int type, const void *indices)
+  void immdrawelements(int mode, int count, int type, const void *indices)
   {
     int sz = count;
     switch (type) {
@@ -109,30 +103,29 @@ namespace ogl
       case GL_UNSIGNED_SHORT: sz*=sizeof(ushort); break;
       case GL_UNSIGNED_INT: sz*=sizeof(uint); break;
     };
-    immediate_setdata(ELEMENT_ARRAY_BUFFER, sz, indices);
+    immsetdata(ELEMENT_ARRAY_BUFFER, sz, indices);
     const void *fake = (const void *) intptr_t(drawibooffset);
     drawelements(mode, count, type, fake);
   }
 
   /* XXX remove state crap */
-  void immediate_draw(int mode, int pos, int tex, int col, size_t n, const float *data)
+  void immdraw(int mode, int pos, int tex, int col, size_t n, const float *data)
   {
     const int sz = (pos+tex+col)*sizeof(float);
-    immediate();
-    immediate_setvertices(n*sz, data);
+    immvertices(n*sz, data);
     if (pos) {
-      immediate_setattrib(ogl::POS0, pos, GL_FLOAT, sz, (tex+col)*sizeof(float));
+      immattrib(ogl::POS0, pos, GL_FLOAT, sz, (tex+col)*sizeof(float));
       OGL(EnableVertexAttribArray, POS0);
     }
     if (tex) {
-      immediate_setattrib(ogl::TEX, tex, GL_FLOAT, sz, col*sizeof(float));
+      immattrib(ogl::TEX, tex, GL_FLOAT, sz, col*sizeof(float));
       OGL(EnableVertexAttribArray, TEX);
     }
     if (col) {
-      immediate_setattrib(ogl::COL, col, GL_FLOAT, sz, 0);
+      immattrib(ogl::COL, col, GL_FLOAT, sz, 0);
       OGL(EnableVertexAttribArray, COL);
     }
-    immediate_drawarrays(mode, 0, n);
+    immdrawarrays(mode, 0, n);
     OGL(DisableVertexAttribArray, TEX);
     OGL(DisableVertexAttribArray, COL);
     OGL(DisableVertexAttribArray, POS0);
@@ -337,7 +330,7 @@ namespace ogl
   }
 
   /*--------------------------------------------------------------------------
-   - overbright -> just multiply final color
+   - overbright -> just multiplies final color
    -------------------------------------------------------------------------*/
   static float overbrightf = 1.f;
   static void overbright(float amount)
@@ -896,4 +889,7 @@ namespace ogl
     OGL(Enable, GL_CULL_FACE);
   }
 } /* namespace ogl */
+
+
+
 

@@ -173,12 +173,11 @@ namespace rdr
     }
     OGL(EnableVertexAttribArray, ogl::POS0);
     OGL(EnableVertexAttribArray, ogl::TEX);
-    ogl::immediate(true);
-    ogl::immediate_setvertices(vert*sizeof(float[4]), &verts[0][0]);
-    ogl::immediate_setattrib(ogl::POS0, 2, GL_FLOAT, sizeof(float[4]), sizeof(float[2]));
-    ogl::immediate_setattrib(ogl::TEX, 2, GL_FLOAT, sizeof(float[4]), 0);
+    ogl::immvertices(vert*sizeof(float[4]), &verts[0][0]);
+    ogl::immattrib(ogl::POS0, 2, GL_FLOAT, sizeof(float[4]), sizeof(float[2]));
+    ogl::immattrib(ogl::TEX, 2, GL_FLOAT, sizeof(float[4]), 0);
     ogl::bindshader(ogl::DIFFUSETEX);
-    ogl::immediate_drawelements(GL_TRIANGLES, index, GL_UNSIGNED_INT, indices);
+    ogl::immdrawelements(GL_TRIANGLES, index, GL_UNSIGNED_INT, indices);
     OGL(DisableVertexAttribArray, ogl::POS0);/* XXX */
     OGL(DisableVertexAttribArray, ogl::TEX);
   }
@@ -197,11 +196,10 @@ namespace rdr
 
     OGL(BindTexture, GL_TEXTURE_2D, texture);
     /* XXX bind shader here !!! */
-    ogl::immediate(true);
-    ogl::immediate_setvertices(4*sizeof(vvec<5>), &verts[0][0]);
-    ogl::immediate_setattrib(ogl::POS0, 3, GL_FLOAT, sizeof(vvec<5>), sizeof(float[2]));
-    ogl::immediate_setattrib(ogl::TEX, 2, GL_FLOAT, sizeof(vvec<5>), 0);
-    ogl::immediate_drawelements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, twotriangles);
+    ogl::immvertices(4*sizeof(vvec<5>), &verts[0][0]);
+    ogl::immattrib(ogl::POS0, 3, GL_FLOAT, sizeof(vvec<5>), sizeof(float[2]));
+    ogl::immattrib(ogl::TEX, 2, GL_FLOAT, sizeof(vvec<5>), 0);
+    ogl::immdrawelements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, twotriangles);
     ogl::xtraverts += 4;
   }
 
@@ -235,4 +233,7 @@ namespace rdr
     OGL(DepthMask, GL_TRUE);
   }
 } /* namespace rdr */
+
+
+
 
