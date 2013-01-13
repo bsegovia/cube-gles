@@ -2,10 +2,10 @@
 #define __QBE_GAME_HPP__
 
 // XXX move that to namespace ? Or use functions?
-extern int lastmillis;             // last time
-extern int curtime;                // current frame time
+extern int lastmillis;          // last time
+extern int curtime;             // current frame time
 extern int gamemode, nextmode;
-extern vec worldpos;               // current target of the crosshair in the world
+extern vec worldpos;          // current target of the crosshair in the world
 
 #define m_noitems     (gamemode>=4)
 #define m_noitemsrail (gamemode<=5)

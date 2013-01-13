@@ -199,12 +199,12 @@ namespace rdr
   COMMAND(loadsky, ARG_1STR);
 
   static float cursordepth = 0.9f;
-  static GLint viewport[4];
+  static vec4i viewport;
   static mat4x4f readmm, readpm;
 
   static void readmatrices()
   {
-    glGetIntegerv(GL_VIEWPORT, viewport);
+    OGL(GetIntegerv, GL_VIEWPORT, &viewport.x);
     readmm = ogl::matrix(ogl::MODELVIEW);
     readpm = ogl::matrix(ogl::PROJECTION);
   }
@@ -219,18 +219,28 @@ namespace rdr
   // XXX CLean that crap and use our clean math library
   void readdepth(int w, int h)
   {
+#if 1
     glReadPixels(w/2, h/2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &cursordepth);
     double worldx = 0, worldy = 0, worldz = 0;
     double pm[16],mm[16];
     loopi(16) mm[i] = (&readmm[0][0])[i];
     loopi(16) pm[i] = (&readpm[0][0])[i];
-    unproject(w/2, h/2, depthcorrect(cursordepth), mm, pm, viewport, &worldx, &worldz, &worldy);
+    _unproject(w/2, h/2, depthcorrect(cursordepth), mm, pm, &viewport.x, &worldx, &worldz, &worldy);
     worldpos.x = (float)worldx;
     worldpos.y = (float)worldy;
     worldpos.z = (float)worldz;
     const vec r = { (float)mm[0], (float)mm[4], (float)mm[8] };
     const vec u = { (float)mm[1], (float)mm[5], (float)mm[9] };
     setorient(r, u);
+#else
+    glReadPixels(w/2, h/2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &cursordepth);
+    const vec3f screenp(float(w)/2.f,float(h)/2.f,depthcorrect(cursordepth));
+    const vec3f v = unproject(screenp, readmm, readpm, viewport);
+    worldpos = vec(v.x,v.y,v.z);
+    const vec r(readmm.vx.x,readmm.vy.x,readmm.vz.x);// = { (float)mm[0], (float)mm[4], (float)mm[8] };
+    const vec u(readmm.vx.y,readmm.vy.y,readmm.vz.y);// = { (float)mm[1], (float)mm[5], (float)mm[9] };
+    setorient(r, u);
+#endif
   }
 
   void drawicon(float tx, float ty, int x, int y)

@@ -621,6 +621,3 @@ namespace game
 #endif
 } /* namespace game */
 
-
-
-

@@ -122,7 +122,7 @@ void endianswap(void *memory, int stride, int length)
     p[stride-i-1] = t;
   }
 }
-
+#if 1
 /* XXX remove everything that follows */
 static void identity(double m[16])
 {
@@ -205,7 +205,7 @@ int invert(const double m[16], double invOut[16])
 }
 
 /* XXX REMOVE that crap completely */
-int unproject(double winx, double winy, double winz,
+int _unproject(double winx, double winy, double winz,
               const double modelmatrix[16],
               const double projmartrix[16],
               const int viewport[4],
@@ -242,4 +242,5 @@ int unproject(double winx, double winy, double winz,
   *objz = out[2];
   return 1;
 }
+#endif
 

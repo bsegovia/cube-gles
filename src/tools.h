@@ -333,12 +333,12 @@ struct vec {
   INLINE vec(float x, float y, float z) : x(x),y(y),z(z) {}
   float x, y, z;
 };
-
+#if 1
 /* simplistic matrix ops -> XXX remove that crap! */
 void perspective(double m[16], double fovy, double aspect, double zNear, double zFar);
 void mul(const double a[16], const double b[16], double r[16]);
 int invert(const double m[16], double invOut[16]);
-int unproject(double winx, double winy, double winz,
+int _unproject(double winx, double winy, double winz,
               const double model[16],
               const double proj[16],
               const int vp[4],
@@ -347,6 +347,7 @@ int unproject(double winx, double winy, double winz,
 #define v4mul(m, in, out) do { loopi(4)\
   out[i]=in[0]*m[0*4+i] + in[1]*m[1*4+i] + in[2]*m[2*4+i] + in[3]*m[3*4+i];\
 } while (0)
+#endif
 
 /* vertex array format */
 struct vertex { float u, v, x, y, z; uchar r, g, b, a; };

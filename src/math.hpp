@@ -446,25 +446,24 @@ template<typename T> struct mat4x4
     const T f16 = vy.x*vz.w - vz.x*vy.w;
     const T f17 = vy.x*vz.z - vz.x*vy.z;
     const T f18 = vy.x*vz.y - vz.x*vy.y;
-    m44 inv(+vy.y*f00 - vy.z*f01 + vy.w*f02,
-            -vy.x*f00 + vy.z*f03 - vy.w*f04,
-            +vy.x*f01 - vy.y*f03 + vy.w*f05,
-            -vy.x*f02 + vy.y*f04 - vy.z*f05,
-            -vx.y*f00 + vx.z*f01 - vx.w*f02,
-            +vx.x*f00 - vx.z*f03 + vx.w*f04,
-            -vx.x*f01 + vx.y*f03 - vx.w*f05,
-            +vx.x*f02 - vx.y*f04 + vx.z*f05,
-            +vx.y*f06 - vx.z*f07 + vx.w*f08,
-            -vx.x*f06 + vx.z*f09 - vx.w*f10,
-            +vx.x*f11 - vx.y*f09 + vx.w*f12,
-            -vx.x*f08 + vx.y*f10 - vx.z*f12,
-            -vx.y*f13 + vx.z*f14 - vx.w*f15,
-            +vx.x*f13 - vx.z*f16 + vx.w*f17,
-            -vx.x*f14 + vx.y*f16 - vx.w*f18,
-            +vx.x*f15 - vx.y*f17 + vx.z*f18);
+    m44 inv(v4(+vy.y*f00 - vy.z*f01 + vy.w*f02,
+               -vy.x*f00 + vy.z*f03 - vy.w*f04,
+               +vy.x*f01 - vy.y*f03 + vy.w*f05,
+               -vy.x*f02 + vy.y*f04 - vy.z*f05),
+            v4(-vx.y*f00 + vx.z*f01 - vx.w*f02,
+               +vx.x*f00 - vx.z*f03 + vx.w*f04,
+               -vx.x*f01 + vx.y*f03 - vx.w*f05,
+               +vx.x*f02 - vx.y*f04 + vx.z*f05),
+            v4(+vx.y*f06 - vx.z*f07 + vx.w*f08,
+               -vx.x*f06 + vx.z*f09 - vx.w*f10,
+               +vx.x*f11 - vx.y*f09 + vx.w*f12,
+               -vx.x*f08 + vx.y*f10 - vx.z*f12),
+            v4(-vx.y*f13 + vx.z*f14 - vx.w*f15,
+               +vx.x*f13 - vx.z*f16 + vx.w*f17,
+               -vx.x*f14 + vx.y*f16 - vx.w*f18,
+               +vx.x*f15 - vx.y*f17 + vx.z*f18));
     const T det = vx.x*inv.vx.x + vx.y*inv.vy.x + vx.z*inv.vz.x + vx.w*inv.vw.x;
-    inv /= det;
-    return inv;
+    return inv/det;
   }
   INLINE v4& op[] (int i) {return (&vx)[i];}
   INLINE const v4& op[] (int i) const {return (&vx)[i];}
@@ -482,10 +481,10 @@ TINLINE m44 op* (T s, m44arg m) {return m44(m.vx*s, m.vy*s, m.vz*s, m.vw*s);}
 TINLINE m44 op+ (m44arg m, m44arg n) {return m44(m.vx+n.vx, m.vy+n.vy, m.vz+n.vz, m.vw+n.vw);}
 TINLINE m44 op- (m44arg m, m44arg n) {return m44(m.vx-n.vx, m.vy-n.vy, m.vz-n.vz, m.vw-n.vw);}
 TINLINE v4  op* (m44arg m, v4arg v) {
-  return V(m.vx.x*v.x + m.vy.x*v.y + m.vz.x*v.z + m.vw.x*v.w,
-           m.vx.y*v.x + m.vy.y*v.y + m.vz.y*v.z + m.vw.y*v.w,
-           m.vx.z*v.x + m.vy.z*v.y + m.vz.z*v.z + m.vw.z*v.w,
-           m.vx.w*v.x + m.vy.w*v.y + m.vz.w*v.z + m.vw.w*v.w);
+  return v4(m.vx.x*v.x + m.vy.x*v.y + m.vz.x*v.z + m.vw.x*v.w,
+            m.vx.y*v.x + m.vy.y*v.y + m.vz.y*v.z + m.vw.y*v.w,
+            m.vx.z*v.x + m.vy.z*v.y + m.vz.z*v.z + m.vw.z*v.w,
+            m.vx.w*v.x + m.vy.w*v.y + m.vz.w*v.z + m.vw.w*v.w);
 }
 TINLINE v4 op* (v4arg v, m44arg m) {
   return V(m.vx.x*v.x + m.vx.y*v.y + m.vx.z*v.z + m.vx.w*v.w,
@@ -503,6 +502,10 @@ TINLINE m44 op* (m44arg m, m44arg n) {
   dst.vw = a0*b3[0] + a1*b3[1] + a2*b3[2] + a3*b3[3];
   return dst;
 }
+TINLINE m44& op*= (m44& a, T b) {return a = a*b;}
+TINLINE m44& op/= (m44& a, T b) {return a = a/b;}
+TINLINE m44& op*= (m44& a, m44arg b) {return a = a*b;}
+TINLINE m44& op/= (m44& a, m44arg b) {return a = a/b;}
 TINLINE v4 op/ (m44arg m, v4arg v) {return m.inverse() * v;}
 TINLINE v4 op/ (v4arg v, m44arg m) {return v * m.inverse();}
 TINLINE m44 op/ (m44arg m, m44arg n) {return m * n.inverse();}
@@ -582,6 +585,16 @@ TINLINE m44 scale(m44arg m, v3arg v)
   dst[2] = m[2] * v[2];
   dst[3] = m[3];
   return dst;
+}
+TINLINE v3 unproject(v3arg win, m44arg model, m44arg proj, const vec4<int> &viewport)
+{
+  const m44 final = (proj*model).inverse();
+  v4 in(win.x, win.y, win.z, T(one));
+  in.x = T(two) * (win.x - T(viewport.x)) / T(viewport.z) - T(one);
+  in.y = T(two) * (win.y - T(viewport.y)) / T(viewport.w) - T(one);
+  in.z = T(two) * win.z - T(one);
+  const v4 out = final*in;
+  return v3(out.x/out.w,out.y/out.w,out.z/out.w);
 }
 
 /* convenient variable size float vector */
