@@ -211,36 +211,15 @@ namespace rdr
 
   static float depthcorrect(float d) { return (d<=1/256.0f) ? d*256 : d; }
 
-  // find out the 3d target of the crosshair in the world easily and very
-  // acurately. sadly many very old cards and drivers appear to fuck up on
-  // glReadPixels() and give false coordinates, making shooting and such
-  // impossible. also hits map entities which is unwanted.  could be replaced
-  // by a more acurate version of monster.cpp los() if needed
-  // XXX CLean that crap and use our clean math library
   void readdepth(int w, int h)
   {
-#if 1
-    glReadPixels(w/2, h/2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &cursordepth);
-    double worldx = 0, worldy = 0, worldz = 0;
-    double pm[16],mm[16];
-    loopi(16) mm[i] = (&readmm[0][0])[i];
-    loopi(16) pm[i] = (&readpm[0][0])[i];
-    _unproject(w/2, h/2, depthcorrect(cursordepth), mm, pm, &viewport.x, &worldx, &worldz, &worldy);
-    worldpos.x = (float)worldx;
-    worldpos.y = (float)worldy;
-    worldpos.z = (float)worldz;
-    const vec r = { (float)mm[0], (float)mm[4], (float)mm[8] };
-    const vec u = { (float)mm[1], (float)mm[5], (float)mm[9] };
-    setorient(r, u);
-#else
     glReadPixels(w/2, h/2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &cursordepth);
     const vec3f screenp(float(w)/2.f,float(h)/2.f,depthcorrect(cursordepth));
     const vec3f v = unproject(screenp, readmm, readpm, viewport);
-    worldpos = vec(v.x,v.y,v.z);
-    const vec r(readmm.vx.x,readmm.vy.x,readmm.vz.x);// = { (float)mm[0], (float)mm[4], (float)mm[8] };
-    const vec u(readmm.vx.y,readmm.vy.y,readmm.vz.y);// = { (float)mm[1], (float)mm[5], (float)mm[9] };
+    worldpos = vec(v.x,v.z,v.y);
+    const vec r(readmm.vx.x,readmm.vy.x,readmm.vz.x);
+    const vec u(readmm.vx.y,readmm.vy.y,readmm.vz.y);
     setorient(r, u);
-#endif
   }
 
   void drawicon(float tx, float ty, int x, int y)
@@ -392,7 +371,4 @@ namespace rdr
   }
 
 } /* namespace rdr */
-
-
-
 

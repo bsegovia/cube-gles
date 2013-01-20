@@ -1,7 +1,7 @@
 CXX=g++
 #CXX=clang++
 #CXX=~/src/emscripten/em++
-CXXOPTFLAGS=-Wall -O3 -DNDEBUG -DGL_GLEXT_PROTOTYPES -g -pg -fsigned-char -std=c++0x
+CXXOPTFLAGS=-Wall  -DNDEBUG -DGL_GLEXT_PROTOTYPES -g -pg -fsigned-char -std=c++0x
 CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include `sdl-config --cflags`
 #CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include `sdl-config --cflags` -DEMSCRIPTEN
 

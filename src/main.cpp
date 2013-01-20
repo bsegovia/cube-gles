@@ -5,6 +5,7 @@
 #include <enet/enet.h>
 #include <time.h>
 
+#include "math.hpp"
 void cleanup(char *msg)         // single program exit point;
 {
   demo::stop();
@@ -118,6 +119,11 @@ int main(int argc, char **argv)
   fs = 0;
 #endif
 
+  mat4x4f m0, m1;
+  loopi(4)loopj(4) m0[i][j]=drand48();
+  m1 = m0.inverse();
+  mat4x4f m = m0*m1;
+
   if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|par)<0) fatal("Unable to initialize SDL");
 
   log("net");
@@ -227,9 +233,7 @@ int main(int argc, char **argv)
     }
   }
   quit();
+#undef log
   return 1;
 }
-
-
-
 
