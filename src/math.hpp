@@ -600,6 +600,7 @@ TINLINE v3 unproject(v3arg win, m44arg model, m44arg proj, const vec4<int> &view
   return v3(out.x/out.w,out.y/out.w,out.z/out.w);
 }
 
+#if 0 // deactivated for now to have vs 10 support
 /* convenient variable size float vector */
 template <int n> struct vvec
 {
@@ -614,6 +615,53 @@ template <int n> struct vvec
   const float &operator[] (int index) const { return v[index]; }
   float v[n];
 };
+#else
+/* convenient variable size float vector */
+template <int n> struct vvec
+{
+  INLINE vvec(void) {}
+  template <typename T0> INLINE vvec(T0 x0) {
+    v[0] = x0;
+  }
+  template <typename T0, typename T1>
+  INLINE vvec(T0 x0, T1 x1) {
+    v[0] = x0; v[1] = x1;
+  }
+  template <typename T0, typename T1, typename T2>
+  INLINE vvec(T0 x0, T1 x1, T2 x2) {
+    v[0] = x0; v[1] = x1; v[2] = x2;
+  }
+  template <typename T0, typename T1, typename T2, typename T3>
+  INLINE vvec(T0 x0, T1 x1, T2 x2, T3 x3) {
+    v[0] = x0; v[1] = x1; v[2] = x2; v[3] = x3;
+  }
+  template <typename T0, typename T1, typename T2, typename T3, typename T4>
+  INLINE vvec(T0 x0, T1 x1, T2 x2, T3 x3, T4 x4) {
+    v[0] = x0; v[1] = x1; v[2] = x2; v[3] = x3;
+    v[4] = x4;
+  }
+  template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5>
+  INLINE vvec(T0 x0, T1 x1, T2 x2, T3 x3, T4 x4, T5 x5) {
+    v[0] = x0; v[1] = x1; v[2] = x2; v[3] = x3;
+    v[4] = x4; v[5] = x5;
+  }
+  template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6>
+  INLINE vvec(T0 x0, T1 x1, T2 x2, T3 x3, T4 x4, T5 x5, T6 x6) {
+    v[0] = x0; v[1] = x1; v[2] = x2; v[3] = x3;
+    v[4] = x4; v[5] = x5; v[6] = x6;
+  }
+  template <typename T0, typename T1, typename T2, typename T3, typename T4, typename T5, typename T6, typename T7>
+  INLINE vvec(T0 x0, T1 x1, T2 x2, T3 x3, T4 x4, T5 x5, T6 x6, T7 x7) {
+    v[0] = x0; v[1] = x1; v[2] = x2; v[3] = x3;
+    v[4] = x4; v[5] = x5; v[6] = x6; v[7] = x7;
+  }
+  INLINE void set(int index) {}
+  float &operator[] (int index) { return v[index]; }
+  const float &operator[] (int index) const { return v[index]; }
+  float v[n];
+};
+
+#endif
 
 /* commonly used types */
 typedef mat3x3<float> mat3x3f;
