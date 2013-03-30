@@ -1,0 +1,160 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\enet\callbacks.c" />
+    <ClCompile Include="..\enet\host.c" />
+    <ClCompile Include="..\enet\list.c" />
+    <ClCompile Include="..\enet\memory.c" />
+    <ClCompile Include="..\enet\packet.c" />
+    <ClCompile Include="..\enet\peer.c" />
+    <ClCompile Include="..\enet\protocol.c" />
+    <ClCompile Include="..\enet\win32.c" />
+    <ClCompile Include="..\src\client.cpp" />
+    <ClCompile Include="..\src\clientgame.cpp" />
+    <ClCompile Include="..\src\command.cpp" />
+    <ClCompile Include="..\src\console.cpp" />
+    <ClCompile Include="..\src\demo.cpp" />
+    <ClCompile Include="..\src\editing.cpp" />
+    <ClCompile Include="..\src\entities.cpp" />
+    <ClCompile Include="..\src\main.cpp" />
+    <ClCompile Include="..\src\menu.cpp" />
+    <ClCompile Include="..\src\monster.cpp" />
+    <ClCompile Include="..\src\ogl.cpp" />
+    <ClCompile Include="..\src\physics.cpp" />
+    <ClCompile Include="..\src\rendercubes.cpp" />
+    <ClCompile Include="..\src\renderextras.cpp" />
+    <ClCompile Include="..\src\rendermd2.cpp" />
+    <ClCompile Include="..\src\renderparticles.cpp" />
+    <ClCompile Include="..\src\rendertext.cpp" />
+    <ClCompile Include="..\src\rndmap.cpp" />
+    <ClCompile Include="..\src\server.cpp" />
+    <ClCompile Include="..\src\serverbrowser.cpp" />
+    <ClCompile Include="..\src\serverms.cpp" />
+    <ClCompile Include="..\src\serverutil.cpp" />
+    <ClCompile Include="..\src\sound.cpp" />
+    <ClCompile Include="..\src\tools.cpp" />
+    <ClCompile Include="..\src\weapon.cpp" />
+    <ClCompile Include="..\src\world.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\src\client.hpp" />
+    <ClInclude Include="..\src\clientgame.hpp" />
+    <ClInclude Include="..\src\command.hpp" />
+    <ClInclude Include="..\src\console.hpp" />
+    <ClInclude Include="..\src\cube.h" />
+    <ClInclude Include="..\src\demo.hpp" />
+    <ClInclude Include="..\src\editing.hpp" />
+    <ClInclude Include="..\src\entities.hpp" />
+    <ClInclude Include="..\src\math.hpp" />
+    <ClInclude Include="..\src\menu.hpp" />
+    <ClInclude Include="..\src\monster.hpp" />
+    <ClInclude Include="..\src\ogl.hpp" />
+    <ClInclude Include="..\src\physics.hpp" />
+    <ClInclude Include="..\src\protos.h" />
+    <ClInclude Include="..\src\renderer.hpp" />
+    <ClInclude Include="..\src\server.hpp" />
+    <ClInclude Include="..\src\serverbrowser.hpp" />
+    <ClInclude Include="..\src\sound.hpp" />
+    <ClInclude Include="..\src\tools.h" />
+    <ClInclude Include="..\src\weapon.hpp" />
+    <ClInclude Include="..\src\world.hpp" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{3434853A-60B3-4025-BE62-FFE39F920F34}</ProjectGuid>
+    <Keyword>Win32Proj</Keyword>
+    <RootNamespace>cube</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v110</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <LinkIncremental>false</LinkIncremental>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../enet/include;../include/</AdditionalIncludeDirectories>
+      <StringPooling>true</StringPooling>
+      <MinimalRebuild>false</MinimalRebuild>
+      <ExceptionHandling>false</ExceptionHandling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;zlib.lib;opengl32.lib;msvcrt.lib;SDLmain.lib;SDL.lib;SDL_image.lib;SDL_mixer.lib;ws2_32.lib;winmm.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>../lib</AdditionalLibraryDirectories>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>false</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;USE_ENET;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>../enet/include;../include/</AdditionalIncludeDirectories>
+      <StringPooling>true</StringPooling>
+      <ExceptionHandling>false</ExceptionHandling>
+      <BufferSecurityCheck>false</BufferSecurityCheck>
+      <PrecompiledHeaderFile>
+      </PrecompiledHeaderFile>
+      <TreatWChar_tAsBuiltInType>false</TreatWChar_tAsBuiltInType>
+      <ForceConformanceInForLoopScope>false</ForceConformanceInForLoopScope>
+    </ClCompile>
+    <Link>
+      <SubSystem>Console</SubSystem>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>../lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>odbc32.lib;odbccp32.lib;zlib.lib;opengl32.lib;msvcrt.lib;SDLmain.lib;SDL.lib;SDL_image.lib;ws2_32.lib;winmm.lib;SDL_mixer.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
