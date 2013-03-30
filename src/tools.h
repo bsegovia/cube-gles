@@ -39,6 +39,7 @@
 #include <cstdarg>
 #include <climits>
 #include <cassert>
+#include <cfloat>
 #ifdef __GNUC__
 #include <new>
 #else
