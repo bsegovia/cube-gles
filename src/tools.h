@@ -27,6 +27,13 @@
 #define gamma __gamma
 #endif
 
+#ifdef _MSC_VER
+#pragma warning( 3 : 4189 )
+#pragma warning (disable : 4244)
+#include <malloc.h>
+#endif
+
+#define _USE_MATH_DEFINES
 #include <cmath>
 
 #ifdef __GNUC__
@@ -98,7 +105,6 @@ namespace cube {
 #endif
 
 #ifdef WIN32
-#pragma warning( 3 : 4189 )
 #define PATHDIV '\\'
 #else
 #define __cdecl

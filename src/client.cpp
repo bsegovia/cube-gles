@@ -558,7 +558,7 @@ void localservertoclient(uchar *buf, int len)
       uint i = server::getint(p);
       entities::setspawn(i, true);
       if (i>=(uint)ents.length()) break;
-      const vec v = {float(ents[i].x), float(ents[i].y), float(ents[i].z)};
+      const vec v(float(ents[i].x), float(ents[i].y), float(ents[i].z));
       sound::play(S_ITEMSPAWN, &v); 
       break;
     }

@@ -248,7 +248,7 @@ void rendermodel(const char *mdl, int frame, int range, int tex,
 
   const int ix = (int)x;
   const int iy = (int)z;
-  vec light = { 1.0f, 1.0f, 1.0f };
+  vec light(1.0f, 1.0f, 1.0f);
 
   if (!OUTBORD(ix, iy)) {
     sqr *s = S(ix,iy);

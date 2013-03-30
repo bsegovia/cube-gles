@@ -56,7 +56,7 @@ void createrays(vec &from, vec &to)             // create random spread of rays 
   loopi(SGRAYS)
   {
 #define RNDD (rnd(101)-50)*f
-    vec r = { RNDD, RNDD, RNDD };
+    vec r(RNDD, RNDD, RNDD);
     sg[i] = to;
     vadd(sg[i], r);
   }

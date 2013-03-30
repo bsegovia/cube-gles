@@ -1,22 +1,20 @@
+﻿
 Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cube", "cube.vcxproj", "{BBBD1F67-ABC4-054D-6FD6-149E8A759369}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cube", "cube.vcxproj", "{3434853A-60B3-4025-BE62-FFE39F920F34}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
-		Profile|Win32 = Profile|Win32
 		Release|Win32 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{BBBD1F67-ABC4-054D-6FD6-149E8A759369}.Debug|Win32.ActiveCfg = Debug|Win32
-		{BBBD1F67-ABC4-054D-6FD6-149E8A759369}.Profile|Win32.ActiveCfg = Profile|Win32
-		{BBBD1F67-ABC4-054D-6FD6-149E8A759369}.Release|Win32.ActiveCfg = Release|Win32
+		{3434853A-60B3-4025-BE62-FFE39F920F34}.Debug|Win32.ActiveCfg = Debug|Win32
+		{3434853A-60B3-4025-BE62-FFE39F920F34}.Debug|Win32.Build.0 = Debug|Win32
+		{3434853A-60B3-4025-BE62-FFE39F920F34}.Release|Win32.ActiveCfg = Release|Win32
+		{3434853A-60B3-4025-BE62-FFE39F920F34}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
-	EndGlobalSection
-	GlobalSection(ExtensibilityGlobals) = postSolution
-		DPBuild = 5
 	EndGlobalSection
 EndGlobal

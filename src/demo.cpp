@@ -55,7 +55,7 @@ void savestate(char *fn)
   gzputc(f, islittleendian);
   gzputi(SAVEGAMEVERSION);
   gzputi(sizeof(dynent));
-  gzwrite(f, game::getclientmap(), _MAXDEFSTR);
+  gzwrite(f, (const voidp) game::getclientmap(), _MAXDEFSTR);
   gzputi(gamemode);
   gzputi(ents.length());
   loopv(ents) gzputc(f, ents[i].spawned);

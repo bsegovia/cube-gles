@@ -173,7 +173,7 @@ void renderents(void)
   loopv(ents) {
     entity &e = ents[i];
     if (e.type==NOTUSED) continue;
-    vec v = { float(e.x), float(e.y), float(e.z) };
+    vec v(float(e.x), float(e.y), float(e.z));
     particle_splash(2, 2, 40, v);
   }
   const int e = world::closestent();
@@ -273,7 +273,7 @@ void drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
   OGL(Disable, GL_DEPTH_TEST);
   invertperspective();
   ogl::pushmatrix();
-  ogl::ortho(0, VIRTW, VIRTH, 0, -1, 1);
+  ogl::ortho(0.f, float(VIRTW), float(VIRTH), 0.f, -1.f, 1.f);
   OGL(Enable, GL_BLEND);
 
   OGL(DepthMask, GL_FALSE);
@@ -355,7 +355,7 @@ void drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
     draw_textf("%d", 690, 827, 2, player1->ammo[player1->gunselect]);
     ogl::popmatrix();
     ogl::pushmatrix();
-    ogl::ortho(0, VIRTW, VIRTH, 0, -1, 1);
+    ogl::ortho(0.f, float(VIRTW), float(VIRTH), 0.f, -1.f, 1.f);
     OGL(Disable, GL_BLEND);
     drawicon(128, 128, 20, 1650);
     if (player1->armour) drawicon((float)(player1->armourtype*64), 0, 620, 1650);

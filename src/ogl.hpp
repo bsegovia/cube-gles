@@ -77,12 +77,12 @@ extern int xtraverts;
 #define OGL(NAME, ...) \
   do { \
     cube::ogl::NAME(__VA_ARGS__); \
-    if (glGetError()) fatal("gl" #NAME " failed"); \
+    if (cube::ogl::GetError()) fatal("gl" #NAME " failed"); \
   } while (0)
 #define OGLR(RET, NAME, ...) \
   do { \
     RET = cube::ogl::NAME(__VA_ARGS__); \
-    if (glGetError()) fatal("gl" #NAME " failed"); \
+    if (cube::ogl::GetError()) fatal("gl" #NAME " failed"); \
   } while (0)
 #else
   #define OGL(NAME, ...) do {cube::ogl::NAME(__VA_ARGS__);} while(0)

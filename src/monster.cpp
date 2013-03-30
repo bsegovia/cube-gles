@@ -314,7 +314,7 @@ void monsterthink()
     entity &e = ents[i];
     if (e.type!=TELEPORT) continue;
     if (OUTBORD(e.x, e.y)) continue;
-    vec v = { float(e.x), float(e.y), float(S(e.x, e.y)->floor) };
+    vec v(float(e.x), float(e.y), float(S(e.x, e.y)->floor));
     loopv(monsters) if (monsters[i]->state==CS_DEAD) {
       if (lastmillis-monsters[i]->lastaction<2000) {
         monsters[i]->move = 0;

@@ -182,7 +182,7 @@ int closestent(void)
   loopv(ents) {
     entity &e = ents[i];
     if (e.type==NOTUSED) continue;
-    const vec v = {float(e.x), float(e.y), float(e.z)};
+    const vec v(float(e.x), float(e.y), float(e.z));
     vdist(dist, t, player1->o, v);
     if (dist<bdist) {
       best = i;

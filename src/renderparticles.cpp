@@ -82,7 +82,7 @@ static void initparticles(void)
 void render_particles(int time)
 {
   if (demoplayback && demotracking) {
-    const vec nom = { 0, 0, 0 };
+    const vec nom(0, 0, 0);
     newparticle(player1->o, nom, 100000000, 8);
   }
   if (particleibo == 0u) initparticles();
@@ -172,7 +172,7 @@ void particle_splash(int type, int num, int fade, const vec &p)
       y = rnd(radius*2)-radius;
       z = rnd(radius*2)-radius;
     } while (x*x+y*y+z*z>radius*radius);
-    vec d = { (float)x, (float)y, (float)z };
+    vec d = vec(float(x), float(y), float(z));
     newparticle(p, d, rnd(fade*3), type);
   }
 }
@@ -184,7 +184,7 @@ void particle_trail(int type, int fade, vec &s, vec &e)
   vec p = s;
   loopi(int(d)*2) {
     vadd(p, v);
-    const vec d = { float(rnd(12)-5), float(rnd(11)-5), float(rnd(11)-5) };
+    const cube::vec d(float(rnd(12)-5), float(rnd(11)-5), float(rnd(11)-5));
     newparticle(p, d, rnd(fade)+fade, type);
   }
 }
