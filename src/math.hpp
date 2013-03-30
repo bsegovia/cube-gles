@@ -277,12 +277,12 @@ template<typename T> struct mat3x3
   INLINE mat3x3& op= (const mat3x3 &m) {vx = m.vx; vy = m.vy; vz = m.vz; return *this;}
   INLINE mat3x3(v3arg n) {
     vy = n;
-    if (abs(n.x) >= abs(n.y)){
+    if (abs(n.x) >= abs(n.y)) {
       const float inv = rcp(sqrt(n.x*n.x + n.z*n.z));
-      vx = vec3f(-n.z*inv, 0.f, n.x*inv);
+      vx = vec3<T>(-n.z*inv, zero, n.x*inv);
     } else {
       const float inv = rcp(sqrt(n.y*n.y + n.z*n.z));
-      vx = vec3f(0.f, n.z*inv, -n.y*inv);
+      vx = vec3<T>(zero, n.z*inv, -n.y*inv);
     }
     vx = normalize(vx);
     vy = normalize(vy);
@@ -304,7 +304,9 @@ template<typename T> struct mat3x3
   }
   INLINE mat3x3 inverse(void) const {return rcp(det())*adjoint();}
   INLINE T det(void) const {return dot(vx,cross(vy,vz));}
-  static INLINE mat3x3 scale(v3arg s) {return mat3x3(s.x,0,0,0,s.y,0,0,0,s.z);}
+  static INLINE mat3x3 scale(v3arg s) {
+    return mat3x3(s.x,zero,zero,zero,s.y,zero,zero,zero,s.z);
+  }
   static INLINE mat3x3 rotate(v3arg _u, T r) {
     const v3 u = normalize(_u);
     const T s = sin(r), c = cos(r);
@@ -457,13 +459,13 @@ TINLINE v4 op* (v4arg v, m44arg m) {
            m.vw.x*v.x + m.vw.y*v.y + m.vw.z*v.z + m.vw.w*v.w);
 }
 TINLINE m44 op* (m44arg m, m44arg n) {
-  const v4 a0 = m[0], a1 = m[1], a2 = m[2], a3 = m[3];
-  const v4 b0 = n[0], b1 = n[1], b2 = n[2], b3 = n[3];
+  const v4 a0 = m.vx, a1 = m.vy, a2 = m.vz, a3 = m.vw;
+  const v4 b0 = n.vx, b1 = n.vy, b2 = n.vz, b3 = n.vw;
   m44 dst;
-  dst.vx = a0*b0[0] + a1*b0[1] + a2*b0[2] + a3*b0[3];
-  dst.vy = a0*b1[0] + a1*b1[1] + a2*b1[2] + a3*b1[3];
-  dst.vz = a0*b2[0] + a1*b2[1] + a2*b2[2] + a3*b2[3];
-  dst.vw = a0*b3[0] + a1*b3[1] + a2*b3[2] + a3*b3[3];
+  dst.vx = a0*b0.x + a1*b0.y + a2*b0.z + a3*b0.w;
+  dst.vy = a0*b1.x + a1*b1.y + a2*b1.z + a3*b1.w;
+  dst.vz = a0*b2.x + a1*b2.y + a2*b2.z + a3*b2.w;
+  dst.vw = a0*b3.x + a1*b3.y + a2*b3.z + a3*b3.w;
   return dst;
 }
 TINLINE m44& op*= (m44& a, T b) {return a = a*b;}
@@ -473,45 +475,44 @@ TINLINE m44& op/= (m44& a, m44arg b) {return a = a/b;}
 TINLINE v4 op/ (m44arg m, v4arg v) {return m.inverse() * v;}
 TINLINE v4 op/ (v4arg v, m44arg m) {return v * m.inverse();}
 TINLINE m44 op/ (m44arg m, m44arg n) {return m * n.inverse();}
-TINLINE bool op== (m44arg m, m44arg n) {return (m.vx==n[0]) && (m.vy==n[1]) && (m.vz==n[2]) && (m.vw==n[3]);}
-TINLINE bool op!= (m44arg m, m44arg n) {return (m.vx!=n[0]) || (m.vy!=n[1]) || (m.vz!=n[2]) || (m.vw!=n[3]);}
+TINLINE bool op== (m44arg m, m44arg n) {return (m.vx==n.x) && (m.vy==n.y) && (m.vz==n.z) && (m.vw==n.w);}
+TINLINE bool op!= (m44arg m, m44arg n) {return (m.vx!=n.x) || (m.vy!=n.y) || (m.vz!=n.z) || (m.vw!=n.w);}
 
 TINLINE m44 m44::inverse(void) const {
   m44 inv;
-  (&inv.vx.x)[0] =   (&vx.x)[5]*(&vx.x)[10]*(&vx.x)[15] - (&vx.x)[5]*(&vx.x)[11]*(&vx.x)[14] - (&vx.x)[9]*(&vx.x)[6]*(&vx.x)[15]
-           + (&vx.x)[9]*(&vx.x)[7]*(&vx.x)[14] + (&vx.x)[13]*(&vx.x)[6]*(&vx.x)[11] - (&vx.x)[13]*(&vx.x)[7]*(&vx.x)[10];
-  (&inv.vx.x)[4] =  -(&vx.x)[4]*(&vx.x)[10]*(&vx.x)[15] + (&vx.x)[4]*(&vx.x)[11]*(&vx.x)[14] + (&vx.x)[8]*(&vx.x)[6]*(&vx.x)[15]
-           - (&vx.x)[8]*(&vx.x)[7]*(&vx.x)[14] - (&vx.x)[12]*(&vx.x)[6]*(&vx.x)[11] + (&vx.x)[12]*(&vx.x)[7]*(&vx.x)[10];
-  (&inv.vx.x)[8] =   (&vx.x)[4]*(&vx.x)[9]*(&vx.x)[15] - (&vx.x)[4]*(&vx.x)[11]*(&vx.x)[13] - (&vx.x)[8]*(&vx.x)[5]*(&vx.x)[15]
-           + (&vx.x)[8]*(&vx.x)[7]*(&vx.x)[13] + (&vx.x)[12]*(&vx.x)[5]*(&vx.x)[11] - (&vx.x)[12]*(&vx.x)[7]*(&vx.x)[9];
-  (&inv.vx.x)[12] = -(&vx.x)[4]*(&vx.x)[9]*(&vx.x)[14] + (&vx.x)[4]*(&vx.x)[10]*(&vx.x)[13] + (&vx.x)[8]*(&vx.x)[5]*(&vx.x)[14]
-           - (&vx.x)[8]*(&vx.x)[6]*(&vx.x)[13] - (&vx.x)[12]*(&vx.x)[5]*(&vx.x)[10] + (&vx.x)[12]*(&vx.x)[6]*(&vx.x)[9];
-  (&inv.vx.x)[1] =  -(&vx.x)[1]*(&vx.x)[10]*(&vx.x)[15] + (&vx.x)[1]*(&vx.x)[11]*(&vx.x)[14] + (&vx.x)[9]*(&vx.x)[2]*(&vx.x)[15]
-           - (&vx.x)[9]*(&vx.x)[3]*(&vx.x)[14] - (&vx.x)[13]*(&vx.x)[2]*(&vx.x)[11] + (&vx.x)[13]*(&vx.x)[3]*(&vx.x)[10];
-  (&inv.vx.x)[5] =   (&vx.x)[0]*(&vx.x)[10]*(&vx.x)[15] - (&vx.x)[0]*(&vx.x)[11]*(&vx.x)[14] - (&vx.x)[8]*(&vx.x)[2]*(&vx.x)[15]
-           + (&vx.x)[8]*(&vx.x)[3]*(&vx.x)[14] + (&vx.x)[12]*(&vx.x)[2]*(&vx.x)[11] - (&vx.x)[12]*(&vx.x)[3]*(&vx.x)[10];
-  (&inv.vx.x)[9] =  -(&vx.x)[0]*(&vx.x)[9]*(&vx.x)[15] + (&vx.x)[0]*(&vx.x)[11]*(&vx.x)[13] + (&vx.x)[8]*(&vx.x)[1]*(&vx.x)[15]
-           - (&vx.x)[8]*(&vx.x)[3]*(&vx.x)[13] - (&vx.x)[12]*(&vx.x)[1]*(&vx.x)[11] + (&vx.x)[12]*(&vx.x)[3]*(&vx.x)[9];
-  (&inv.vx.x)[13] =  (&vx.x)[0]*(&vx.x)[9]*(&vx.x)[14] - (&vx.x)[0]*(&vx.x)[10]*(&vx.x)[13] - (&vx.x)[8]*(&vx.x)[1]*(&vx.x)[14]
-           + (&vx.x)[8]*(&vx.x)[2]*(&vx.x)[13] + (&vx.x)[12]*(&vx.x)[1]*(&vx.x)[10] - (&vx.x)[12]*(&vx.x)[2]*(&vx.x)[9];
-  (&inv.vx.x)[2] =   (&vx.x)[1]*(&vx.x)[6]*(&vx.x)[15] - (&vx.x)[1]*(&vx.x)[7]*(&vx.x)[14] - (&vx.x)[5]*(&vx.x)[2]*(&vx.x)[15]
-           + (&vx.x)[5]*(&vx.x)[3]*(&vx.x)[14] + (&vx.x)[13]*(&vx.x)[2]*(&vx.x)[7] - (&vx.x)[13]*(&vx.x)[3]*(&vx.x)[6];
-  (&inv.vx.x)[6] =  -(&vx.x)[0]*(&vx.x)[6]*(&vx.x)[15] + (&vx.x)[0]*(&vx.x)[7]*(&vx.x)[14] + (&vx.x)[4]*(&vx.x)[2]*(&vx.x)[15]
-           - (&vx.x)[4]*(&vx.x)[3]*(&vx.x)[14] - (&vx.x)[12]*(&vx.x)[2]*(&vx.x)[7] + (&vx.x)[12]*(&vx.x)[3]*(&vx.x)[6];
-  (&inv.vx.x)[10] =  (&vx.x)[0]*(&vx.x)[5]*(&vx.x)[15] - (&vx.x)[0]*(&vx.x)[7]*(&vx.x)[13] - (&vx.x)[4]*(&vx.x)[1]*(&vx.x)[15]
-           + (&vx.x)[4]*(&vx.x)[3]*(&vx.x)[13] + (&vx.x)[12]*(&vx.x)[1]*(&vx.x)[7] - (&vx.x)[12]*(&vx.x)[3]*(&vx.x)[5];
-  (&inv.vx.x)[14] = -(&vx.x)[0]*(&vx.x)[5]*(&vx.x)[14] + (&vx.x)[0]*(&vx.x)[6]*(&vx.x)[13] + (&vx.x)[4]*(&vx.x)[1]*(&vx.x)[14]
-           - (&vx.x)[4]*(&vx.x)[2]*(&vx.x)[13] - (&vx.x)[12]*(&vx.x)[1]*(&vx.x)[6] + (&vx.x)[12]*(&vx.x)[2]*(&vx.x)[5];
-  (&inv.vx.x)[3] =  -(&vx.x)[1]*(&vx.x)[6]*(&vx.x)[11] + (&vx.x)[1]*(&vx.x)[7]*(&vx.x)[10] + (&vx.x)[5]*(&vx.x)[2]*(&vx.x)[11]
-           - (&vx.x)[5]*(&vx.x)[3]*(&vx.x)[10] - (&vx.x)[9]*(&vx.x)[2]*(&vx.x)[7] + (&vx.x)[9]*(&vx.x)[3]*(&vx.x)[6];
-  (&inv.vx.x)[7] =   (&vx.x)[0]*(&vx.x)[6]*(&vx.x)[11] - (&vx.x)[0]*(&vx.x)[7]*(&vx.x)[10] - (&vx.x)[4]*(&vx.x)[2]*(&vx.x)[11]
-           + (&vx.x)[4]*(&vx.x)[3]*(&vx.x)[10] + (&vx.x)[8]*(&vx.x)[2]*(&vx.x)[7] - (&vx.x)[8]*(&vx.x)[3]*(&vx.x)[6];
-  (&inv.vx.x)[11] = -(&vx.x)[0]*(&vx.x)[5]*(&vx.x)[11] + (&vx.x)[0]*(&vx.x)[7]*(&vx.x)[9] + (&vx.x)[4]*(&vx.x)[1]*(&vx.x)[11]
-           - (&vx.x)[4]*(&vx.x)[3]*(&vx.x)[9] - (&vx.x)[8]*(&vx.x)[1]*(&vx.x)[7] + (&vx.x)[8]*(&vx.x)[3]*(&vx.x)[5];
-  (&inv.vx.x)[15] =  (&vx.x)[0]*(&vx.x)[5]*(&vx.x)[10] - (&vx.x)[0]*(&vx.x)[6]*(&vx.x)[9] - (&vx.x)[4]*(&vx.x)[1]*(&vx.x)[10]
-           + (&vx.x)[4]*(&vx.x)[2]*(&vx.x)[9] + (&vx.x)[8]*(&vx.x)[1]*(&vx.x)[6] - (&vx.x)[8]*(&vx.x)[2]*(&vx.x)[5];
-
-  return inv / ((&vx.x)[0]*(&inv.vx.x)[0] + (&vx.x)[1]*(&inv.vx.x)[4] + (&vx.x)[2]*(&inv.vx.x)[8] + (&vx.x)[3]*(&inv.vx.x)[12]);
+  inv.vx.x = vy.y*vz.z*vw.w - vy.y*vz.w*vw.z - vz.y*vy.z*vw.w
+           + vz.y*vy.w*vw.z + vw.y*vy.z*vz.w - vw.y*vy.w*vz.z;
+  inv.vy.x =  -vy.x*vz.z*vw.w + vy.x*vz.w*vw.z + vz.x*vy.z*vw.w
+           - vz.x*vy.w*vw.z - vw.x*vy.z*vz.w + vw.x*vy.w*vz.z;
+  inv.vz.x =   vy.x*vz.y*vw.w - vy.x*vz.w*vw.y - vz.x*vy.y*vw.w
+           + vz.x*vy.w*vw.y + vw.x*vy.y*vz.w - vw.x*vy.w*vz.y;
+  inv.vw.x = -vy.x*vz.y*vw.z + vy.x*vz.z*vw.y + vz.x*vy.y*vw.z
+           - vz.x*vy.z*vw.y - vw.x*vy.y*vz.z + vw.x*vy.z*vz.y;
+  inv.vx.y =  -vx.y*vz.z*vw.w + vx.y*vz.w*vw.z + vz.y*vx.z*vw.w
+           - vz.y*vx.w*vw.z - vw.y*vx.z*vz.w + vw.y*vx.w*vz.z;
+  inv.vy.y =   vx.x*vz.z*vw.w - vx.x*vz.w*vw.z - vz.x*vx.z*vw.w
+           + vz.x*vx.w*vw.z + vw.x*vx.z*vz.w - vw.x*vx.w*vz.z;
+  inv.vz.y =  -vx.x*vz.y*vw.w + vx.x*vz.w*vw.y + vz.x*vx.y*vw.w
+           - vz.x*vx.w*vw.y - vw.x*vx.y*vz.w + vw.x*vx.w*vz.y;
+  inv.vw.y =  vx.x*vz.y*vw.z - vx.x*vz.z*vw.y - vz.x*vx.y*vw.z
+           + vz.x*vx.z*vw.y + vw.x*vx.y*vz.z - vw.x*vx.z*vz.y;
+  inv.vx.z =   vx.y*vy.z*vw.w - vx.y*vy.w*vw.z - vy.y*vx.z*vw.w
+           + vy.y*vx.w*vw.z + vw.y*vx.z*vy.w - vw.y*vx.w*vy.z;
+  inv.vy.z =  -vx.x*vy.z*vw.w + vx.x*vy.w*vw.z + vy.x*vx.z*vw.w
+           - vy.x*vx.w*vw.z - vw.x*vx.z*vy.w + vw.x*vx.w*vy.z;
+  inv.vz.z =  vx.x*vy.y*vw.w - vx.x*vy.w*vw.y - vy.x*vx.y*vw.w
+           + vy.x*vx.w*vw.y + vw.x*vx.y*vy.w - vw.x*vx.w*vy.y;
+  inv.vw.z = -vx.x*vy.y*vw.z + vx.x*vy.z*vw.y + vy.x*vx.y*vw.z
+           - vy.x*vx.z*vw.y - vw.x*vx.y*vy.z + vw.x*vx.z*vy.y;
+  inv.vx.w =  -vx.y*vy.z*vz.w + vx.y*vy.w*vz.z + vy.y*vx.z*vz.w
+           - vy.y*vx.w*vz.z - vz.y*vx.z*vy.w + vz.y*vx.w*vy.z;
+  inv.vy.w =   vx.x*vy.z*vz.w - vx.x*vy.w*vz.z - vy.x*vx.z*vz.w
+           + vy.x*vx.w*vz.z + vz.x*vx.z*vy.w - vz.x*vx.w*vy.z;
+  inv.vz.w = -vx.x*vy.y*vz.w + vx.x*vy.w*vz.y + vy.x*vx.y*vz.w
+           - vy.x*vx.w*vz.y - vz.x*vx.y*vy.w + vz.x*vx.w*vy.y;
+  inv.vw.w =  vx.x*vy.y*vz.z - vx.x*vy.z*vz.y - vy.x*vx.y*vz.z
+           + vy.x*vx.z*vz.y + vz.x*vx.y*vy.z - vz.x*vx.z*vy.y;
+  return inv / (vx.x*inv.vx.x + vx.y*inv.vy.x + vx.z*inv.vz.x + vx.w*inv.vw.x);
 }
 TINLINE m44 translate(m44arg m, v3arg v) {
   m44 dst(m);
@@ -525,9 +526,9 @@ TINLINE m44 lookat(v3arg eye, v3arg center, v3arg up)
   const v3 s = normalize(cross(f, u));
   const v3 t = cross(s, f);
   m44 dst(one);
-  dst[0][0] = s.x; dst[1][0] = s.y; dst[2][0] = s.z;
-  dst[0][1] = t.x; dst[1][1] = t.y; dst[2][1] = t.z;
-  dst[0][2] =-f.x; dst[1][2] =-f.y; dst[2][2] =-f.z;
+  dst.vx.x = s.x; dst.vy.x = s.y; dst.vz.x = s.z;
+  dst.vx.y = t.x; dst.vy.y = t.y; dst.vz.y = t.z;
+  dst.vx.z =-f.x; dst.vy.z =-f.y; dst.vz.z =-f.z;
   return translate(dst, -eye);
 }
 TINLINE m44 perspective(T fovy, T aspect, T znear, T zfar)
@@ -553,39 +554,39 @@ TINLINE m44 rotate(m44arg m, T angle, v3arg v)
   const T s = sin(a);
   const v3 axis = normalize(v);
   const v3 temp = (T(one) - c) * axis;
-  rot.vx[0] = c + temp[0]*axis[0];
-  rot.vx[1] = T(zero) + temp[0]*axis[1] + s*axis[2];
-  rot.vx[2] = T(zero) + temp[0]*axis[2] - s*axis[1];
-  rot.vy[0] = T(zero) + temp[1]*axis[0] - s*axis[2];
-  rot.vy[1] = c + temp[1]*axis[1];
-  rot.vy[2] = T(zero) + temp[1]*axis[2] + s*axis[0];
-  rot.vz[0] = T(zero) + temp[2]*axis[0] + s*axis[1];
-  rot.vz[1] = T(zero) + temp[2]*axis[1] - s*axis[0];
-  rot.vz[2] = c + temp[2]*axis[2];
-  dst.vx = m.vx*rot.vx[0] + m.vy*rot.vx[1] + m.vz*rot.vx[2];
-  dst.vy = m.vx*rot.vy[0] + m.vy*rot.vy[1] + m.vz*rot.vy[2];
-  dst.vz = m.vx*rot.vz[0] + m.vy*rot.vz[1] + m.vz*rot.vz[2];
+  rot.vx.x = c + temp.x*axis.x;
+  rot.vx.y = T(zero) + temp.x*axis.y + s*axis.z;
+  rot.vx.z = T(zero) + temp.x*axis.z - s*axis.y;
+  rot.vy.x = T(zero) + temp.y*axis.x - s*axis.z;
+  rot.vy.y = c + temp.y*axis.y;
+  rot.vy.z = T(zero) + temp.y*axis.z + s*axis.x;
+  rot.vz.x = T(zero) + temp.z*axis.x + s*axis.y;
+  rot.vz.y = T(zero) + temp.z*axis.y - s*axis.x;
+  rot.vz.z = c + temp.z*axis.z;
+  dst.vx = m.vx*rot.vx.x + m.vy*rot.vx.y + m.vz*rot.vx.z;
+  dst.vy = m.vx*rot.vy.x + m.vy*rot.vy.y + m.vz*rot.vy.z;
+  dst.vz = m.vx*rot.vz.x + m.vy*rot.vz.y + m.vz*rot.vz.z;
   dst.vw = m.vw;
   return dst;
 }
 TINLINE m44 ortho(T left, T right, T bottom, T top, T znear, T zfar)
 {
   m44 dst(one);
-  dst[0][0] = T(two) / (right - left);
-  dst[1][1] = T(two) / (top - bottom);
-  dst[2][2] = - T(two) / (zfar - znear);
-  dst[3][0] = - (right + left) / (right - left);
-  dst[3][1] = - (top + bottom) / (top - bottom);
-  dst[3][2] = - (zfar + znear) / (zfar - znear);
+  dst.vx.x = T(two) / (right - left);
+  dst.vy.y = T(two) / (top - bottom);
+  dst.vz.z = - T(two) / (zfar - znear);
+  dst.vw.x = - (right + left) / (right - left);
+  dst.vw.y = - (top + bottom) / (top - bottom);
+  dst.vw.z = - (zfar + znear) / (zfar - znear);
   return dst;
 }
 TINLINE m44 scale(m44arg m, v3arg v)
 {
   m44 dst;
-  dst[0] = m[0] * v[0];
-  dst[1] = m[1] * v[1];
-  dst[2] = m[2] * v[2];
-  dst[3] = m[3];
+  dst.vx = m.vx * v.x;
+  dst.vy = m.vy * v.y;
+  dst.vz = m.vz * v.z;
+  dst.vw = m.vw;
   return dst;
 }
 TINLINE v3 unproject(v3arg win, m44arg model, m44arg proj, const vec4<int> &viewport)
