@@ -6,8 +6,9 @@
 
 #include "cube.h"
 
-namespace physics
-{
+namespace cube {
+namespace physics {
+
   bool plcollide(dynent *d, dynent *o, float &headspace, float &hi, float &lo) // collide with player or monster
   {
     if (o->state!=CS_ALIVE) return true;
@@ -321,12 +322,8 @@ namespace physics
   void moveplayer(dynent *pl, int moveres, bool local)
   {
     loopi(physicsrepeat) moveplayer(pl, moveres, local, i ? curtime/physicsrepeat : curtime-curtime/physicsrepeat*(physicsrepeat-1));
-  };
+  }
+
 } /* namespace physics */
-
-
-
-
-
-
+} /* namespace cube */
 

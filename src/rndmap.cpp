@@ -1,5 +1,7 @@
 #include "cube.h"
 
+namespace cube {
+
 float noise(int x, int y, int seed)
 {
   int n = x+y*57;
@@ -65,10 +67,5 @@ void perlinarea(block &b, int scale, int seed, int psize)
   }
 }
 
-
-
-
-
-
-
+} /* namespace cube */
 

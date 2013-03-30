@@ -6,6 +6,8 @@
 #include <cmath>
 #include <cfloat>
 
+namespace cube {
+
 /* polymorphic constant values */
 #define CONSTANT_TYPE(TYPE,VALUE,NUM)\
 static const struct TYPE\
@@ -45,6 +47,7 @@ CONSTANT_TYPE(twotype,two,2);
 #define UINLINE template <typename U> INLINE
 
 /* all useful math functions */
+INLINE int abs    (int x)   {return ::abs(x);}
 INLINE float sign (float x) {return x<0?-1.0f:1.0f;}
 INLINE float rcp  (float x) {return 1.0f/x;}
 INLINE float rsqrt(float x) {return 1.0f/::sqrtf(x);}
@@ -646,6 +649,8 @@ typedef vec4<double> vec4d;
 #undef m33arg
 #undef m43arg
 #undef m44arg
+
+} /* namespace cube */
 
 #endif /* __CUBE_MATH_HPP__ */
 

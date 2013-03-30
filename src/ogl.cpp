@@ -4,11 +4,10 @@
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 
-// XXX
+namespace cube {
 namespace rdr { extern int curvert; }
+namespace ogl {
 
-namespace ogl
-{
   int xtraverts = 0;
 
   /*-------------------------------------------------------------------------
@@ -165,11 +164,11 @@ namespace ogl
   }
   void perspective(float fovy, float aspect, float znear, float zfar) {
     dirty.flags.mvp=1;
-    vp[vpmode] = vp[vpmode]*::perspective(fovy,aspect,znear,zfar);
+    vp[vpmode] = vp[vpmode]*cube::perspective(fovy,aspect,znear,zfar);
   }
   void ortho(float left, float right, float bottom, float top, float znear, float zfar) {
     dirty.flags.mvp=1;
-    vp[vpmode] = vp[vpmode]*::ortho(left,right,bottom,top,znear,zfar);
+    vp[vpmode] = vp[vpmode]*cube::ortho(left,right,bottom,top,znear,zfar);
   }
   void scale(const vec3f &s) {
     dirty.flags.mvp=1;
@@ -354,7 +353,7 @@ namespace ogl
       char *buffer = new char[infologlength + 1];
       buffer[infologlength] = 0;
       OGL(GetShaderInfoLog, shadername, infologlength, NULL, buffer);
-      printf(buffer);
+      printf("%s",buffer);
       delete [] buffer;
     }
     if (result == GL_FALSE) fatal("OGL: failed to compile shader");
@@ -413,7 +412,7 @@ namespace ogl
     "#endif\n"
     "  outcol = incol;\n"
     "#if USE_KEYFRAME\n"
-    "  const vec3 p = mix(p0,p1,delta);\n"
+    "  vec3 p = mix(p0,p1,delta);\n"
     "#endif\n"
     "#if USE_FOG\n"
     "  fogz = dot(zaxis,vec4(p,1.0));\n"
@@ -443,7 +442,7 @@ namespace ogl
     "  col = outcol;\n"
     "#endif\n"
     "#if USE_FOG\n"
-    "  const float factor = clamp((-fogz-fogstartend.x)*fogstartend.y,0.0,1.0)\n;"
+    "  float factor = clamp((-fogz-fogstartend.x)*fogstartend.y,0.0,1.0)\n;"
     "  col.xyz = mix(col.xyz,fogcolor.xyz,factor);\n"
     "#endif\n"
     "  col.xyz *= overbright;\n"
@@ -813,7 +812,7 @@ namespace ogl
 
     rdr::resetcubes();
 
-    rdr::curvert = 0;
+    cube::rdr::curvert = 0;
     strips.setsize(0);
 
     world::render(player1->o.x, player1->o.y, player1->o.z,
@@ -887,5 +886,7 @@ namespace ogl
     rdr::drawhud(w, h, int(curfps), nquads, rdr::curvert, underwater);
     OGL(Enable, GL_CULL_FACE);
   }
+
 } /* namespace ogl */
+} /* namespace cube */
 

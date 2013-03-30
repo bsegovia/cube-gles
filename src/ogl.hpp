@@ -1,8 +1,9 @@
 #ifndef __CUBE_OGL_HPP__
 #define __CUBE_OGL_HPP__
 
-namespace ogl
-{
+namespace cube {
+namespace ogl {
+
   enum {POS0=0, POS1=1, TEX=2, NOR=3, COL=4}; /* vertex attributes */
 
   /* quick, dirty and super simple uber-shader system */
@@ -57,7 +58,6 @@ namespace ogl
 
   /* number of transformed vertices per frame */
   extern int xtraverts;
-} /* namespace ogl */
 
 /* OGL debug macros */
 #ifndef NDEBUG
@@ -76,8 +76,8 @@ namespace ogl
   #define OGLR(RET, NAME, ...) do {RET=gl##NAME(__VA_ARGS__);} while(0)
 #endif /* NDEBUG */
 
+} /* namespace ogl */
+} /* namespace cube */
+
 #endif /* __CUBE_OGL_HPP__ */
-
-
-
 

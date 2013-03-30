@@ -1,21 +1,16 @@
-#ifndef __QBE_BROWSER_HPP__
-#define __QBE_BROWSER_HPP__
+#ifndef __CUBE_BROWSER_HPP__
+#define __CUBE_BROWSER_HPP__
 
-namespace browser
-{
+namespace cube {
+namespace browser {
+
   void addserver(const char *servername);
   const char *getservername(int n);
   void refreshservers(void);
   void writeservercfg(void);
+
 } /* namespace browser */
+} /* namespace cube */
 
-#endif /* __QBE_BROWSER_HPP__ */
-
-
-
-
-
-
-
-
+#endif /* __CUBE_BROWSER_HPP__ */
 

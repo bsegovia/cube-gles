@@ -1,6 +1,8 @@
 #include "tools.h"
 #include <new>
 
+namespace cube {
+
 pool::pool(void)
 {
   blocks = 0;
@@ -122,4 +124,6 @@ void endianswap(void *memory, int stride, int length)
     p[stride-i-1] = t;
   }
 }
+
+} /* namespace cube */
 

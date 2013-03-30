@@ -4,8 +4,9 @@
 #include <enet/enet.h>
 
 // XXX
-namespace game
-{
+namespace cube {
+namespace game {
+
   static const char *modenames[] = {
     "SP", "DMSP", "ffa/default", "coopedit", "ffa/duel", "teamplay",
     "instagib", "instagib team", "efficiency", "efficiency team",
@@ -14,12 +15,15 @@ namespace game
   const char *modestr(int n) {
     return (n>=-2 && n<12) ? modenames[n+2] : "unknown";
   }
+
 } /* namespace game */
+} /* namespace cube */
 
 // all network traffic is in 32bit ints, which are then compressed using the
 // following simple scheme (assumes that most values are small).
-namespace server
-{
+namespace cube {
+namespace server {
+
   void putint(uchar *&p, int n)
   {
     if (n<128 && n>-127) { *p++ = n; }
@@ -90,10 +94,10 @@ namespace server
     enet_packet_resize(packet, p-start);
     return packet;
   }
-}
+
+} /* namespace server */
 
 #ifdef STANDALONE
-
 void client::localservertoclient(uchar *buf, int len) {};
 void fatal(const char *s, const char *o) { server::cleanup(); printf("servererror: %s\n", s); exit(1); };
 void *alloc(int s) { void *b = calloc(1,s); if (!b) fatal("no memory!"); return b; };
@@ -118,11 +122,12 @@ int main(int argc, char* argv[])
   if (enet_initialize()<0) fatal("Unable to initialise network module");
   server::init(true, uprate, sdesc, ip, master, passwd, maxcl);
   return 0;
-};
+}
 #endif
 
+} /* namespace cube */
 
-
-
-
+#ifdef STANDALONE
+int main(int argc, char *argv[]) { return cube::main(argc,argv); }
+#endif
 

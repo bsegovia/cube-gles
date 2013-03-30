@@ -1,6 +1,7 @@
 #ifndef __CUBE_WORLD_HPP__
 #define __CUBE_WORLD_HPP__
 
+namespace cube {
 struct vec;
 struct dynent;
 
@@ -76,59 +77,53 @@ extern int cubicsize, mipsize;     // cubicsize = ssize^2
 
 struct entity;
 
-namespace world
-{
+namespace world {
 
-  void setup(int factor);
-  /*! main empty world creation routine, if passed factor -1 will enlarge old
-   *  world by 1
-   */
-  void empty(int factor, bool force);
+void setup(int factor);
+/*! main empty world creation routine, if passed factor -1 will enlarge old
+ *  world by 1
+ */
+void empty(int factor, bool force);
 
-  /*! Main geometric mipmapping routine, recursively rebuild
-   *  mipmaps within block
-   */
-  void remip(block &b, int world = 0);
-  /*! Same but also consider the neighbors */
-  void remipmore(block &b, int world = 0);
-  /*! Used for edit mode ent display */
-  int closestent(void);
-  int findentity(int type, int index = 0);
-  /*! Trigger tag */
-  void trigger(int tag, int type, bool savegame);
-  /*! Reset for editing or map saving */
-  void resettagareas(void);
-  /*! Set for playing */
-  void settagareas(void);
-  /*! Create a new entity */
-  entity *newentity(int x, int y, int z, char *what, int v1, int v2, int v3, int v4);
-  /*! Update the lighting per vertex */
-  void calclight(void);
-  void dodynlight(vec &vold, vec &v, int reach, int strength, dynent *owner);
-  void cleardlights(void);
-  block *blockcopy(block &b);
-  void blockpaste(block &b);
-  /*! Save the world as .cgz file */
-  void save(const char *fname);
-  /*! Load the world from .cgz file */
-  void load(const char *mname);
-  void writemap(char *mname, int msize, uchar *mdata);
-  uchar *readmap(const char *mname, int *msize);
+/*! Main geometric mipmapping routine, recursively rebuild
+ *  mipmaps within block
+ */
+void remip(block &b, int world = 0);
+/*! Same but also consider the neighbors */
+void remipmore(block &b, int world = 0);
+/*! Used for edit mode ent display */
+int closestent(void);
+int findentity(int type, int index = 0);
+/*! Trigger tag */
+void trigger(int tag, int type, bool savegame);
+/*! Reset for editing or map saving */
+void resettagareas(void);
+/*! Set for playing */
+void settagareas(void);
+/*! Create a new entity */
+entity *newentity(int x, int y, int z, char *what, int v1, int v2, int v3, int v4);
+/*! Update the lighting per vertex */
+void calclight(void);
+void dodynlight(vec &vold, vec &v, int reach, int strength, dynent *owner);
+void cleardlights(void);
+block *blockcopy(block &b);
+void blockpaste(block &b);
+/*! Save the world as .cgz file */
+void save(const char *fname);
+/*! Load the world from .cgz file */
+void load(const char *mname);
+void writemap(char *mname, int msize, uchar *mdata);
+uchar *readmap(const char *mname, int *msize);
 
-  void render(float vx, float vy, float vh, int yaw, int pitch, float widef, int w, int h);
+void render(float vx, float vy, float vh, int yaw, int pitch, float widef, int w, int h);
 
-  /*! Constructs occlusion map */
-  void computeraytable(float vx, float vy);
-  /*! Test occlusion for a cube (v = viewer, c = cube to test) */
-  int isoccluded(float vx, float vy, float cx, float cy, float csize);
+/*! Constructs occlusion map */
+void computeraytable(float vx, float vy);
+/*! Test occlusion for a cube (v = viewer, c = cube to test) */
+int isoccluded(float vx, float vy, float cx, float cy, float csize);
 
 } /* namespace world */
+} /* namespace cube */
 
 #endif /* __CUBE_WORLD_HPP__ */
-
-
-
-
-
-
 

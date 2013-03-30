@@ -1,11 +1,13 @@
 #include "cube.h"
 #include "ogl.hpp"
+#include "math.hpp"
 #include <GL/gl.h>
 #include <SDL/SDL.h>
 #include <enet/enet.h>
 #include <time.h>
 
-#include "math.hpp"
+namespace cube {
+
 void cleanup(char *msg)         // single program exit point;
 {
   demo::stop();
@@ -19,7 +21,7 @@ void cleanup(char *msg)         // single program exit point;
 #ifdef WIN32
     MessageBox(NULL, msg, "cube fatal error", MB_OK|MB_SYSTEMMODAL);
 #else
-    printf(msg);
+    printf("%s",msg);
 #endif
   };
   SDL_Quit();
@@ -85,7 +87,7 @@ VARF(grabmouse, 0, 0, 1, {SDL_WM_GrabInput(grabmouse ? SDL_GRAB_ON : SDL_GRAB_OF
 int islittleendian = 1;
 int framesinmap = 0;
 
-int main(int argc, char **argv)
+static int main(int argc, char **argv)
 {
   bool dedicated = false;
   int fs = SDL_FULLSCREEN, par = 0, uprate = 0, maxcl = 4;
@@ -230,5 +232,11 @@ int main(int argc, char **argv)
   quit();
 #undef log
   return 1;
+}
+
+} /* namespace cube */
+
+int main(int argc, char **argv) {
+  return cube::main(argc, argv);
 }
 

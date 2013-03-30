@@ -1,6 +1,8 @@
 #ifndef __CUBE_ENTITIES_HPP__
 #define __CUBE_ENTITIES_HPP__
 
+namespace cube {
+
 // XXX move that into the namespace
 enum                            // static entity types
 {
@@ -78,8 +80,8 @@ extern dynent *player1;            // special client ent that receives input and
 extern dvector players;            // all the other clients (in multiplayer)
 extern vector<entity> ents;        // map entities
 
-namespace entities
-{
+namespace entities {
+
   void putitems(uchar *&p);
   void checkquad(int time);
   void checkitems(void);
@@ -89,14 +91,9 @@ namespace entities
   void setspawn(uint i, bool on);
   void teleport(int n, dynent *d);
   void baseammo(int gun);
+
 } /* namespace entities */
+} /* namespace cube */
 
 #endif /* __CUBE_ENTITIES_HPP__ */
-
-
-
-
-
-
-
 

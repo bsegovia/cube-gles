@@ -1,23 +1,28 @@
-#ifndef __QBE_SOUND_HPP__
-#define __QBE_SOUND_HPP__
+#ifndef __CUBE_SOUND_HPP__
+#define __CUBE_SOUND_HPP__
 
 #include <cstdlib>
 
+
+namespace cube {
+
 struct vec; // 3D vector
 
-namespace sound
-{
-  /*! Init the sound module */
-  void init(void);
-  /*! Stop the sound module */
-  void clean(void);
-  /*! Play sound n at given location */
-  void play(int n, const vec *loc = NULL);
-  /*! Play sound n and send message to the server */
-  void playc(int n);
-  /*! Update the overall volume */
-  void updatevol(void);
-}
+namespace sound {
+
+/*! Init the sound module */
+void init(void);
+/*! Stop the sound module */
+void clean(void);
+/*! Play sound n at given location */
+void play(int n, const vec *loc = NULL);
+/*! Play sound n and send message to the server */
+void playc(int n);
+/*! Update the overall volume */
+void updatevol(void);
+
+} /* namespace sound */
+} /* namespace cube */
 
 /*! Hardcoded sounds, defined in sounds.cfg */
 enum
@@ -42,27 +47,5 @@ enum
   S_JUMPPAD,
 };
 
-#endif /* __QBE_SOUND_HPP__ */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+#endif /* __CUBE_SOUND_HPP__ */
 
