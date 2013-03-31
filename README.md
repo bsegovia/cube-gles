@@ -11,7 +11,9 @@ Native builds on Windows and Linux
 
 The code has been compiled with gcc on Linux and visual 2010/2012 on Windows.
 On Linux:
+
 `> cd src`
+
 `> make`
 
 On Windows, open the solution and compile
@@ -24,7 +26,8 @@ The code can also be compiled to javascript using emscripten. You need to have
 the data in the same directory such emscripten can pre-package the complete
 game. This is required to enable synchronous load of assets.
 
-So:
+Just type:
+
 `> ./emscripten cube`
 
 This will produce two files: `cube.html` that basically contains the code and
@@ -49,15 +52,16 @@ Remarks on JS port
 ------------------
 
 - glReadPixels does not support depth target. Unfortunately, this is used to get
-  the hit points for the main character weapon. So, no collision yet :-(
+  the hit points for the main character weapon. So, no collision when you shoot
+  yet :-(
 
-- There is a crash when dealing with volume control I was able to track down.
+- There is a crash when dealing with volume control I was not able to track down.
   So, the sound is not spatialized properly
 
 - No network! Firefox (and partly Chrome) now supports webRTC and data channel.
   I did not have the time to look at it. Emscripten guys wrap sockets around it
   to have out of the box support of posix sockets. It may be interesting to try
   it (even if this may not be really high performance compared to a native use of
-  webRTC)
-
+  webRTC, since most of the work (MTU handing, congestion control...) is done
+  twice
 
