@@ -214,9 +214,6 @@ void sendpackettoserv(void *packet)
 
 void c2sinfo(const dynent *d)
 {
-#if defined(EMSCRIPTEN)
-  return;
-#endif
   // We haven't had a welcome message from the server yet
   if (clientnum<0)
     return;
@@ -291,7 +288,6 @@ void c2sinfo(const dynent *d)
       lastping = lastmillis;
     }
   }
-#if !defined(EMSCRIPTEN)
   *(ushort *)start = ENET_HOST_TO_NET_16(p-start);
   enet_packet_resize(packet, p-start);
   demo::incomingdata(start, p-start, true);
@@ -303,7 +299,6 @@ void c2sinfo(const dynent *d)
   lastupdate = lastmillis;
   if (serveriteminitdone)
     demo::loadgamerest();  // hack
-#endif
 }
 
 /*! Update the position of other clients in the game in our world don't care
@@ -343,9 +338,6 @@ static void changemapserv(const char *name, int mode)
 
 void localservertoclient(uchar *buf, int len)
 {
-#if defined(EMSCRIPTEN)
-  return;
-#else
   if (ENET_NET_TO_HOST_16(*(ushort *)buf) != len)
     neterr("packet length");
   demo::incomingdata(buf, len);
@@ -667,7 +659,6 @@ void localservertoclient(uchar *buf, int len)
       neterr("type");
       return;
   }
-#endif
 }
 
 void gets2c(void)

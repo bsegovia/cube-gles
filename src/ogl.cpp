@@ -1,6 +1,5 @@
 #include "cube.h"
 #include "ogl.hpp"
-#include <GL/gl.h>
 #include <SDL/SDL.h>
 #include <SDL/SDL_image.h>
 
@@ -205,27 +204,67 @@ static string mapname[256][MAXFRAMES];
 
 static void purgetextures(void) {loopi(256)loop(j,MAXFRAMES)mapping[i][j]=0;}
 
+#if defined(EMSCRIPTEN)
+static const uint ID_NUM = 2*MAXTEX;
+static GLuint generated_ids[ID_NUM];
+#endif /* EMSCRIPTEN */
+
+void bindtexture(int target, uint id)
+{
+#if defined(EMSCRIPTEN)
+  if (id >= ID_NUM) fatal("out of bound texture ID");
+  OGL(BindTexture, target, generated_ids[id]);
+#else
+  OGL(BindTexture, target, id);
+#endif
+}
+
+INLINE bool isPowerOfTwo(unsigned int x) { return ((x & (x - 1)) == 0); }
+
 bool installtex(int tnum, const char *texname, int &xs, int &ys, bool clamp)
 {
   SDL_Surface *s = IMG_Load(texname);
   if (!s) {
     console::out("couldn't load texture %s", texname);
     return false;
-  } else if (s->format->BitsPerPixel!=24) {
-    console::out("texture must be 24bpp: %s", texname);
+  }
+#if !defined(EMSCRIPTEN)
+  else if (s->format->BitsPerPixel!=24) {
+    console::out("texture must be 24bpp: %s (got %i bpp)", texname, s->format->BitsPerPixel);
     return false;
   }
-  OGL(BindTexture, GL_TEXTURE_2D, tnum);
+#else
+  if (tnum >= ID_NUM) fatal("out of bound texture ID");
+  if (generated_ids[tnum] == 0)
+    OGL(GenTextures, 1, generated_ids + tnum);
+#endif /* EMSCRIPTEN */
+
+  console::out("loading %s (%ix%i)", texname, s->w, s->h);
+  ogl::bindtexture(GL_TEXTURE_2D, tnum);
   OGL(PixelStorei, GL_UNPACK_ALIGNMENT, 1);
-  OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-  OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
-  OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
   xs = s->w;
   ys = s->h;
-  if (xs>glmaxtexsize || ys>glmaxtexsize) fatal("texture dimensions are too large");
-  OGL(TexImage2D, GL_TEXTURE_2D, 0, GL_RGB, xs, ys, 0, GL_RGB, GL_UNSIGNED_BYTE, s->pixels);
-  OGL(GenerateMipmap, GL_TEXTURE_2D);
+  if (xs>glmaxtexsize || ys>glmaxtexsize)
+    fatal("texture dimensions are too large");
+  if (s->format->BitsPerPixel == 24)
+    OGL(TexImage2D, GL_TEXTURE_2D, 0, GL_RGB, xs, ys, 0, GL_RGB, GL_UNSIGNED_BYTE, s->pixels);
+  else if (s->format->BitsPerPixel == 32)
+    OGL(TexImage2D, GL_TEXTURE_2D, 0, GL_RGBA, xs, ys, 0, GL_RGBA, GL_UNSIGNED_BYTE, s->pixels);
+  else
+    fatal("unsupported texture format");
+
+  if (isPowerOfTwo(xs) && isPowerOfTwo(ys)) {
+    OGL(GenerateMipmap, GL_TEXTURE_2D);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, clamp ? GL_CLAMP_TO_EDGE : GL_REPEAT);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  } else {
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    OGL(TexParameteri, GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  }
   SDL_FreeSurface(s);
   return true;
 }
@@ -361,7 +400,8 @@ static bool checkshader(GLuint shadername)
 
 static GLuint loadshader(GLenum type, const char *source, const char *rulestr)
 {
-  const GLuint name = CreateShader(type);
+  GLuint name;
+  OGLR(name, CreateShader, type);
   const char *sources[] = {rulestr, source};
   OGL(ShaderSource, name, 2, sources, NULL);
   OGL(CompileShader, name);
@@ -372,7 +412,8 @@ static GLuint loadshader(GLenum type, const char *source, const char *rulestr)
 static GLuint loadprogram(const char *vertstr, const char *fragstr, uint rules)
 {
   GLuint program = 0;
-  sprintf_sd(rulestr)("#version 130\n"
+  sprintf_sd(rulestr)(UNLESS_EMSCRIPTEN("#version 130\n")
+                      IF_EMSCRIPTEN("precision highp float;\n")
                       "#define USE_FOG %i\n"
                       "#define USE_KEYFRAME %i\n"
                       "#define USE_DIFFUSETEX %i\n",
@@ -387,24 +428,34 @@ static GLuint loadprogram(const char *vertstr, const char *fragstr, uint rules)
   return program;
 }
 
+#if defined(EMSCRIPTEN)
+#define VS_IN "attribute"
+#define VS_OUT "varying"
+#define PS_IN "varying"
+#else
+#define VS_IN "in"
+#define VS_OUT "out"
+#define PS_IN "in"
+#endif /* EMSCRIPTEN */
+
 static const char ubervert[] = {
   "uniform mat4 MVP;\n"
   "#if USE_FOG\n"
   "  uniform vec4 zaxis;\n"
-  "  out float fogz;\n"
+  "  " VS_OUT " float fogz;\n"
   "#endif\n"
   "#if USE_KEYFRAME\n"
   "  uniform float delta;\n"
-  "  in vec3 p0, p1;\n"
+  "  " VS_IN " vec3 p0, p1;\n"
   "#else\n"
-  "  in vec3 p;\n"
+  "  " VS_IN " vec3 p;\n"
   "#endif\n"
-  "in vec4 incol;\n"
+  VS_IN " vec4 incol;\n"
   "#if USE_DIFFUSETEX\n"
-  "  out vec2 texcoord;\n"
-  "  in vec2 t;\n"
+  "  " VS_OUT " vec2 texcoord;\n"
+  "  " VS_IN " vec2 t;\n"
   "#endif\n"
-  "out vec4 outcol;\n"
+  VS_OUT " vec4 outcol;\n"
   "void main() {\n"
   "#if USE_DIFFUSETEX\n"
   "  texcoord = t;\n"
@@ -422,20 +473,21 @@ static const char ubervert[] = {
 static const char uberfrag[] = {
   "#if USE_DIFFUSETEX\n"
   "  uniform sampler2D diffuse;\n"
-  "  in vec2 texcoord;\n"
+  "  " PS_IN " vec2 texcoord;\n"
   "#endif\n"
   "#if USE_FOG\n"
   "  uniform vec4 fogcolor;\n"
   "  uniform vec2 fogstartend;\n"
-  "  in float fogz;\n"
+  "  " PS_IN " float fogz;\n"
   "#endif\n"
   "uniform float overbright;\n"
-  "in vec4 outcol;\n"
-  "out vec4 c;\n"
+  PS_IN " vec4 outcol;\n"
+  UNLESS_EMSCRIPTEN("out vec4 c;\n")
   "void main() {\n"
   "  vec4 col;\n"
   "#if USE_DIFFUSETEX\n"
-  "  col = texture(diffuse, texcoord);\n"
+  UNLESS_EMSCRIPTEN("  col = texture(diffuse, texcoord);\n")
+  IF_EMSCRIPTEN("  col = texture2D(diffuse, texcoord);\n")
   "  col *= outcol;\n"
   "#else\n"
   "  col = outcol;\n"
@@ -445,7 +497,8 @@ static const char uberfrag[] = {
   "  col.xyz = mix(col.xyz,fogcolor.xyz,factor);\n"
   "#endif\n"
   "  col.xyz *= overbright;\n"
-  "  c = col;\n"
+  UNLESS_EMSCRIPTEN("  c = col;\n")
+  IF_EMSCRIPTEN("  gl_FragColor = col;\n")
   "}\n"
 };
 
@@ -461,10 +514,10 @@ static const char watervert[] = { /* use DIFFUSETEX */
   "uniform mat4 MVP;\n"
   "uniform vec2 duv, dxy;\n"
   "uniform float hf, delta;\n"
-  "in vec2 p, t;\n"
-  "in vec4 incol;\n"
-  "out vec2 texcoord;\n"
-  "out vec4 outcol;\n"
+  VS_IN " vec2 p, t;\n"
+  VS_IN " vec4 incol;\n"
+  VS_OUT " vec2 texcoord;\n"
+  VS_OUT " vec4 outcol;\n"
   "float dx(float x) { return x+sin(x*2.0+delta/1000.0)*0.04; }\n"
   "float dy(float x) { return x+sin(x*2.0+delta/900.0+PI/5.0)*0.05; }\n"
   "void main() {\n"
@@ -504,7 +557,9 @@ static void buildshaderattrib(shader &shader)
   if (shader.rules&DIFFUSETEX)
     OGL(BindAttribLocation, shader.program, TEX, "t");
   OGL(BindAttribLocation, shader.program, COL, "incol");
+#if !defined(EMSCRIPTEN)
   OGL(BindFragDataLocation, shader.program, 0, "c");
+#endif /* EMSCRIPTEN */
   OGL(LinkProgram, shader.program);
   OGL(ValidateProgram, shader.program);
   OGL(UseProgram, shader.program);
@@ -614,7 +669,8 @@ void drawelements(int mode, int count, int type, const void *indices) {
   OGL(DrawElements, mode, count, type, indices);
 }
 
-#define GL_PROC(FIELD,NAME,PROTOTYPE) PROTOTYPE FIELD;
+#if !defined (EMSCRIPTEN)
+#define GL_PROC(FIELD,NAME,PROTOTYPE) PROTOTYPE FIELD = NULL;
 #include "GL/ogl100.hxx"
 #include "GL/ogl110.hxx"
 #include "GL/ogl120.hxx"
@@ -623,9 +679,11 @@ void drawelements(int mode, int count, int type, const void *indices) {
 #include "GL/ogl200.hxx"
 #include "GL/ogl300.hxx"
 #undef GL_PROC
+#endif /* EMSCRIPTEN */
 
 void init(int w, int h)
 {
+#if !defined(EMSCRIPTEN)
 // On Windows, we directly load from OpenGL 1.1 functions
 #if defined(__WIN32__)
   #define GL_PROC(FIELD,NAME,PROTOTYPE) FIELD = (PROTOTYPE) NAME;
@@ -655,9 +713,16 @@ void init(int w, int h)
 #include "GL/ogl300.hxx"
 
 #undef GL_PROC
+#endif
 
   OGL(Viewport, 0, 0, w, h);
-  glClearDepth(1.f);
+#if defined (EMSCRIPTEN)
+  for (uint32 i = 0; i < sizeof(generated_ids) / sizeof(generated_ids[0]); ++i)
+    generated_ids[i] = 0;
+  OGL(ClearDepthf,1.f);
+#else
+  OGL(ClearDepth,1.f);
+#endif
   OGL(DepthFunc, GL_LESS);
   OGL(Enable, GL_DEPTH_TEST);
   OGL(CullFace, GL_FRONT);
@@ -698,7 +763,7 @@ static vector<strip> strips;
 
 static void renderstripssky(void)
 {
-  OGL(BindTexture, GL_TEXTURE_2D, skyoglid);
+  ogl::bindtexture(GL_TEXTURE_2D, skyoglid);
   loopv(strips)
     if (strips[i].tex==skyoglid)
       ogl::drawarrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
@@ -709,7 +774,7 @@ static void renderstrips(void)
   int lasttex = -1;
   loopv(strips) if (strips[i].tex!=skyoglid) {
     if (strips[i].tex!=lasttex) {
-      OGL(BindTexture, GL_TEXTURE_2D, strips[i].tex);
+      ogl::bindtexture(GL_TEXTURE_2D, strips[i].tex);
       lasttex = strips[i].tex;
     }
     ogl::drawarrays(GL_TRIANGLE_STRIP, strips[i].start, strips[i].num);
@@ -844,7 +909,7 @@ void drawframe(int w, int h, float curfps)
 
   transplayer();
 
-  OGL(Enable, GL_TEXTURE_2D);
+  UNLESS_EMSCRIPTEN(OGL(Enable, GL_TEXTURE_2D));
 
   int xs, ys;
   skyoglid = lookuptex(DEFAULT_SKY, xs, ys);
@@ -857,6 +922,7 @@ void drawframe(int w, int h, float curfps)
   world::render(player1->o.x, player1->o.y, player1->o.z,
                 (int)player1->yaw, (int)player1->pitch, (float)fov, w, h);
   rdr::finishstrips();
+
   bindworldvbo();
   rdr::uploadworld();
 
@@ -921,7 +987,7 @@ void drawframe(int w, int h, float curfps)
   }
 
   overbright(1.f);
-  OGL(Disable, GL_TEXTURE_2D);
+  UNLESS_EMSCRIPTEN(OGL(Disable, GL_TEXTURE_2D));
   rdr::drawhud(w, h, int(curfps), nquads, rdr::curvert, underwater);
   OGL(Enable, GL_CULL_FACE);
 }

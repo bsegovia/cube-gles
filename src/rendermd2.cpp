@@ -1,6 +1,5 @@
 #include "cube.h"
 #include "ogl.hpp"
-#include <GL/gl.h>
 
 namespace cube {
 namespace rdr {
@@ -244,7 +243,7 @@ void rendermodel(const char *mdl, int frame, int range, int tex,
   delayedload(m);
 
   int xs, ys;
-  OGL(BindTexture, GL_TEXTURE_2D, tex ? ogl::lookuptex(tex, xs, ys) : FIRSTMDL+m->mdlnum);
+  ogl::bindtexture(GL_TEXTURE_2D, tex ? ogl::lookuptex(tex, xs, ys) : FIRSTMDL+m->mdlnum);
 
   const int ix = (int)x;
   const int iy = (int)z;

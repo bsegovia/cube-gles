@@ -2,6 +2,14 @@
 #ifndef __CUBE_TOOLS_HPP__
 #define __CUBE_TOOLS_HPP__
 
+#if defined(EMSCRIPTEN)
+#define IF_EMSCRIPTEN(X) X
+#define UNLESS_EMSCRIPTEN(X)
+#else
+#define IF_EMSCRIPTEN(X)
+#define UNLESS_EMSCRIPTEN(X) X
+#endif /* EMSCRIPTEN */
+
 #ifdef _MSC_VER
 #undef NOINLINE
 #define NOINLINE        __declspec(noinline)
@@ -111,7 +119,6 @@ namespace cube {
 #define _vsnprintf vsnprintf
 #define PATHDIV '/'
 #endif
-
 
   /* easy safe strings */
 #define _MAXDEFSTR 260

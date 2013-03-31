@@ -110,7 +110,7 @@ enet_protocol_remove_sent_reliable_command (ENetPeer * peer, enet_uint32 reliabl
     if (currentCommand == enet_list_end (& peer -> sentReliableCommands))
       return ENET_PROTOCOL_COMMAND_NONE;
 
-    commandNumber = outgoingCommand -> command.header.command;
+    commandNumber = (ENetProtocolCommand) outgoingCommand -> command.header.command;
 
     enet_list_remove (& outgoingCommand -> outgoingCommandList);
 

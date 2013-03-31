@@ -1,6 +1,5 @@
 #include "cube.h"
 #include "ogl.hpp"
-#include <GL/gl.h>
 
 namespace cube {
 
@@ -69,7 +68,7 @@ void dot(int x, int y, float z)
 void blendbox(int x1, int y1, int x2, int y2, bool border)
 {
   OGL(DepthMask, GL_FALSE);
-  OGL(Disable, GL_TEXTURE_2D);
+  UNLESS_EMSCRIPTEN(OGL(Disable, GL_TEXTURE_2D));
   OGL(BlendFunc, GL_ZERO, GL_ONE_MINUS_SRC_COLOR);
   ogl::bindshader(ogl::COLOR_ONLY);
   if (border)
@@ -99,7 +98,7 @@ void blendbox(int x1, int y1, int x2, int y2, bool border)
 
   ogl::xtraverts += 8;
   OGL(Enable, GL_BLEND);
-  OGL(Enable, GL_TEXTURE_2D);
+  UNLESS_EMSCRIPTEN(OGL(Enable, GL_TEXTURE_2D));
   OGL(DepthMask, GL_TRUE);
 }
 
@@ -134,7 +133,7 @@ void renderspheres(int time)
   OGL(DepthMask, GL_FALSE);
   OGL(Enable, GL_BLEND);
   OGL(BlendFunc, GL_SRC_ALPHA, GL_ONE);
-  OGL(BindTexture, GL_TEXTURE_2D, 4);
+  ogl::bindtexture(GL_TEXTURE_2D, 4);
 
   for (sphere *p, **pp = &slist; (p = *pp);) {
     const float size = p->size/p->max;
@@ -215,7 +214,11 @@ static float depthcorrect(float d) { return (d<=1/256.0f) ? d*256 : d; }
 
 void readdepth(int w, int h)
 {
-  glReadPixels(w/2, h/2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &cursordepth);
+#if !defined(EMSCRIPTEN)
+  OGL (ReadPixels, w/2, h/2, 1, 1, GL_DEPTH_COMPONENT, GL_FLOAT, &cursordepth);
+#else
+  cursordepth = 1.f;
+#endif
   const vec3f screenp(float(w)/2.f,float(h)/2.f,depthcorrect(cursordepth));
   const vec3f v = unproject(screenp, readmm, readpm, viewport);
   worldpos = vec(v.x,v.z,v.y);
@@ -230,7 +233,7 @@ void drawicon(float tx, float ty, int x, int y)
   const int s = 120;
   tx /= 192;
   ty /= 192;
-  OGL(BindTexture, GL_TEXTURE_2D, 5);
+  ogl::bindtexture(GL_TEXTURE_2D, 5);
   const vvec<4> verts[] = {
     vvec<4>(tx,   ty,   x,   y),
     vvec<4>(tx+o, ty,   x+s, y),
@@ -294,7 +297,7 @@ void drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
     dblend -= curtime/3;
     if (dblend<0) dblend = 0;
   }
-  OGL(Enable, GL_TEXTURE_2D);
+  UNLESS_EMSCRIPTEN(OGL(Enable, GL_TEXTURE_2D));
 
   const char *command = console::getcurcommand();
   const char *player = weapon::playerincrosshair();
@@ -308,7 +311,7 @@ void drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
   game::renderscores();
   if (!menu::render()) {
     OGL(BlendFunc, GL_SRC_ALPHA, GL_SRC_ALPHA);
-    OGL(BindTexture, GL_TEXTURE_2D, 1);
+    ogl::bindtexture(GL_TEXTURE_2D, 1);
     OGL(VertexAttrib3f,ogl::COL,1.f,1.f,1.f);
     if (crosshairfx) {
       if (player1->gunwait)
@@ -368,7 +371,7 @@ void drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
 
   OGL(DepthMask, GL_TRUE);
   OGL(Disable, GL_BLEND);
-  OGL(Disable, GL_TEXTURE_2D);
+  UNLESS_EMSCRIPTEN(OGL(Disable, GL_TEXTURE_2D));
   OGL(Enable, GL_DEPTH_TEST);
 }
 

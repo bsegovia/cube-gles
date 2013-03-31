@@ -1,6 +1,5 @@
 #include "cube.h"
 #include "ogl.hpp"
-#include <GL/gl.h>
 
 namespace cube {
 namespace rdr {
@@ -27,7 +26,7 @@ void reallocv(void)
   verts = (vertex *)realloc(verts, (curmaxverts *= 2)*sizeof(vertex));
   curmaxverts -= 10;
   if (!verts) fatal("no vertex memory!");
-  setarraypointers();
+  // setarraypointers();
 }
 
 /* generating the actual vertices is done dynamically every frame and sits at
@@ -273,7 +272,7 @@ int renderwater(float hf, uint udxy, uint uduv)
   OGL(DepthMask, GL_FALSE);
   OGL(Enable, GL_BLEND);
   OGL(BlendFunc, GL_ONE, GL_SRC_COLOR);
-  OGL(BindTexture, GL_TEXTURE_2D, ogl::lookuptex(DEFAULT_LIQUID, sx, sy));
+  ogl::bindtexture(GL_TEXTURE_2D, ogl::lookuptex(DEFAULT_LIQUID, sx, sy));
 
   wx1 &= ~(watersubdiv-1);
   wy1 &= ~(watersubdiv-1);

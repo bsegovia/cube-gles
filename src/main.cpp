@@ -1,7 +1,6 @@
 #include "cube.h"
 #include "ogl.hpp"
 #include "math.hpp"
-#include <GL/gl.h>
 #include <SDL/SDL.h>
 #include <enet/enet.h>
 #include <time.h>
@@ -36,9 +35,9 @@ void quit() // normal exit
 
 void fatal(const char *s, const char *o)    // failure exit
 {
-  assert(0);
   sprintf_sd(msg)("%s%s (%s)\n", s, o, SDL_GetError());
   cleanup(msg);
+  assert(0);
 }
 
 void *alloc(int s) // for some big chunks... most other allocs use the memory pool
@@ -48,17 +47,18 @@ void *alloc(int s) // for some big chunks... most other allocs use the memory po
   return b;
 }
 
-int scr_w = 1920;
-int scr_h = 1080;
+int scr_w = 1024;
+int scr_h = 768;
 
 void screenshot()
 {
+#if !defined(EMSCRIPTEN)
   SDL_Surface *image;
   SDL_Surface *temp;
   int idx;
   if ((image = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)) != NULL) {
     if ((temp = SDL_CreateRGBSurface(SDL_SWSURFACE, scr_w, scr_h, 24, 0x0000FF, 0x00FF00, 0xFF0000, 0)) != NULL) {
-      glReadPixels(0, 0, scr_w, scr_h, GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
+      OGL (ReadPixels, 0, 0, scr_w, scr_h, GL_RGB, GL_UNSIGNED_BYTE, image->pixels);
       for (idx = 0; idx<scr_h; idx++) {
         char *dest = (char *)temp->pixels+3*scr_w*idx;
         memcpy(dest, (char *)image->pixels+3*scr_w*(scr_h-1-idx), 3*scr_w);
@@ -70,6 +70,7 @@ void screenshot()
     }
     SDL_FreeSurface(image);
   }
+#endif /* EMSCRIPTEN */
 }
 
 COMMAND(screenshot, ARG_NONE);
@@ -86,9 +87,63 @@ VARF(grabmouse, 0, 0, 1, {SDL_WM_GrabInput(grabmouse ? SDL_GRAB_ON : SDL_GRAB_OF
 
 int islittleendian = 1;
 int framesinmap = 0;
+int ignore = 5;
+
+static void main_loop(void)
+{
+  int millis = SDL_GetTicks()*gamespeed/100;
+  if (millis-lastmillis>200) lastmillis = millis-200;
+  else if (millis-lastmillis<1) lastmillis = millis-1;
+#if !defined(EMSCRIPTEN)
+  if (millis-lastmillis<minmillis)
+    SDL_Delay(minmillis-(millis-lastmillis));
+#endif
+  world::cleardlights();
+  game::updateworld(millis);
+  if (!demoplayback)
+    server::slice((int)time(NULL), 0);
+  static float fps = 30.0f;
+  fps = (1000.0f/curtime+fps*50)/51;
+  world::computeraytable(player1->o.x, player1->o.y);
+  rdr::readdepth(scr_w, scr_h);
+  SDL_GL_SwapBuffers();
+  sound::updatevol();
+  /* cheap hack to get rid of initial sparklies when triple buffering */
+  if (framesinmap++<5) {
+    player1->yaw += 5;
+    ogl::drawframe(scr_w, scr_h, fps);
+    player1->yaw -= 5;
+  }
+  ogl::drawframe(scr_w, scr_h, fps);
+  SDL_Event event;
+  int lasttype = 0, lastbut = 0;
+  while (SDL_PollEvent(&event)) {
+    switch (event.type) {
+      case SDL_QUIT:
+        quit();
+      break;
+      case SDL_KEYDOWN: 
+      case SDL_KEYUP: 
+        console::keypress(event.key.keysym.sym, event.key.state==SDL_PRESSED, event.key.keysym.unicode);
+      break;
+      case SDL_MOUSEMOTION:
+        if (ignore) { ignore--; break; };
+        game::mousemove(event.motion.xrel, event.motion.yrel);
+      break;
+      case SDL_MOUSEBUTTONDOWN:
+      case SDL_MOUSEBUTTONUP:
+        if (lasttype==event.type && lastbut==event.button.button) break; // why?? get event twice without it
+        console::keypress(-event.button.button, event.button.state!=0, 0);
+        lasttype = event.type;
+        lastbut = event.button.button;
+      break;
+    }
+  }
+}
 
 static int main(int argc, char **argv)
 {
+  IF_EMSCRIPTEN(emscripten_hide_mouse());
   bool dedicated = false;
   int fs = SDL_FULLSCREEN, par = 0, uprate = 0, maxcl = 4;
   const char *sdesc = "", *ip = "", *passwd = "";
@@ -172,7 +227,10 @@ static int main(int argc, char **argv)
   cmd::exec("data/prefabs.cfg");
   cmd::exec("data/sounds.cfg");
   cmd::exec("servers.cfg");
-  if (!cmd::execfile("config.cfg")) cmd::execfile("data/defaults.cfg");
+  if (!cmd::execfile("config.cfg")) {
+    console::out("config.cfg not found. executing defaults.cfg");
+    cmd::execfile("data/defaults.cfg");
+  }
   cmd::exec("autoexec.cfg");
 
   log("localconnect");
@@ -180,55 +238,12 @@ static int main(int argc, char **argv)
   client::changemap("metl3");        // if this map is changed, also change depthcorrect()
 
   log("mainloop");
-  int ignore = 5;
-  for (;;) {
-    int millis = SDL_GetTicks()*gamespeed/100;
-    if (millis-lastmillis>200) lastmillis = millis-200;
-    else if (millis-lastmillis<1) lastmillis = millis-1;
-    if (millis-lastmillis<minmillis)
-      SDL_Delay(minmillis-(millis-lastmillis));
-    world::cleardlights();
-    game::updateworld(millis);
-    if (!demoplayback)
-      server::slice((int)time(NULL), 0);
-    static float fps = 30.0f;
-    fps = (1000.0f/curtime+fps*50)/51;
-    world::computeraytable(player1->o.x, player1->o.y);
-    rdr::readdepth(scr_w, scr_h);
-    SDL_GL_SwapBuffers();
-    sound::updatevol();
-    /* cheap hack to get rid of initial sparklies when triple buffering */
-    if (framesinmap++<5) {
-      player1->yaw += 5;
-      ogl::drawframe(scr_w, scr_h, fps);
-      player1->yaw -= 5;
-    }
-    ogl::drawframe(scr_w, scr_h, fps);
-    SDL_Event event;
-    int lasttype = 0, lastbut = 0;
-    while (SDL_PollEvent(&event)) {
-      switch (event.type) {
-        case SDL_QUIT:
-          quit();
-        break;
-        case SDL_KEYDOWN: 
-        case SDL_KEYUP: 
-          console::keypress(event.key.keysym.sym, event.key.state==SDL_PRESSED, event.key.keysym.unicode);
-        break;
-        case SDL_MOUSEMOTION:
-          if (ignore) { ignore--; break; };
-          game::mousemove(event.motion.xrel, event.motion.yrel);
-        break;
-        case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP:
-          if (lasttype==event.type && lastbut==event.button.button) break; // why?? get event twice without it
-          console::keypress(-event.button.button, event.button.state!=0, 0);
-          lasttype = event.type;
-          lastbut = event.button.button;
-        break;
-      }
-    }
-  }
+#if defined(EMSCRIPTEN)
+  emscripten_set_main_loop(main_loop, 0, 1);
+#else
+  for(;;) main_loop();
+#endif
+
   quit();
 #undef log
   return 1;

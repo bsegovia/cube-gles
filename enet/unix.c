@@ -8,6 +8,7 @@
 #include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <sys/time.h>
+#include <arpa/inet.h>
 #include <netdb.h>
 #include <unistd.h>
 #include <string.h>
@@ -222,6 +223,9 @@ enet_socket_send (ENetSocket socket,
                   const ENetBuffer * buffers,
                   size_t bufferCount)
 {
+#if defined(EMSCRIPTEN)
+    return 0;
+#else
     struct msghdr msgHdr;
     struct sockaddr_in sin;
     int sentLength;
@@ -252,6 +256,7 @@ enet_socket_send (ENetSocket socket,
     }
 
     return sentLength;
+#endif
 }
 
 int
@@ -260,6 +265,9 @@ enet_socket_receive (ENetSocket socket,
                      ENetBuffer * buffers,
                      size_t bufferCount)
 {
+#if defined(EMSCRIPTEN)
+    return 0;
+#else
     struct msghdr msgHdr;
     struct sockaddr_in sin;
     int recvLength;
@@ -297,6 +305,7 @@ enet_socket_receive (ENetSocket socket,
     }
 
     return recvLength;
+#endif
 }
 
 int

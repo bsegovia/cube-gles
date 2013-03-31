@@ -1,6 +1,5 @@
 #include "cube.h"
 #include "ogl.hpp"
-#include <GL/gl.h>
 
 namespace cube {
 namespace rdr {
@@ -142,7 +141,7 @@ void render_particles(int time)
     if (partbucketsize[i] == 0) continue;
     const parttype *pt = &parttypes[i];
     const int n = partbucketsize[i]*6;
-    OGL(BindTexture, GL_TEXTURE_2D, pt->tex);
+    ogl::bindtexture(GL_TEXTURE_2D, pt->tex);
     const void *offset = (const void *) (partbucket[i] * sizeof(uint16[6]));
     ogl::drawelements(GL_TRIANGLES, n, GL_UNSIGNED_SHORT, offset);
   }

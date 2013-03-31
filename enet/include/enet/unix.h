@@ -9,6 +9,10 @@
 #include <sys/types.h>
 #include <netinet/in.h>
 
+#ifdef EMSCRIPTEN
+#include <net/arpa/inet.h>
+#endif
+
 typedef int ENetSocket;
 
 enum

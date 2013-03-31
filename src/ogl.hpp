@@ -1,12 +1,17 @@
 #ifndef __CUBE_OGL_HPP__
 #define __CUBE_OGL_HPP__
 
+#if defined(EMSCRIPTEN)
+#include "GLES2/gl2.h"
+#else
 #include "GL/gl3.h"
+#endif
 
 namespace cube {
 namespace ogl {
 
 /* We instantiate all GL functions here */
+#if !defined(EMSCRIPTEN)
 #define GL_PROC(FIELD,NAME,PROTOTYPE) extern PROTOTYPE FIELD;
 #include "GL/ogl100.hxx"
 #include "GL/ogl110.hxx"
@@ -16,6 +21,7 @@ namespace ogl {
 #include "GL/ogl200.hxx"
 #include "GL/ogl300.hxx"
 #undef GL_PROC
+#endif /* EMSCRIPTEN */
 
 enum {POS0=0, POS1=1, TEX=2, NOR=3, COL=4}; /* vertex attributes */
 
@@ -46,6 +52,7 @@ void drawsphere(void);
 /* just to ensure state tracking */
 enum {ARRAY_BUFFER=0,ELEMENT_ARRAY_BUFFER,BUFFER_NUM};
 void bindbuffer(int target, uint buffer);
+void bindtexture(int target, uint tex);
 
 /* immediate mode rendering */
 void immvertices(int sz, const void *data);
@@ -73,7 +80,8 @@ const mat4x4f &matrix(int mode);
 extern int xtraverts;
 
 /* OGL debug macros */
-#ifndef NDEBUG
+#if !defined(EMSCRIPTEN)
+#if !defined(NDEBUG)
 #define OGL(NAME, ...) \
   do { \
     cube::ogl::NAME(__VA_ARGS__); \
@@ -88,6 +96,27 @@ extern int xtraverts;
   #define OGL(NAME, ...) do {cube::ogl::NAME(__VA_ARGS__);} while(0)
   #define OGLR(RET, NAME, ...) do {RET=cube::ogl::NAME(__VA_ARGS__);} while(0)
 #endif /* NDEBUG */
+#else /* EMSCRIPTEN */
+#if !defined(NDEBUG)
+#define OGL(NAME, ...) \
+  do { \
+    gl##NAME(__VA_ARGS__); \
+    if (gl##GetError()) { \
+      char error[2048]; \
+      snprintf(error, sizeof(error), "gl" #NAME " failed at line %i and file %s",__LINE__, __FILE__);\
+      fatal(error); \
+    } \
+  } while (0)
+#define OGLR(RET, NAME, ...) \
+  do { \
+    RET = gl##NAME(__VA_ARGS__); \
+    if (gl##GetError()) fatal("gl" #NAME " failed"); \
+  } while (0)
+#else
+  #define OGL(NAME, ...) do {gl##NAME(__VA_ARGS__);} while(0)
+  #define OGLR(RET, NAME, ...) do {RET=gl##NAME(__VA_ARGS__);} while(0)
+#endif /* NDEBUG */
+#endif /* EMSCRIPTEN */
 
 } /* namespace ogl */
 } /* namespace cube */

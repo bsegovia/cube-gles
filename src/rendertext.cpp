@@ -101,7 +101,10 @@ static const short char_coords[96][4] =
   {270,448,310,512},  //}
   {310,448,363,512}   //~
 };
-static const int twotriangles[] = {0,1,2,0,2,3};
+
+IF_EMSCRIPTEN(typedef ushort index_type);
+UNLESS_EMSCRIPTEN(typedef uint index_type);
+static const index_type twotriangles[] = {0,1,2,0,2,3};
 
 int text_width(const char *str)
 {
@@ -129,7 +132,7 @@ void draw_textf(const char *fstr, int left, int top, int gl_num, ...)
 void draw_text(const char *str, int left, int top, int gl_num)
 {
   OGL(BlendFunc, GL_ONE, GL_ONE);
-  OGL(BindTexture, GL_TEXTURE_2D, gl_num);
+  ogl::bindtexture(GL_TEXTURE_2D, gl_num);
   OGL(VertexAttrib3f,ogl::COL,1.f,1.f,1.f);
 
   int x = left;
@@ -140,7 +143,7 @@ void draw_text(const char *str, int left, int top, int gl_num)
 
   /* use a triangle mesh to display the text */
   const size_t len = strlen(str);
-  int *indices = (int*) alloca(6*len*sizeof(int));
+  index_type *indices = (index_type*) alloca(6*len*sizeof(int));
   vvec<4> *verts = (vvec<4>*) alloca(4*len*sizeof(vvec<4>));
 
   /* traverse the string and build the mesh */
@@ -177,7 +180,8 @@ void draw_text(const char *str, int left, int top, int gl_num)
   ogl::immattrib(ogl::POS0, 2, GL_FLOAT, sizeof(float[4]), sizeof(float[2]));
   ogl::immattrib(ogl::TEX, 2, GL_FLOAT, sizeof(float[4]), 0);
   ogl::bindshader(ogl::DIFFUSETEX);
-  ogl::immdrawelements(GL_TRIANGLES, index, GL_UNSIGNED_INT, indices);
+  UNLESS_EMSCRIPTEN(ogl::immdrawelements(GL_TRIANGLES, index, GL_UNSIGNED_INT, indices));
+  IF_EMSCRIPTEN(ogl::immdrawelements(GL_TRIANGLES, index, GL_UNSIGNED_SHORT, indices));
   OGL(DisableVertexAttribArray, ogl::POS0);/* XXX */
   OGL(DisableVertexAttribArray, ogl::TEX);
 }
@@ -194,12 +198,13 @@ static void draw_envbox_aux(float s0, float t0, int x0, int y0, int z0,
   verts[2] = vvec<5>(s1, t1, float(x1), float(y1), float(z1));
   verts[3] = vvec<5>(s0, t0, float(x0), float(y0), float(z0));
 
-  OGL(BindTexture, GL_TEXTURE_2D, texture);
+  ogl::bindtexture(GL_TEXTURE_2D, texture);
   /* XXX bind shader here !!! */
   ogl::immvertices(4*sizeof(vvec<5>), &verts[0][0]);
   ogl::immattrib(ogl::POS0, 3, GL_FLOAT, sizeof(vvec<5>), sizeof(float[2]));
   ogl::immattrib(ogl::TEX, 2, GL_FLOAT, sizeof(vvec<5>), 0);
-  ogl::immdrawelements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, twotriangles);
+  UNLESS_EMSCRIPTEN(ogl::immdrawelements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, twotriangles));
+  IF_EMSCRIPTEN(ogl::immdrawelements(GL_TRIANGLES, 6, GL_UNSIGNED_SHORT, twotriangles));
   ogl::xtraverts += 4;
 }
 

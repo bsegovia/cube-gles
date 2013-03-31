@@ -87,8 +87,12 @@ static void updatechanvol(int chan, const vec *loc)
     }
   }
   vol = (vol*MAXVOL)/255;
+#if !defined(EMSCRIPTEN)
+  // crashed (out of bound access) happens here.
+  // I do not know why unfortunately
   Mix_Volume(chan, vol);
   Mix_SetPanning(chan, 255-pan, pan);
+#endif /* EMSCRIPTEN */
 }
 
 static void newsoundloc(int chan, const vec *loc)

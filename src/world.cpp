@@ -648,7 +648,7 @@ void calclightsource(persistent_entity &l)
     lightray((float)ex, sy2, l);
   }
 
-  rndtime();
+  // rndtime();
 }
 
 /* median filter smooths out random noise in light and makes more mipable */
