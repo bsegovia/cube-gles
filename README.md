@@ -28,7 +28,7 @@ game. This is required to enable synchronous load of assets.
 
 Just type:
 
-`> ./emscripten cube`
+`> ./emscripten.sh cube`
 
 This will produce two files: `cube.html` that basically contains the code and
 the html glue and `cube.data` which contains the prepackaged data.
