@@ -213,8 +213,8 @@ static GLuint generated_ids[ID_NUM];
 
 void bindtexture(int target, uint id)
 {
-  if (bindedtexture == id)
-    return;
+  if (bindedtexture == id) return;
+  bindedtexture = id;
 #if defined(EMSCRIPTEN)
   if (id >= ID_NUM) fatal("out of bound texture ID");
   OGL(BindTexture, target, generated_ids[id]);
@@ -238,11 +238,11 @@ bool installtex(int tnum, const char *texname, int &xs, int &ys, bool clamp)
     return false;
   }
 #else
-  if (tnum >= ID_NUM) fatal("out of bound texture ID");
-  if (generated_ids[tnum] == 0)
+  if (tnum >= int(ID_NUM)) fatal("out of bound texture ID");
+  if (generated_ids[tnum] == 0u)
     OGL(GenTextures, 1, generated_ids + tnum);
 #endif /* EMSCRIPTEN */
-
+  bindedtexture = 0;
   console::out("loading %s (%ix%i)", texname, s->w, s->h);
   ogl::bindtexture(GL_TEXTURE_2D, tnum);
   OGL(PixelStorei, GL_UNPACK_ALIGNMENT, 1);
