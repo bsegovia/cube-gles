@@ -1,6 +1,6 @@
 #!/bin/bash
 EMSCRIPTEN=~/src/emscripten/
-$EMSCRIPTEN/em++ --minify 1 -O2 \
+$EMSCRIPTEN/em++ -DNDEBUG --minify 1 -O2 \
   -s DEAD_FUNCTIONS="['_gethostbyaddr','_SDL_SemPost','_SDL_SemTryWait','_SDL_SemWait','_SDL_CreateSemaphore']" \
   -s ASM_JS=1 \
   -s TOTAL_MEMORY=67108864 \

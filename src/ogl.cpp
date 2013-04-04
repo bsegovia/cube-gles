@@ -21,6 +21,9 @@ union {
   } flags;
   uint any;
 } dirty;
+static GLuint bindedvbo[BUFFER_NUM] = {0,0};
+static GLuint bindedtexture = 0;
+static struct shader *bindedshader = NULL;
 
 /*--------------------------------------------------------------------------
  - immediate mode and buffer support
@@ -29,7 +32,6 @@ static const uint glbufferbinding[BUFFER_NUM] = {
   GL_ARRAY_BUFFER,
   GL_ELEMENT_ARRAY_BUFFER
 };
-static GLuint bindedvbo[BUFFER_NUM] = {0,0};
 void bindbuffer(int target, uint buffer)
 {
   if (bindedvbo[target] != buffer) {
@@ -211,6 +213,8 @@ static GLuint generated_ids[ID_NUM];
 
 void bindtexture(int target, uint id)
 {
+  if (bindedtexture == id)
+    return;
 #if defined(EMSCRIPTEN)
   if (id >= ID_NUM) fatal("out of bound texture ID");
   OGL(BindTexture, target, generated_ids[id]);
@@ -532,7 +536,6 @@ static struct watershader : shader {
   GLuint uduv, udxy, uhf;
 } watershader;
 
-static shader *bindedshader = NULL;
 static vec4f fogcolor;
 static vec2f fogstartend;
 
