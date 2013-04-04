@@ -355,7 +355,7 @@ void selfdamage(int damage, int actor, dynent *act)
 {
   if (player1->state!=CS_ALIVE || editmode || intermission)
     return;
-  rdr::damageblend(damage);
+  rr::damageblend(damage);
   demo::blend(damage);
   // let armour absorb when possible
   int ad = damage*(player1->armourtype+1)*20/100;
@@ -507,7 +507,7 @@ void renderclient(dynent *d, bool team, const char *mdlname, bool hellpig, float
     scale *= 32;
     mz -= 1.9f;
   }
-  rdr::rendermodel(mdlname, frame[n], range[n], 0, 1.5f, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, 0, basetime);
+  rr::rendermodel(mdlname, frame[n], range[n], 0, 1.5f, d->o.x, mz, d->o.y, d->yaw+90, d->pitch/2, team, scale, speed, 0, basetime);
 }
 
 void renderclients(void)

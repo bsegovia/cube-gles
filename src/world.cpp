@@ -96,7 +96,7 @@ void remip(block &b, int level)
       uchar nums[MAXTYPE];
       loopi(MAXTYPE) nums[i] = 0;
       loopj(4) nums[o[j]->type]++;
-      // cube contains both solid and space, treated specially in the rdr
+      // cube contains both solid and space, treated specially in the rr
       r->type = SEMISOLID;
       loopk(MAXTYPE) if (nums[k]==4) r->type = k;
       if (!SOLID(r)) {
@@ -759,7 +759,7 @@ void render_wall(sqr *o, sqr *s, int x1, int y1, int x2, int y2, int mip, sqr *d
     float f1 = s->ceil;
     float f2 = s->ceil;
     if (s->type==CHF) { f1 += d1->vdelta/4.0f; f2 += d2->vdelta/4.0f; };
-    rdr::render_square(o->wtex, c1, c2, f1, f2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
+    rr::render_square(o->wtex, c1, c2, f1, f2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
     return;
  }
  {
@@ -776,7 +776,7 @@ void render_wall(sqr *o, sqr *s, int x1, int y1, int x2, int y2, int mip, sqr *d
      f2 -= d2->vdelta/4.0f;
    }
    if (f1>=c1 && f2>=c2) goto skip;
-   rdr::render_square(o->wtex, f1, f2, c1, c2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
+   rr::render_square(o->wtex, f1, f2, c1, c2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
  }
  skip:
  {
@@ -793,7 +793,7 @@ void render_wall(sqr *o, sqr *s, int x1, int y1, int x2, int y2, int mip, sqr *d
      c2 += d2->vdelta/4.0f;
    }
    if (c1<=f1 && c2<=f2) return;
-   rdr::render_square(o->utex, f1, f2, c1, c2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
+   rr::render_square(o->utex, f1, f2, c1, c2, x1<<mip, y1<<mip, x2<<mip, y2<<mip, 1<<mip, d1, d2, topleft);
  }
 }
 
@@ -888,20 +888,20 @@ sqr *v = SWS(s,0,1,sz);
       stats[mip]++;
       LOOPD
         if ((s->type==SPACE || s->type==FHF) && s->ceil>=vh && render_ceil)
-            rdr::render_flat(s->ctex, xx<<mip, yy<<mip, 1<<mip, s->ceil, s, t, u, v, true);
+            rr::render_flat(s->ctex, xx<<mip, yy<<mip, 1<<mip, s->ceil, s, t, u, v, true);
         if (s->type==CHF)
-            rdr::render_flatdelta(s->ctex, xx<<mip, yy<<mip, 1<<mip, dc(s), dc(t), dc(u), dc(v), s, t, u, v, true);
+            rr::render_flatdelta(s->ctex, xx<<mip, yy<<mip, 1<<mip, dc(s), dc(t), dc(u), dc(v), s, t, u, v, true);
     }}
 
     LOOPH continue;     // floors
       LOOPD
       if ((s->type==SPACE || s->type==CHF) && s->floor<=vh && render_floor) {
-        rdr::render_flat(s->ftex, xx<<mip, yy<<mip, 1<<mip, s->floor, s, t, u, v, false);
-        if (s->floor<hdr.waterlevel && !SOLID(s)) rdr::addwaterquad(xx<<mip, yy<<mip, 1<<mip);
+        rr::render_flat(s->ftex, xx<<mip, yy<<mip, 1<<mip, s->floor, s, t, u, v, false);
+        if (s->floor<hdr.waterlevel && !SOLID(s)) rr::addwaterquad(xx<<mip, yy<<mip, 1<<mip);
       }
       if (s->type==FHF) {
-        rdr::render_flatdelta(s->ftex, xx<<mip, yy<<mip, 1<<mip, df(s), df(t), df(u), df(v), s, t, u, v, false);
-        if (s->floor-s->vdelta/4.0f<hdr.waterlevel && !SOLID(s)) rdr::addwaterquad(xx<<mip, yy<<mip, 1<<mip);
+        rr::render_flatdelta(s->ftex, xx<<mip, yy<<mip, 1<<mip, df(s), df(t), df(u), df(v), s, t, u, v, false);
+        if (s->floor-s->vdelta/4.0f<hdr.waterlevel && !SOLID(s)) rr::addwaterquad(xx<<mip, yy<<mip, 1<<mip);
       }
     }}
 
@@ -946,7 +946,7 @@ sqr *v = SWS(s,0,1,sz);
                     else   { render_wall(h2 = s, h1 = w, xx, yy+1, xx+1, yy, mip, v, t, false); topleft = false; };
                 };
             };
-            rdr::render_tris(xx<<mip, yy<<mip, 1<<mip, topleft, h1, h2, s, t, u, v);
+            rr::render_tris(xx<<mip, yy<<mip, 1<<mip, topleft, h1, h2, s, t, u, v);
         }
 
         if (normalwall)
@@ -1011,7 +1011,7 @@ void render(float vx, float vy, float vh, int yaw, int pitch, float fov, int w, 
   render_floor = pitch<hyfov;
   render_ceil  = -pitch<hyfov;
   render_seg_new(vx, vy, vh, MAX_MIP, 0, 0, ssize>>MAX_MIP, ssize>>MAX_MIP);
-  rdr::mipstats(stats[0], stats[1], stats[2]);
+  rr::mipstats(stats[0], stats[1], stats[2]);
 }
 
 /*-------------------------------------------------------------------------

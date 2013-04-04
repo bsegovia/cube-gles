@@ -14,7 +14,7 @@ const char *entnames[] =
 "?", "?", "?", "?", "?"
 };
 
-namespace rdr {
+namespace rr {
 
 void line(int x1, int y1, float z1, int x2, int y2, float z2)
 {
@@ -375,6 +375,6 @@ void drawhud(int w, int h, int curfps, int nquads, int curvert, bool underwater)
   OGL(Enable, GL_DEPTH_TEST);
 }
 
-} /* namespace rdr */
+} /* namespace rr */
 } /* namespace cube */
 

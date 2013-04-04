@@ -105,7 +105,7 @@ static void main_loop(void)
   static float fps = 30.0f;
   fps = (1000.0f/curtime+fps*50)/51;
   world::computeraytable(player1->o.x, player1->o.y);
-  rdr::readdepth(scr_w, scr_h);
+  rr::readdepth(scr_w, scr_h);
   SDL_GL_SwapBuffers();
   sound::updatevol();
   /* cheap hack to get rid of initial sparklies when triple buffering */

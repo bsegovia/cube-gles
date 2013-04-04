@@ -2,7 +2,7 @@
 #include "ogl.hpp"
 
 namespace cube {
-namespace rdr {
+namespace rr {
 
 static const int MAXPARTICLES = 10500;
 static const int NUMPARTCUTOFF = 20;
@@ -188,6 +188,6 @@ void particle_trail(int type, int fade, vec &s, vec &e)
   }
 }
 
-} /* namespace rdr */
+} /* namespace rr */
 } /* namespace cube */
 

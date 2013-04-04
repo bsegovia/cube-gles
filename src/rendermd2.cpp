@@ -2,7 +2,7 @@
 #include "ogl.hpp"
 
 namespace cube {
-namespace rdr {
+namespace rr {
 
 struct md2_header
 {
@@ -267,6 +267,6 @@ void rendermodel(const char *mdl, int frame, int range, int tex,
   m->render(light, frame, range, x, y, z, yaw, pitch, scale, speed, snap, basetime);
 }
 
-} /* namespace rdr */
+} /* namespace rr */
 } /* namespace cube */
 

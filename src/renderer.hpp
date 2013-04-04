@@ -4,7 +4,7 @@
 #include "math.hpp"
 
 namespace cube {
-namespace rdr {
+namespace rr {
 
 static const int VIRTW = 2400; /* screen width for text & HUD */
 static const int VIRTH = 1800; /* screen height for text & HUD */
@@ -54,7 +54,7 @@ void render_particles(int time);
 void rendermodel(const char *mdl, int frame, int range, int tex, float rad, float x, float y, float z, float yaw, float pitch, bool teammate, float scale, float speed, int snap = 0, int basetime = 0);
 mapmodelinfo &getmminfo(int i);
 
-} /* namespace rdr */
+} /* namespace rr */
 } /* namespace cube */
 
 #endif /* __CUBE_RENDERER_HPP__ */

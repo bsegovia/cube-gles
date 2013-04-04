@@ -19,7 +19,7 @@ static int triggertime = 0;
 
 void renderent(entity &e, const char *mdlname, float z, float yaw, int frame = 0, int numf = 1, int basetime = 0, float speed = 10.0f)
 {
-  rdr::rendermodel(mdlname, frame, numf, 0, 1.1f, e.x, z+S(e.x, e.y)->floor, e.y, yaw, 0, false, 1.0f, speed, 0, basetime);
+  rr::rendermodel(mdlname, frame, numf, 0, 1.1f, e.x, z+S(e.x, e.y)->floor, e.y, yaw, 0, false, 1.0f, speed, 0, basetime);
 }
 
 void renderentities()
@@ -28,9 +28,9 @@ void renderentities()
   loopv(ents) {
     entity &e = ents[i];
     if (e.type==MAPMODEL) {
-      mapmodelinfo &mmi = rdr::getmminfo(e.attr2);
+      mapmodelinfo &mmi = rr::getmminfo(e.attr2);
       if (!&mmi) continue;
-      rdr::rendermodel(mmi.name, 0, 1, e.attr4, (float)mmi.rad, e.x, (float)S(e.x, e.y)->floor+mmi.zoff+e.attr3, e.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f, mmi.snap);
+      rr::rendermodel(mmi.name, 0, 1, e.attr4, (float)mmi.rad, e.x, (float)S(e.x, e.y)->floor+mmi.zoff+e.attr3, e.y, (float)((e.attr1+7)-(e.attr1+7)%15), 0, false, 1.0f, 10.0f, mmi.snap);
     } else {
       if (OUTBORD(e.x, e.y)) continue;
       if (e.type!=CARROT) {

@@ -155,38 +155,38 @@ void cursorupdate(void) // called every frame from hud
     float h3 = sheight(s, SWS(s,1,1,ssize), z)+dh;
     float h4 = sheight(s, SWS(s,0,1,ssize), z)+dh;
     if (s->tag)
-      rdr::linestyle(GRIDW, 0xFF, 0x40, 0x40);
+      rr::linestyle(GRIDW, 0xFF, 0x40, 0x40);
     else if (s->type==FHF || s->type==CHF)
-      rdr::linestyle(GRIDW, 0x80, 0xFF, 0x80);
+      rr::linestyle(GRIDW, 0x80, 0xFF, 0x80);
     else
-      rdr::linestyle(GRIDW, 0x80, 0x80, 0x80);
+      rr::linestyle(GRIDW, 0x80, 0x80, 0x80);
     block b = {ix, iy, 1, 1};
-    rdr::box(b, h1, h2, h3, h4);
-    rdr::linestyle(GRID8, 0x40, 0x40, 0xFF);
-    if (!(ix&GRIDM)) rdr::line(ix,iy,h1,ix,  iy+1,h4);
-    if (!(iy&GRIDM)) rdr::line(ix,iy,h1,ix+1,iy,  h2);
-    if (!((ix+1)&GRIDM)) rdr::line(ix+1,iy,  h2,ix+1,iy+1,h3);
-    if (!((iy+1)&GRIDM)) rdr::line(ix,  iy+1,h4,ix+1,iy+1,h3);
+    rr::box(b, h1, h2, h3, h4);
+    rr::linestyle(GRID8, 0x40, 0x40, 0xFF);
+    if (!(ix&GRIDM)) rr::line(ix,iy,h1,ix,  iy+1,h4);
+    if (!(iy&GRIDM)) rr::line(ix,iy,h1,ix+1,iy,  h2);
+    if (!((ix+1)&GRIDM)) rr::line(ix+1,iy,  h2,ix+1,iy+1,h3);
+    if (!((iy+1)&GRIDM)) rr::line(ix,  iy+1,h4,ix+1,iy+1,h3);
   }
 
   if (!SOLID(s)) {
     const float dh = flrceil?-.02f:+.02f;
     const float ih = sheight(s, s, z);
     const block b = { cx, cy, 1, 1 };
-    rdr::linestyle(GRIDS, 0xFF, 0xFF, 0xFF);
-    rdr::box(b, ih+dh,
+    rr::linestyle(GRIDS, 0xFF, 0xFF, 0xFF);
+    rr::box(b, ih+dh,
              sheight(s, SWS(s,1,0,ssize), z)+dh,
              sheight(s, SWS(s,1,1,ssize), z)+dh,
              sheight(s, SWS(s,0,1,ssize), z)+dh);
-    rdr::linestyle(GRIDS, 0xFF, 0x00, 0x00);
-    rdr::dot(cx, cy, ih);
+    rr::linestyle(GRIDS, 0xFF, 0x00, 0x00);
+    rr::dot(cx, cy, ih);
     ch = (int)ih;
   }
 
   if (selset) {
     const float h = float(selh) + (flrceil?-0.03f:+0.03f);
-    rdr::linestyle(GRIDS, 0xFF, 0x40, 0x40);
-    rdr::box(sel, h, h, h, h);
+    rr::linestyle(GRIDS, 0xFF, 0x40, 0x40);
+    rr::box(sel, h, h, h, h);
   }
 }
 

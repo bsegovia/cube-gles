@@ -49,7 +49,7 @@ namespace physics {
     {
       entity &e = ents[i];
       if (e.type!=MAPMODEL) continue;
-      mapmodelinfo &mmi = rdr::getmminfo(e.attr2);
+      mapmodelinfo &mmi = rr::getmminfo(e.attr2);
       if (!&mmi || !mmi.h) continue;
       const float r = mmi.rad+d->radius;
       if (fabs(e.x-d->o.x)<r && fabs(e.y-d->o.y)<r)

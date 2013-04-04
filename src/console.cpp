@@ -70,8 +70,8 @@ void render(void)
       refs[nd++] = conlines[i].cref;
       if (nd==ndraw) break;
     }
-  const int h = rdr::FONTH;
-  loopj(nd) rdr::draw_text(refs[j], h/3, (h/4*5)*(nd-j-1)+h/3, 2);
+  const int h = rr::FONTH;
+  loopj(nd) rr::draw_text(refs[j], h/3, (h/4*5)*(nd-j-1)+h/3, 2);
 }
 
 // keymap is defined externally in keymap.cfg

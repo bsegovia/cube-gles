@@ -2,7 +2,7 @@
 #include "ogl.hpp"
 
 namespace cube {
-namespace rdr {
+namespace rr {
 
 vertex *verts = NULL;
 int curvert;
@@ -26,7 +26,6 @@ void reallocv(void)
   verts = (vertex *)realloc(verts, (curmaxverts *= 2)*sizeof(vertex));
   curmaxverts -= 10;
   if (!verts) fatal("no vertex memory!");
-  // setarraypointers();
 }
 
 /* generating the actual vertices is done dynamically every frame and sits at
@@ -357,6 +356,6 @@ void resetcubes(void)
   sdark.r = sdark.g = sdark.b = 0;
 }
 
-} /* namespace rdr */
+} /* namespace rr */
 } /* namespace cube */
 

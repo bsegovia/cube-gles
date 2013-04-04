@@ -61,27 +61,27 @@ bool render(void)
   int mdisp = m.items.length();
   int w = 0;
   loopi(mdisp) {
-    const int x = rdr::text_width(m.items[i].text);
+    const int x = rr::text_width(m.items[i].text);
     if (x>w) w = x;
   }
 
-  int tw = rdr::text_width(title);
+  int tw = rr::text_width(title);
   if (tw>w) w = tw;
-  const int fh = rdr::FONTH;
+  const int fh = rr::FONTH;
   int step = fh/4*5;
   int h = (mdisp+2)*step;
-  int y = (rdr::VIRTH-h)/2;
-  int x = (rdr::VIRTW-w)/2;
-  rdr::blendbox(x-fh/2*3, y-fh, x+w+fh/2*3, y+h+fh, true);
-  rdr::draw_text(title, x, y,2);
+  int y = (rr::VIRTH-h)/2;
+  int x = (rr::VIRTW-w)/2;
+  rr::blendbox(x-fh/2*3, y-fh, x+w+fh/2*3, y+h+fh, true);
+  rr::draw_text(title, x, y,2);
   y += fh*2;
 
   if (vmenu) {
     int bh = y+m.menusel*step;
-    rdr::blendbox(x-fh, bh-10, x+w+fh, bh+fh+10, false);
+    rr::blendbox(x-fh, bh-10, x+w+fh, bh+fh+10, false);
   }
   loopj(mdisp) {
-    rdr::draw_text(m.items[j].text, x, y, 2);
+    rr::draw_text(m.items[j].text, x, y, 2);
     y += step;
   }
   return true;

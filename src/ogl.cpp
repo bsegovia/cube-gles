@@ -4,7 +4,7 @@
 #include <SDL/SDL_image.h>
 
 namespace cube {
-namespace rdr { extern int curvert; }
+namespace rr { extern int curvert; }
 namespace ogl {
 
 int xtraverts = 0;
@@ -605,7 +605,7 @@ static int worldvbosz[2] = {0,0};
 static int worldvbocurr = 0;
 static void bindworldvbo(void)
 {
-  const int worldsz = rdr::worldsize();
+  const int worldsz = rr::worldsize();
   if (worldvbo[worldvbocurr] == 0u)
     OGL(GenBuffers, 1, worldvbo+worldvbocurr);
   OGL(BindBuffer, GL_ARRAY_BUFFER, worldvbo[worldvbocurr]);
@@ -757,7 +757,7 @@ static void setupworld(void)
   OGL(EnableVertexAttribArray, POS0);
   OGL(EnableVertexAttribArray, COL);
   OGL(EnableVertexAttribArray, TEX);
-  rdr::setarraypointers();
+  rr::setarraypointers();
 }
 
 static int skyoglid;
@@ -819,7 +819,7 @@ static const char *hudgunnames[] = {
 
 static void drawhudmodel(int start, int end, float speed, int base)
 {
-  rdr::rendermodel(hudgunnames[player1->gunselect], start, end, 0, 1.0f, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 1.0f, speed, 0, base);
+  rr::rendermodel(hudgunnames[player1->gunselect], start, end, 0, 1.0f, player1->o.x, player1->o.z, player1->o.y, player1->yaw+90, player1->pitch, false, 1.0f, speed, 0, base);
 }
 
 static void drawhudgun(float fovy, float aspect, int farplane)
@@ -917,17 +917,17 @@ void drawframe(int w, int h, float curfps)
   int xs, ys;
   skyoglid = lookuptex(DEFAULT_SKY, xs, ys);
 
-  rdr::resetcubes();
+  rr::resetcubes();
 
-  cube::rdr::curvert = 0;
+  cube::rr::curvert = 0;
   strips.setsize(0);
 
   world::render(player1->o.x, player1->o.y, player1->o.z,
                 (int)player1->yaw, (int)player1->pitch, (float)fov, w, h);
-  rdr::finishstrips();
+  rr::finishstrips();
 
   bindworldvbo();
-  rdr::uploadworld();
+  rr::uploadworld();
 
   /* render sky */
   if (rendersky) {
@@ -941,7 +941,7 @@ void drawframe(int w, int h, float curfps)
     rotate(90.f, vec3f(1.f,0.f,0.f));
     OGL(VertexAttrib3f,COL,1.0f,1.0f,1.0f);
     OGL(DepthFunc, GL_GREATER);
-    rdr::draw_envbox(14, fog*4/3);
+    rr::draw_envbox(14, fog*4/3);
     OGL(DepthFunc, GL_LESS);
   }
 
@@ -961,8 +961,8 @@ void drawframe(int w, int h, float curfps)
   game::renderclients();
   monster::monsterrender();
   entities::renderentities();
-  rdr::renderspheres(curtime);
-  rdr::renderents();
+  rr::renderspheres(curtime);
+  rr::renderents();
 
   OGL(Disable, GL_CULL_FACE);
 
@@ -977,7 +977,7 @@ void drawframe(int w, int h, float curfps)
     OGL(EnableVertexAttribArray, POS0); /* XXX REMOVE! */
     OGL(EnableVertexAttribArray, COL);
     OGL(EnableVertexAttribArray, TEX);
-    nquads = rdr::renderwater(hf, watershader.udxy, watershader.uduv);
+    nquads = rr::renderwater(hf, watershader.udxy, watershader.uduv);
     OGL(DisableVertexAttribArray, POS0); /* XXX REMOVE! */
     OGL(DisableVertexAttribArray, COL);
     OGL(DisableVertexAttribArray, TEX);
@@ -986,12 +986,12 @@ void drawframe(int w, int h, float curfps)
   if (renderparticles) {
     overbright(2.f);
     bindshader(DIFFUSETEX);
-    rdr::render_particles(curtime);
+    rr::render_particles(curtime);
   }
 
   overbright(1.f);
   UNLESS_EMSCRIPTEN(OGL(Disable, GL_TEXTURE_2D));
-  rdr::drawhud(w, h, int(curfps), nquads, rdr::curvert, underwater);
+  rr::drawhud(w, h, int(curfps), nquads, rr::curvert, underwater);
   OGL(Enable, GL_CULL_FACE);
 }
 

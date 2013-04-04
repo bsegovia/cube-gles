@@ -2,7 +2,7 @@
 #include "ogl.hpp"
 
 namespace cube {
-namespace rdr {
+namespace rr {
 
 static const short char_coords[96][4] = 
 {
@@ -239,6 +239,6 @@ void draw_envbox(int t, int w)
   OGL(DepthMask, GL_TRUE);
 }
 
-} /* namespace rdr */
+} /* namespace rr */
 } /* namespace cube */
 
