@@ -27,7 +27,7 @@
 */
 //==============================================================================
 
-class LuaException : public std::exception 
+class LuaException
 {
 private:
   lua_State* m_L;
@@ -57,13 +57,13 @@ public:
 
   //----------------------------------------------------------------------------
 
-  ~LuaException() ()
+  ~LuaException()
   {
   }
 
   //----------------------------------------------------------------------------
 
-  char const* what() const ()
+  char const* what() const
   {
     return m_what.c_str();
   }
@@ -74,8 +74,11 @@ public:
   */
   static void pcall (lua_State* L, int nargs = 0, int nresults = 0, int msgh = 0)
   {
-    int code = lua_pcall (L, nargs, nresults, msgh);
-    assert (code == LUABRIDGE_LUA_OK)
+#if !defined(NDEBUG)
+    int code =
+#endif
+    lua_pcall (L, nargs, nresults, msgh);
+    assert (code == LUABRIDGE_LUA_OK);
   }
 
   //----------------------------------------------------------------------------

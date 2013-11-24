@@ -1,12 +1,16 @@
 #ifndef __CUBE_COMMAND_HPP__
 #define __CUBE_COMMAND_HPP__
 
-/*! Mini-scripting language implemented in qbe (mostly cvompatible with quake
- *  script engine)
+#include "lua/bridge.h"
+
+/* Mini-scripting language implemented in cube (mostly cvompatible with quake
+ * script engine)
  */
 namespace cube {
 namespace cmd {
 
+/*! Get the lua state. Allocate it lazily when needed for the first time */
+lua_State *luastate(void);
 /*! Register a console variable (done through globals) */
 int variable(const char *name, int min, int cur, int max, int *storage, void (*fun)(), bool persist);
 /*! Set the integer value for a variable */
@@ -17,12 +21,21 @@ int getvar(const char *name);
 bool identexists(const char *name);
 /*! Register a new command */
 bool addcommand(const char *name, void (*fun)(), int narg);
+
 /*! Execute a given string */
 int execute(char *p, bool down = true);
 /*! Execute a given file and print any error */
 void exec(const char *cfgfile);
 /*! Execute a file and says if this succeeded */
 bool execfile(const char *cfgfile);
+
+/*! Execute a given string */
+int executelua(const char *p, bool down = true);
+/*! Execute a given file and print any error */
+void execscript(const char *cfgfile);
+/*! Execute a file and says if this succeeded */
+bool execluascript(const char *cfgfile);
+
 /*! Stop completion */
 void resetcomplete(void);
 /*! Complete the given string */
@@ -52,9 +65,18 @@ enum
 // Handle command and Cvar registrations
 ///////////////////////////////////////////////////////////////////////////
 
+struct luainitializer {
+  template <typename T> luainitializer(T) {}
+};
+
 /*! Register a command with a given name */
 #define COMMANDN(name, fun, nargs) \
-  static bool __dummy_##fun = cube::cmd::addcommand(#name, (void (*)())fun, nargs)
+  static auto __dummy_##fun = cube::cmd::addcommand(#name, (void (*)())fun, nargs);\
+  static auto __dummy_##fun##_lua =\
+  luainitializer(luabridge::getGlobalNamespace(cube::cmd::luastate())\
+      .beginNamespace("cube")\
+        .addFunction(#name, fun)\
+      .endNamespace())
 
 /*! Register a command with a name given by the function name */
 #define COMMAND(name, nargs) COMMANDN(name, name, nargs)

@@ -78,18 +78,21 @@ void render(void)
 struct keym { int code; char *name; char *action; } keyms[256];
 static int numkm = 0;
 
-static void keymap(char *code, char *key, char *action)
+static void keymap(int code, const char *key, const char *action)
 {
-  keyms[numkm].code = atoi(code);
+  keyms[numkm].code = code;
   keyms[numkm].name = newstring(key);
   keyms[numkm++].action = newstringbuf(action);
 }
 COMMAND(keymap, ARG_3STR);
 
-static void bindkey(char *key, char *action)
+static void bindkey(const char *key, const char *action)
 {
-  for (char *x = key; *x; x++) *x = toupper(*x);
-  loopi(numkm) if (strcmp(keyms[i].name, key)==0) {
+  string upper;
+  char *dst = upper;
+  for (auto *src = key; *src; ++src, ++dst) *dst = toupper(*src);
+  *dst = 0;
+  loopi(numkm) if (strcmp(keyms[i].name, upper)==0) {
     strcpy_s(keyms[i].action, action);
     return;
   }
@@ -206,9 +209,7 @@ void keypress(int code, bool isdown, int cooked)
     }
   } else if (!menu::key(code, isdown)) { // keystrokes go to menu
     loopi(numkm) if (keyms[i].code==code) { // keystrokes go to game, lookup in keymap and execute
-      string temp;
-      strcpy_s(temp, keyms[i].action);
-      cmd::execute(temp, isdown);
+      cmd::executelua(keyms[i].action, isdown);
       return;
     }
   }

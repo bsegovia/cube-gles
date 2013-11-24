@@ -38,6 +38,8 @@
 #include <stdexcept>
 #include <string>
 #include <typeinfo>
+#include "lua.h"
+#include "lauxlib.h"
 
 #define LUABRIDGE_MAJOR_VERSION 2
 #define LUABRIDGE_MINOR_VERSION 0

@@ -155,7 +155,7 @@ void toserver(const char *text)
   console::out("%s:\f %s", player1->name, text);
   strn0cpy(ctext, text, 80);
 }
-static void echo(char *text) { console::out("%s", text); }
+static void echo(const char *text) { console::out("%s", text); }
 
 void addmsg(int rel, int num, int type, ...)
 {

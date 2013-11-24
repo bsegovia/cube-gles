@@ -175,6 +175,7 @@ static int main(int argc, char **argv)
   par = SDL_INIT_NOPARACHUTE;
   fs = 0;
 #endif
+  cmd::executelua("particlesize = 100");
 
   if (SDL_Init(SDL_INIT_TIMER|SDL_INIT_VIDEO|par)<0) fatal("Unable to initialize SDL");
 
@@ -222,9 +223,8 @@ static int main(int argc, char **argv)
   log("cfg");
   menu::newm("frags\tpj\tping\tteam\tname");
   menu::newm("ping\tplr\tserver");
+#if 0
   cmd::exec("data/keymap.cfg");
-  cmd::exec("data/menus.cfg");
-  cmd::exec("data/prefabs.cfg");
   cmd::exec("data/sounds.cfg");
   cmd::exec("servers.cfg");
   if (!cmd::execfile("config.cfg")) {
@@ -232,6 +232,17 @@ static int main(int argc, char **argv)
     cmd::execfile("data/defaults.cfg");
   }
   cmd::exec("autoexec.cfg");
+#else
+  cmd::execscript("data/keymap.lua");
+  cmd::execscript("data/menus.lua");
+  cmd::exec("data/prefabs.cfg");
+  cmd::execscript("data/sounds.lua");
+  cmd::execscript("servers.lua");
+  if (!cmd::execluascript("config.lua")) {
+    console::out("config.lua not found. executing defaults.lua");
+    cmd::execscript("data/defaults.lua");
+  }
+#endif
 
   log("localconnect");
   server::localconnect();

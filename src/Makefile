@@ -1,7 +1,7 @@
 CXX=g++
 #CXX=clang++
 #CXX=~/src/emscripten/em++
-CXXOPTFLAGS=-Wall -O2 -DNDEBUG -g -fsigned-char -std=c++0x
+CXXOPTFLAGS=-Wall -Os -fsigned-char -std=c++0x
 CXXFLAGS=$(CXXOPTFLAGS) -I../enet/include `sdl-config --cflags`
 
 CLIENT_LIBS=-L../enet -lenet `sdl-config --libs` -lSDL_image -lSDL_mixer -lz -lGL -lX11
@@ -13,10 +13,11 @@ CLIENT_OBJS= \
 	console.o \
 	editing.o \
 	entities.o \
-	ogl.o \
+	lua.o \
 	main.o \
 	menu.o \
 	monster.o \
+	ogl.o \
 	physics.o \
 	rendercubes.o \
 	renderextras.o \

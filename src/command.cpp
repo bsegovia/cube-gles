@@ -1,8 +1,25 @@
 #include "command.hpp"
 #include "cube.h"
+#include "lua/lualib.h"
 
 namespace cube {
 namespace cmd {
+
+static lua_State *L = NULL;
+
+static void closeluastate(void) {
+  if (L != NULL)
+    lua_close(L);
+}
+
+lua_State *luastate(void) {
+  if (L == NULL) {
+    L = luaL_newstate();
+    luaL_openlibs(L);
+    atexit(closeluastate);
+  }
+  return L;
+}
 
 enum { ID_VAR, ID_COMMAND, ID_ALIAS };
 
@@ -51,14 +68,31 @@ COMMAND(alias, ARG_2STR);
 int variable(const char *name, int min, int cur, int max,
              int *storage, void (*fun)(), bool persist)
 {
+  assert(storage != NULL);
   if (!idents) idents = new hashtable<Ident>;
+  *storage = cur;
+  luabridge::getGlobalNamespace(luastate())
+    .beginNamespace("cube")
+      .addVariable(name, storage, min, max, fun)
+    .endNamespace();
+
   const Ident v = {ID_VAR, name, min, max, storage, fun, 0, 0, persist};
   idents->access(name, &v);
   return cur;
 }
 
-void setvar(const char *name, int i) { *idents->access(name)->storage = i; }
-int getvar(const char *name) { return *idents->access(name)->storage; }
+void setvar(const char *name, int i)
+{
+  auto cube_table = luabridge::getGlobal(luastate(), "cube");
+  cube_table[name] = i;
+}
+
+int getvar(const char *name)
+{
+  auto cube_table = luabridge::getGlobal(luastate(), "cube");
+  return int(cube_table[name]);
+}
+
 bool identexists(const char *name) { return idents->access(name)!=NULL; }
 
 char *getalias(const char *name)
@@ -73,6 +107,41 @@ bool addcommand(const char *name, void (*fun)(), int narg)
   const Ident c = { ID_COMMAND, name, 0, 0, 0, fun, narg, 0, false };
   idents->access(name, &c);
   return false;
+}
+
+static int luareport(int ret) {
+  auto L = luastate();
+  if (ret && !lua_isnil(L, -1)) {
+    const char *msg = lua_tostring(L, -1);
+    if (msg != NULL) console::out("lua script failed with %s", msg);
+    lua_pop(L, 1);
+  }
+  return ret;
+}
+
+int executelua(const char *p, bool down) {
+  auto L = luastate();
+  if (luareport(luaL_loadstring(L, p))) return 0;
+  lua_getglobal(L, "_G");
+  lua_setupvalue(L, -2, 1);
+  return luareport(lua_pcall(L, 0, 0, 0));
+}
+
+bool execluascript(const char *cfgfile)
+{
+  string s;
+  strcpy_s(s, cfgfile);
+  char *buf = loadfile(path(s), NULL);
+  if (!buf) return false;
+  executelua(buf);
+  free(buf);
+  return true;
+}
+
+void execscript(const char *cfgfile)
+{
+  if (!execluascript(cfgfile))
+    console::out("could not read \"%s\"", cfgfile);
 }
 
 /*! Parse any nested set of () or [] */

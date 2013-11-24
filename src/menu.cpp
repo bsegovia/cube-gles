@@ -26,7 +26,7 @@ void set(int menu)
     menus[1].menusel = 0;
 }
 
-static void show(char *name)
+static void show(const char *name)
 {
   loopv(menus) if (i>1 && strcmp(menus[i].name, name)==0) {
     set(i);
@@ -102,7 +102,7 @@ void manual(int m, int n, char *text)
   mitem.action = empty;
 }
 
-void item(char *text, char *action)
+void item(const char *text, const char *action)
 {
   gmenu &menu = menus.last();
   mitem &mi = menu.items.add();
@@ -133,7 +133,7 @@ bool key(int code, bool isdown)
         client::connect(browser::getservername(menusel));
       menustack.add(vmenu);
       set(-1);
-      cmd::execute(action, true);
+      cmd::executelua(action, true);
     }
   }
   return true;
